@@ -427,6 +427,42 @@ class ImasBirthdayPlugin(Star):
             f"缺图片：{self._join_names(missing) or '无'}"
         )
 
+    @filter.event_message_type(filter.EventMessageType.ALL)
+    async def imasbd_text_fallback(self, event: AstrMessageEvent):
+        """Fallback for adapters that log /imasbd text but do not dispatch command groups."""
+        args = self._parse_imasbd_text(getattr(event, "message_str", ""))
+        if args is None:
+            return
+        stop_event = getattr(event, "stop_event", None)
+        if callable(stop_event):
+            stop_event()
+        subcommand = args[0] if args else "help"
+        if subcommand == "sid":
+            yield event.plain_result(f"当前 UMO：{event.unified_msg_origin}")
+            return
+        if subcommand == "today":
+            now = self._now()
+            await self._send_result_to_event(event, now.month, now.day)
+            return
+        if subcommand == "date":
+            date_text = args[1] if len(args) > 1 else ""
+            parsed = self._parse_date_text(date_text)
+            if not parsed:
+                yield event.plain_result("日期格式不对，请使用 /imasbd date MM-DD，例如 /imasbd date 06-22。")
+                return
+            await self._send_result_to_event(event, parsed[0], parsed[1])
+            return
+        if subcommand == "assets":
+            yield event.plain_result(await self._today_assets_text())
+            return
+        yield event.plain_result(
+            "可用指令：\n"
+            "/imasbd sid\n"
+            "/imasbd today\n"
+            "/imasbd date 06-22\n"
+            "/imasbd assets"
+        )
+
     async def _scheduler(self):
         while True:
             try:
@@ -467,11 +503,51 @@ class ImasBirthdayPlugin(Star):
             if not ok:
                 logger.warning(f"偶像大师生日提醒发送失败，未找到平台：{umo}")
 
+    async def _send_result_to_event(self, event: AstrMessageEvent, month: int, day: int):
+        result = await self._build_result(month, day)
+        if not result["message"]:
+            yield_text = f"{month}月{day}日没有匹配到偶像大师相关生日。"
+            await event.send(event.plain_result(yield_text))
+            return
+        await self.context.send_message(
+            event.unified_msg_origin,
+            self._build_message_chain(result["message"], result["card_path"]),
+        )
+
     def _build_message_chain(self, message: str, card_path: str = "") -> MessageChain:
         chain = MessageChain().message(message)
         if card_path:
             chain.file_image(card_path)
         return chain
+
+    def _parse_imasbd_text(self, message: str) -> list[str] | None:
+        text = str(message or "").strip()
+        for prefix in ("/imasbd", "／imasbd"):
+            if text == prefix:
+                return []
+            if text.startswith(prefix + " "):
+                return [part.strip().lower() for part in text[len(prefix) :].split() if part.strip()]
+        return None
+
+    async def _today_assets_text(self) -> str:
+        now = self._now()
+        data = await self._get_birthdays()
+        entry = data.get(f"{now.month:02d}-{now.day:02d}") or {}
+        characters = self._split_people(entry.get("characters", []))
+        if not characters:
+            return "今天没有需要匹配图片的角色。"
+        matched = []
+        missing = []
+        for character in characters:
+            if self._character_image_path(character):
+                matched.append(character)
+            else:
+                missing.append(character)
+        return (
+            "今日图片匹配：\n"
+            f"已匹配：{self._join_names(matched) or '无'}\n"
+            f"缺图片：{self._join_names(missing) or '无'}"
+        )
 
     async def _build_result(self, month: int, day: int) -> dict[str, str]:
         data = await self._get_birthdays()
