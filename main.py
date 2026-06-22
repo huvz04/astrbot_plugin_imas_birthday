@@ -439,7 +439,7 @@ class ImasBirthdayPlugin(Star):
         if not self._cfg_bool("enable_send_test", False):
             yield event.plain_result("发送测试默认关闭。请先在插件配置中打开 enable_send_test。")
             return
-        yield event.plain_result("开始测试图片发送方式，请观察接下来几条消息是否成功显示。")
+        logger.info(f"收到图片发送测试指令：umo={event.unified_msg_origin}")
         report = await self._run_send_tests(event.unified_msg_origin)
         yield event.plain_result(report)
 
@@ -578,7 +578,7 @@ class ImasBirthdayPlugin(Star):
             if not self._cfg_bool("enable_send_test", False):
                 yield event.plain_result("发送测试默认关闭。请先在插件配置中打开 enable_send_test。")
                 return
-            yield event.plain_result("开始测试图片发送方式，请观察接下来几条消息是否成功显示。")
+            logger.info(f"收到图片发送测试 fallback 指令：umo={event.unified_msg_origin}")
             report = await self._run_send_tests(event.unified_msg_origin)
             yield event.plain_result(report)
             return
@@ -673,6 +673,9 @@ class ImasBirthdayPlugin(Star):
             f"测试图：{image_path}",
             f"单次发送超时：{timeout}s",
         ]
+        if debug:
+            with contextlib.suppress(Exception):
+                await self._send_test_progress(umo, "[imasbd sendtest] start")
         for key, description in tests:
             started = time.monotonic()
             if debug:
