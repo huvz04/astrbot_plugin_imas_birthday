@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import html
-import os
 import re
 import sys
 import time
@@ -13,7 +12,14 @@ from pathlib import Path
 
 import httpx
 
-from import_character_assets import ASSETS_DIR, GENERATED_MAPPING, safe_filename, write_mapping
+from import_character_assets import (
+    ASSETS_DIR,
+    GENERATED_MAPPING,
+    IMAGE_SUFFIXES,
+    resolve_assets_dir,
+    safe_filename,
+    write_mapping,
+)
 
 
 SOURCE_URL = (
@@ -89,7 +95,7 @@ def main() -> int:
     parser.add_argument("--quiet", action="store_true", help="Only print skipped, failed, and summary lines.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned operations without writing files.")
     args = parser.parse_args()
-    assets_dir = Path(os.path.expandvars(args.assets_dir)).expanduser() if args.assets_dir else ASSETS_DIR
+    assets_dir = resolve_assets_dir(args.assets_dir) if args.assets_dir else ASSETS_DIR
 
     with httpx.Client(timeout=60, follow_redirects=True, headers={"User-Agent": USER_AGENT}) as client:
         characters = parse_character_links(fetch_text(client, args.source_url))
@@ -104,8 +110,18 @@ def main() -> int:
         mapping: dict[str, str] = {}
         missing: list[str] = []
         failed: list[str] = []
+        kept = 0
 
         for index, character in enumerate(characters, start=1):
+            if not args.overwrite:
+                existing_path = existing_relative_path(character, assets_dir)
+                if existing_path:
+                    mapping[character.name] = existing_path
+                    kept += 1
+                    if not args.quiet:
+                        print(f"[{index}/{len(characters)}] keep: {character.name} uses existing {existing_path}")
+                    continue
+
             try:
                 image_url = fetch_pageimage_url(client, character.page_title, args.size)
             except httpx.HTTPError as exc:
@@ -162,6 +178,8 @@ def main() -> int:
 
         write_mapping(mapping, generated_by="tools/fetch_moegirl_character_assets.py")
         print(f"Wrote mapping: {GENERATED_MAPPING}")
+        if kept:
+            print(f"Kept existing local images: {kept}")
         if missing:
             print(f"Missing page images: {', '.join(missing)}")
         if failed:
@@ -275,9 +293,10 @@ def image_suffix(url: str) -> str:
 def existing_relative_path(character: CharacterLink, assets_dir: Path) -> str:
     stem = safe_filename(character.name)
     brand_dir = assets_dir / character.brand
-    for suffix in (".png", ".jpg", ".jpeg", ".webp"):
-        path = brand_dir / f"{stem}{suffix}"
-        if path.exists():
+    if not brand_dir.exists():
+        return ""
+    for path in brand_dir.iterdir():
+        if path.is_file() and path.stem == stem and path.suffix.lower() in IMAGE_SUFFIXES:
             return f"{character.brand}/{path.name}"
     return ""
 

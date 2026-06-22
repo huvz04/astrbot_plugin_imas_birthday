@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import os
 import re
 import shutil
@@ -11,15 +12,43 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
 GENERATED_MAPPING = PLUGIN_DIR / "character_assets.py"
 
 
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
+
+
+def configured_assets_dir() -> Path | None:
+    config_path = PLUGIN_DIR.parent.parent / "config" / f"{PLUGIN_DIR.name}_config.json"
+    if not config_path.exists():
+        return None
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    value = str(data.get("character_assets_dir", "") or "").strip()
+    if not value:
+        return None
+    return resolve_assets_dir(value)
+
+
+def resolve_assets_dir(value: str) -> Path:
+    path = Path(os.path.expandvars(value)).expanduser()
+    return path if path.is_absolute() else PLUGIN_DIR / path
+
+
 def default_assets_dir() -> Path:
+    config_value = configured_assets_dir()
+    if config_value:
+        return config_value
     env_value = os.environ.get("IMAS_BIRTHDAY_ASSETS_DIR", "").strip()
     if env_value:
-        return Path(os.path.expandvars(env_value)).expanduser()
+        return resolve_assets_dir(env_value)
     if PLUGIN_DIR.parent.name == "plugins":
         return PLUGIN_DIR.parent.parent / "imas_birthday_assets" / "characters"
     return PLUGIN_DIR / "assets" / "characters"
@@ -33,9 +62,10 @@ def main() -> int:
     parser.add_argument("csv_path", help="CSV with columns: name, brand, source, filename(optional)")
     parser.add_argument("--assets-dir", default="", help="Directory to store character images.")
     parser.add_argument("--sleep", type=float, default=0.2, help="Delay between downloads in seconds.")
+    parser.add_argument("--overwrite", action="store_true", help="Replace existing image files.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned operations without writing files.")
     args = parser.parse_args()
-    assets_dir = Path(os.path.expandvars(args.assets_dir)).expanduser() if args.assets_dir else ASSETS_DIR
+    assets_dir = resolve_assets_dir(args.assets_dir) if args.assets_dir else ASSETS_DIR
 
     csv_path = Path(args.csv_path)
     rows = read_rows(csv_path)
@@ -54,6 +84,8 @@ def main() -> int:
         mapping[name] = relative_path.replace("\\", "/")
         print(f"{name}: {source} -> {destination}")
         if args.dry_run:
+            continue
+        if destination.exists() and not args.overwrite:
             continue
         destination.parent.mkdir(parents=True, exist_ok=True)
         import_one(source, destination)
@@ -135,7 +167,7 @@ def build_filename(name: str, source: str) -> str:
 def extension_from_source(source: str) -> str:
     path = urllib.parse.urlparse(source).path if is_url(source) else source
     suffix = Path(path).suffix.lower()
-    if suffix in {".jpg", ".jpeg", ".png", ".webp"}:
+    if suffix in IMAGE_SUFFIXES:
         return suffix
     return ".png"
 

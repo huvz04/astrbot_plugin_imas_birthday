@@ -715,11 +715,7 @@ class ImasBirthdayPlugin(Star):
             return None
         path = Path(filename)
         if not path.is_absolute():
-            for base_dir in (self.assets_dir, self.plugin_dir / "assets" / "characters"):
-                candidate = base_dir / filename
-                if candidate.exists():
-                    return candidate
-            return None
+            path = self.assets_dir / filename
         return path if path.exists() else None
 
     def _character_brand(self, character: str) -> str:

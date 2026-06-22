@@ -53,7 +53,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 AstrBot/data/imas_birthday_assets/characters/
 ```
 
-也可以在配置里把 `character_assets_dir` 改成任意绝对路径，或设置环境变量 `IMAS_BIRTHDAY_ASSETS_DIR`。插件仍会兼容读取旧的 `assets/characters/`，但不再推荐把长期头像素材放在插件目录内。
+也可以在配置里把 `character_assets_dir` 改成任意绝对路径，或设置环境变量 `IMAS_BIRTHDAY_ASSETS_DIR`。插件运行时只会从这个目录读取角色图片。
 
 图片映射由仓库里的 `character_assets.py` 提供，例如：
 
@@ -82,13 +82,25 @@ starlitseason/
 
 插件会根据第一级目录给卡片打上官网品牌名，例如 `THE IDOLM@STER`、`シンデレラガールズ`、`ミリオンライブ！`、`SideM`、`シャイニーカラーズ`、`学園アイドルマスター`、`ヴイアライヴ`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
 
-默认可以从萌娘百科生日页抓取角色链接，并从角色页的主图生成本地图片映射：
+如果已经有图片，或被萌娘百科限流了，直接扫描本地图片目录生成映射，不会访问网络：
+
+```powershell
+python .\tools\sync_character_assets.py
+```
+
+如果想指定图片目录：
+
+```powershell
+python .\tools\sync_character_assets.py --assets-dir D:\imas_birthday_assets\characters
+```
+
+也可以从萌娘百科生日页抓取角色链接，并从角色页的主图补齐缺图：
 
 ```powershell
 python .\tools\fetch_moegirl_character_assets.py
 ```
 
-脚本会下载到外部角色图片目录的 `<brand>/` 子目录，并生成 `character_assets.py`。如果只想测试前几个角色：
+脚本会先检查本地是否已有同名图片；已有就直接复用，不会请求该角色的萌娘百科图片 API。缺图时才会下载到外部角色图片目录的 `<brand>/` 子目录，并生成 `character_assets.py`。如果确实要重下图片，加 `--overwrite`。如果只想测试前几个角色：
 
 ```powershell
 python .\tools\fetch_moegirl_character_assets.py --limit 10 --dry-run
@@ -116,7 +128,7 @@ name,brand,source,filename
 python .\tools\import_character_assets.py .\assets_manifest.csv
 ```
 
-脚本会把图片复制或下载到外部角色图片目录的 `<brand>/` 子目录，并重新生成 `character_assets.py`。插件启动时会自动读取这个生成文件。
+脚本会把图片复制或下载到外部角色图片目录的 `<brand>/` 子目录，并重新生成 `character_assets.py`。已有文件默认不会覆盖，除非加 `--overwrite`。插件启动时会自动读取这个生成文件。
 
 如果 `source` 是本地路径，脚本会复制图片；如果是 `https://...` 图片链接，脚本会下载图片。之后重启/重载插件即可。
 
