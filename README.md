@@ -1,0 +1,83 @@
+# 偶像大师生日提醒
+
+AstrBot 插件：每天从萌娘百科“偶像大师系列/相关人士生日信息”页面读取生日表，并向白名单群聊发送角色、声优及相关人士生日祝贺。
+
+## 安装
+
+把本目录放到 AstrBot 的插件目录，例如：
+
+```text
+AstrBot/data/plugins/astrbot_plugin_imas_birthday
+```
+
+然后在 AstrBot WebUI 的插件管理中安装依赖并重载插件。
+
+## 配置
+
+- `white_umos`：群聊白名单。进入目标群发送 `/imasbd sid` 查看当前 UMO，或使用 `/imasbd bind` 自动加入。
+- `send_time`：每日发送时间，默认 `09:00`。
+- `timezone`：日期时区，默认 `Asia/Shanghai`。
+- `include_characters`：是否包含角色，默认开启。
+- `include_seiyuu`：是否包含声优，默认开启。
+- `include_related_people`：是否包含其他相关人士，默认关闭。
+- `include_events`：是否包含企划事件，默认关闭。
+- `render_card`：是否同时生成生日卡片，默认开启。
+- `card_title` / `card_subtitle`：生日卡标题文案。
+
+## 本地角色图片
+
+把处理好的角色图片放到：
+
+```text
+assets/characters/
+```
+
+然后在 `main.py` 顶部的 `CHARACTER_IMAGE_ASSETS` 中添加映射：
+
+```python
+CHARACTER_IMAGE_ASSETS = {
+    "天海春香": "765as/amami_haruka.png",
+    "如月千早": "765as/kisaragi_chihaya.png",
+}
+```
+
+推荐按企划建子目录，例如 `765as/`、`cg/`、`ml/`、`sidem/`、`shiny/`、`gakumas/`。插件会根据第一级目录给卡片打上企划标签。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
+
+也可以用批量导入脚本。先复制 `assets_manifest.example.csv`，按下面格式维护清单：
+
+```csv
+name,brand,source,filename
+天海春香,765as,C:\path\to\amami_haruka.png,amami_haruka.png
+月村手毬,gakumas,https://gakuen.idolmaster-official.jp/assets/img/idol/temari/default.png,tsukimura_temari.png
+```
+
+然后运行：
+
+```powershell
+python .\tools\import_character_assets.py .\assets_manifest.csv
+```
+
+脚本会把图片复制或下载到 `assets/characters/<brand>/`，并生成 `character_assets.py`。插件启动时会自动读取这个生成文件。
+
+## 指令
+
+```text
+/imasbd sid
+/imasbd bind
+/imasbd today
+/imasbd date 06-22
+/imasbd refresh
+/imasbd assets
+```
+
+`bind` 和 `refresh` 需要管理员权限。
+
+## 数据来源
+
+默认来源是萌娘百科：
+
+```text
+https://zh.moegirl.org.cn/偶像大师系列/相关人士生日信息
+```
+
+页面中带彩色方块的条目会归为角色，普通文字归为声优，斜体归为相关人士，灰色文字归为事件。

@@ -1,0 +1,80 @@
+{
+  "enabled": {
+    "description": "是否启用每日自动推送",
+    "type": "bool",
+    "default": true
+  },
+  "white_umos": {
+    "description": "允许主动推送的群聊 UMO 白名单",
+    "type": "list",
+    "default": [],
+    "hint": "在目标群使用 /imasbd sid 查看当前 UMO，或用 /imasbd bind 自动加入。"
+  },
+  "send_time": {
+    "description": "每日推送时间",
+    "type": "string",
+    "default": "09:00",
+    "hint": "24 小时制，格式 HH:MM，例如 09:00。"
+  },
+  "timezone": {
+    "description": "日期与推送时间使用的时区",
+    "type": "string",
+    "default": "Asia/Shanghai"
+  },
+  "include_characters": {
+    "description": "包含偶像大师登场角色",
+    "type": "bool",
+    "default": true
+  },
+  "include_seiyuu": {
+    "description": "包含声优",
+    "type": "bool",
+    "default": true
+  },
+  "include_related_people": {
+    "description": "包含其他相关人士",
+    "type": "bool",
+    "default": false
+  },
+  "include_events": {
+    "description": "包含企划相关事件",
+    "type": "bool",
+    "default": false
+  },
+  "render_card": {
+    "description": "发送生日祝贺时同时渲染生日卡片",
+    "type": "bool",
+    "default": true
+  },
+  "render_card_without_character_image": {
+    "description": "没有匹配到角色图片时也生成占位生日卡",
+    "type": "bool",
+    "default": true
+  },
+  "card_title": {
+    "description": "生日卡主标题",
+    "type": "string",
+    "default": "Happy Birthday"
+  },
+  "card_subtitle": {
+    "description": "生日卡副标题",
+    "type": "string",
+    "default": "THE IDOLM@STER Birthday"
+  },
+  "source_url": {
+    "description": "萌娘百科生日信息页面",
+    "type": "string",
+    "default": "https://zh.moegirl.org.cn/%E5%81%B6%E5%83%8F%E5%A4%A7%E5%B8%88%E7%B3%BB%E5%88%97/%E7%9B%B8%E5%85%B3%E4%BA%BA%E5%A3%AB%E7%94%9F%E6%97%A5%E4%BF%A1%E6%81%AF"
+  },
+  "cache_hours": {
+    "description": "生日表缓存小时数",
+    "type": "int",
+    "default": 24,
+    "hint": "到期后会重新抓取萌娘百科。抓取失败时会继续使用旧缓存。"
+  },
+  "message_template": {
+    "description": "推送消息模板",
+    "type": "text",
+    "default": "今天是 {month}月{day}日，偶像大师相关生日：\n{items}\n祝大家生日快乐！"
+  }
+}
