@@ -672,6 +672,17 @@ class ImasBirthdayPlugin(Star):
                 return
             except Exception:
                 logger.exception(f"偶像大师生日提醒组合消息发送失败，降级为分开发送：{mode}")
+                if mode != "combined_component_base64":
+                    try:
+                        ok = await self.context.send_message(
+                            umo,
+                            self._build_birthday_message_chain(message, card_path, "combined_component_base64"),
+                        )
+                        if not ok:
+                            logger.warning(f"偶像大师生日提醒 base64 重试发送失败，未找到平台：{umo}")
+                        return
+                    except Exception:
+                        logger.exception("偶像大师生日提醒 base64 组合消息重试失败，继续降级为分开发送。")
 
         ok = await self.context.send_message(umo, MessageChain().message(message))
         if not ok:
@@ -686,11 +697,14 @@ class ImasBirthdayPlugin(Star):
 
     def _build_image_message_chain(self, card_path: str) -> MessageChain:
         chain = MessageChain()
-        chain.file_image(self._image_send_path(card_path))
+        image_path = self._image_send_path(card_path)
+        logger.info(self._image_send_debug("生日卡片分开发送图片", card_path, image_path))
+        chain.file_image(image_path)
         return chain
 
     def _build_birthday_message_chain(self, message: str, card_path: str, mode: str) -> MessageChain:
         image_path = self._image_send_path(card_path)
+        logger.info(self._image_send_debug(f"生日卡片组合发送图片 mode={mode}", card_path, image_path))
         if mode == "combined_component_file":
             if Comp is None:
                 logger.warning("message_components 不可用，改用 combined_file_image。")
@@ -708,7 +722,7 @@ class ImasBirthdayPlugin(Star):
         return chain
 
     def _birthday_send_mode(self) -> str:
-        mode = str(self.config.get("birthday_send_mode", "combined_file_image") or "").strip().lower()
+        mode = str(self.config.get("birthday_send_mode", "combined_component_base64") or "").strip().lower()
         aliases = {
             "split": "split_file_image",
             "combined": "combined_file_image",
@@ -724,8 +738,8 @@ class ImasBirthdayPlugin(Star):
             "combined_component_base64",
         }
         if mode not in valid_modes:
-            logger.warning(f"未知 birthday_send_mode={mode}，改用 combined_file_image。")
-            return "combined_file_image"
+            logger.warning(f"未知 birthday_send_mode={mode}，改用 combined_component_base64。")
+            return "combined_component_base64"
         return mode
 
     async def _run_send_tests(self, umo: str) -> str:
@@ -874,6 +888,9 @@ class ImasBirthdayPlugin(Star):
             stop_event()
 
     def _image_send_path(self, image_path: str) -> str:
+        image_path = str(image_path or "").strip()
+        if image_path.startswith("file://"):
+            image_path = image_path.replace("file:///", "", 1).replace("file://", "", 1)
         path = Path(image_path)
         if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}:
             return str(path)
@@ -891,6 +908,11 @@ class ImasBirthdayPlugin(Star):
         except Exception:
             logger.exception(f"复制生日卡片到带扩展名路径失败：{image_path}")
             return image_path
+
+    def _image_send_debug(self, label: str, original_path: str, send_path: str) -> str:
+        send = Path(send_path)
+        size = send.stat().st_size if send.exists() else "missing"
+        return f"{label}: original={original_path}, send={send_path}, suffix={send.suffix or 'none'}, size={size}"
 
     def _resolve_character_assets_dir(self) -> Path:
         configured = str(self.config.get("character_assets_dir", "") or "").strip()

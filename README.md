@@ -25,7 +25,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `include_related_people`：是否包含其他相关人士，默认关闭。
 - `include_events`：是否包含企划事件，默认关闭。
 - `render_card`：是否同时生成生日卡片，默认开启。
-- `birthday_send_mode`：生日祝贺图片发送方式，默认 `combined_file_image`，即文字和图片同一条消息。
+- `birthday_send_mode`：生日祝贺图片发送方式，默认 `combined_component_base64`，即文字和图片同一条消息，并绕过本地文件类型判断。
 - `enable_send_test`：是否启用图片发送兼容性测试指令，默认关闭。
 - `debug_send_test`：输出图片发送测试调试日志，默认关闭。
 - `send_test_timeout`：图片发送测试单次超时秒数，默认 `10`。
@@ -166,13 +166,13 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 `birthday_send_mode` 可选：
 
 ```text
+combined_component_base64
 combined_file_image
 combined_component_file
-combined_component_base64
 split_file_image
 ```
 
-如果图片发送测试全部通过，推荐保持默认的 `combined_file_image`，它会把祝贺文字和生日卡片放在同一条消息里。`split_file_image` 会回到文字、图片分开发送。
+推荐保持默认的 `combined_component_base64`，它会把祝贺文字和生日卡片放在同一条消息里，并避免 OneBot/NapCat 对本地文件类型判断失败。`split_file_image` 会回到文字、图片分开发送。
 
 ## 数据来源
 
