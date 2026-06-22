@@ -25,6 +25,8 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `include_events`：是否包含企划事件，默认关闭。
 - `render_card`：是否同时生成生日卡片，默认开启。
 - `enable_send_test`：是否启用图片发送兼容性测试指令，默认关闭。
+- `debug_send_test`：输出图片发送测试调试日志，默认关闭。
+- `send_test_timeout`：图片发送测试单次超时秒数，默认 `10`。
 - `card_title` / `card_subtitle`：生日卡标题文案。
 
 `message_template` 支持这些变量：
@@ -156,7 +158,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 /imasbd sendtest
 ```
 
-`bind`、`refresh` 和 `sendtest` 需要管理员权限。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。
+`bind`、`refresh` 和 `sendtest` 需要管理员权限。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。需要详细定位时打开 `debug_send_test`，插件会在 AstrBot 日志和群聊里输出每一步进度；某一步卡住会按 `send_test_timeout` 超时并继续下一项。
 
 ## 数据来源
 

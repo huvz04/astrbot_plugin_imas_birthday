@@ -69,6 +69,18 @@
     "default": false,
     "hint": "开启后管理员可在群里使用 /imasbd sendtest，逐个测试分开发送、组合 file_image、组件本地文件、组件 base64 等图片发送方式。"
   },
+  "debug_send_test": {
+    "description": "输出图片发送测试调试日志",
+    "type": "bool",
+    "default": false,
+    "hint": "开启后会在 AstrBot 日志和群聊里输出每个测试步骤的进度，方便定位卡在哪一种发送方式。"
+  },
+  "send_test_timeout": {
+    "description": "图片发送测试单次超时秒数",
+    "type": "int",
+    "default": 10,
+    "hint": "范围 3-60 秒。某种发送方式卡住时会超时并继续测试下一种。"
+  },
   "character_assets_dir": {
     "description": "角色图片目录",
     "type": "string",

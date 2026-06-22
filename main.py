@@ -659,33 +659,57 @@ class ImasBirthdayPlugin(Star):
 
     async def _run_send_tests(self, umo: str) -> str:
         image_path = self._send_test_image_path()
+        timeout = self._send_test_timeout()
+        debug = self._cfg_bool("debug_send_test", False)
         tests = [
             ("split_file_image", "文字和图片分开发送，图片使用 MessageChain.file_image"),
             ("combined_file_image", "同一 MessageChain 内使用 message + file_image"),
             ("combined_component_file", "同一消息内使用组件 Image.fromFileSystem"),
             ("combined_component_base64", "同一消息内使用组件 Image.fromBase64"),
         ]
-        lines = ["图片发送方式测试结果："]
+        logger.info(f"图片发送测试开始：umo={umo}, image={image_path}, timeout={timeout}s, debug={debug}")
+        lines = [
+            "图片发送方式测试结果：",
+            f"测试图：{image_path}",
+            f"单次发送超时：{timeout}s",
+        ]
         for key, description in tests:
+            started = time.monotonic()
+            if debug:
+                logger.info(f"图片发送测试开始：{key} - {description}")
+                with contextlib.suppress(Exception):
+                    await self._send_test_progress(umo, f"[imasbd sendtest] testing {key}")
             try:
-                await self._send_one_test_case(umo, key, image_path)
+                case_timeout = timeout * 2 + 2 if key == "split_file_image" else timeout + 2
+                await asyncio.wait_for(
+                    self._send_one_test_case(umo, key, image_path, timeout),
+                    timeout=case_timeout,
+                )
+            except asyncio.TimeoutError:
+                elapsed = time.monotonic() - started
+                logger.warning(f"图片发送测试超时：{key}, elapsed={elapsed:.2f}s")
+                lines.append(f"FAIL {key}: TimeoutError: 超过 {timeout}s 没有返回")
             except Exception as exc:
-                logger.exception(f"图片发送测试失败：{key}")
+                elapsed = time.monotonic() - started
+                logger.exception(f"图片发送测试失败：{key}, elapsed={elapsed:.2f}s")
                 lines.append(f"FAIL {key}: {type(exc).__name__}: {exc}")
             else:
-                lines.append(f"PASS {key}: {description}")
+                elapsed = time.monotonic() - started
+                logger.info(f"图片发送测试成功：{key}, elapsed={elapsed:.2f}s")
+                lines.append(f"PASS {key}: {description} ({elapsed:.2f}s)")
+        logger.info("图片发送测试结束。")
         return "\n".join(lines)
 
-    async def _send_one_test_case(self, umo: str, key: str, image_path: str):
+    async def _send_one_test_case(self, umo: str, key: str, image_path: str, timeout: int):
         text = f"[imasbd sendtest] {key}"
         if key == "split_file_image":
-            await self._send_test_chain(umo, MessageChain().message(text))
-            await self._send_test_chain(umo, self._build_image_message_chain(image_path))
+            await self._send_test_chain(umo, MessageChain().message(text), timeout, f"{key}: text")
+            await self._send_test_chain(umo, self._build_image_message_chain(image_path), timeout, f"{key}: image")
             return
         if key == "combined_file_image":
             chain = MessageChain().message(text)
             chain.file_image(image_path)
-            await self._send_test_chain(umo, chain)
+            await self._send_test_chain(umo, chain, timeout, key)
             return
         if key == "combined_component_file":
             if Comp is None:
@@ -693,6 +717,8 @@ class ImasBirthdayPlugin(Star):
             await self._send_test_chain(
                 umo,
                 MessageChain(chain=[Comp.Plain(text), Comp.Image.fromFileSystem(image_path)]),
+                timeout,
+                key,
             )
             return
         if key == "combined_component_base64":
@@ -702,14 +728,26 @@ class ImasBirthdayPlugin(Star):
             await self._send_test_chain(
                 umo,
                 MessageChain(chain=[Comp.Plain(text), Comp.Image.fromBase64(data)]),
+                timeout,
+                key,
             )
             return
         raise ValueError(f"未知发送测试类型：{key}")
 
-    async def _send_test_chain(self, umo: str, chain: MessageChain):
-        ok = await self.context.send_message(umo, chain)
+    async def _send_test_chain(self, umo: str, chain: MessageChain, timeout: int, label: str):
+        logger.info(f"图片发送测试发送中：{label}, timeout={timeout}s")
+        try:
+            ok = await asyncio.wait_for(self.context.send_message(umo, chain), timeout=timeout)
+        except asyncio.TimeoutError:
+            logger.warning(f"图片发送测试单次发送超时：{label}, timeout={timeout}s")
+            raise TimeoutError(f"{label} 超过 {timeout}s 没有返回") from None
+        logger.info(f"图片发送测试发送完成：{label}, result={ok}")
         if not ok:
-            raise RuntimeError(f"未找到平台或发送失败：{umo}")
+            raise RuntimeError(f"{label} 未找到平台或发送失败：{umo}")
+
+    async def _send_test_progress(self, umo: str, text: str):
+        timeout = min(self._send_test_timeout(), 5)
+        await self._send_test_chain(umo, MessageChain().message(text), timeout, "debug progress")
 
     def _send_test_image_path(self) -> str:
         path = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "send_test.png"
@@ -717,6 +755,13 @@ class ImasBirthdayPlugin(Star):
         if not path.exists():
             path.write_bytes(base64.b64decode(TEST_IMAGE_BASE64))
         return str(path)
+
+    def _send_test_timeout(self) -> int:
+        try:
+            value = int(self.config.get("send_test_timeout", 10))
+        except (TypeError, ValueError):
+            value = 10
+        return min(max(value, 3), 60)
 
     def _stop_event(self, event: AstrMessageEvent):
         stop_event = getattr(event, "stop_event", None)
