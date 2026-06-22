@@ -78,9 +78,21 @@ starlitseason/
 961_pro/
 ```
 
-插件会根据第一级目录给卡片打上企划标签，例如 `THE IDOLM@STER / 765PRO ALLSTARS`、`THE IDOLM@STER CINDERELLA GIRLS`、`THE IDOLM@STER MILLION LIVE!`、`THE IDOLM@STER SideM`、`THE IDOLM@STER SHINY COLORS`、`Gakuen Idolmaster`、`PROJECT IM@S vα-liv`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
+插件会根据第一级目录给卡片打上官网品牌名，例如 `THE IDOLM@STER`、`シンデレラガールズ`、`ミリオンライブ！`、`SideM`、`シャイニーカラーズ`、`学園アイドルマスター`、`ヴイアライヴ`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
 
-也可以用批量导入脚本。这个脚本不是“自动全网搜图”，而是按你的清单批量复制/下载。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
+默认可以从萌娘百科生日页抓取角色链接，并从角色页的主图生成本地图片映射：
+
+```powershell
+python .\tools\fetch_moegirl_character_assets.py
+```
+
+脚本会下载到 `assets/characters/<brand>/`，并生成 `character_assets.py`。如果只想测试前几个角色：
+
+```powershell
+python .\tools\fetch_moegirl_character_assets.py --limit 10 --dry-run
+```
+
+也可以用手动清单批量导入，用来替换你不满意的图片。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
 
 ```csv
 name,brand,source,filename
@@ -94,7 +106,7 @@ name,brand,source,filename
 python .\tools\import_character_assets.py .\assets_manifest.csv
 ```
 
-脚本会把图片复制或下载到 `assets/characters/<brand>/`，并生成 `character_assets.py`。插件启动时会自动读取这个生成文件。
+脚本会把图片复制或下载到 `assets/characters/<brand>/`，并重新生成 `character_assets.py`。插件启动时会自动读取这个生成文件。
 
 如果 `source` 是本地路径，脚本会复制图片；如果是 `https://...` 图片链接，脚本会下载图片。之后重启/重载插件即可。
 
