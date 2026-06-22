@@ -8,8 +8,10 @@ import html
 import os
 import re
 import shutil
+import struct
 import tempfile
 import time
+import zlib
 from datetime import datetime
 from html.parser import HTMLParser
 from pathlib import Path
@@ -32,12 +34,6 @@ SOURCE_URL = (
     "https://zh.moegirl.org.cn/"
     "%E5%81%B6%E5%83%8F%E5%A4%A7%E5%B8%88%E7%B3%BB%E5%88%97/"
     "%E7%9B%B8%E5%85%B3%E4%BA%BA%E5%A3%AB%E7%94%9F%E6%97%A5%E4%BF%A1%E6%81%AF"
-)
-TEST_IMAGE_BASE64 = (
-    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAYklEQVR4nO3PsQ0AIAwAsYH9"
-    "d25oQqKoUBXuzO2ZzM7j3gF8GQwGg8FgMBgMBoPBYDAYDAaDwWAwGAwGg8FgMBgMBoPBYDAY"
-    "DAaDwWAwGAwGg8FgMBgMBoPBYDAYDAaDwWAwGAwGg8Fg8Aec4QJ/BE8btAAAAABJRU5ErkJg"
-    "gg=="
 )
 
 MONTH_NAMES = {
@@ -671,6 +667,7 @@ class ImasBirthdayPlugin(Star):
         lines = [
             "图片发送方式测试结果：",
             f"测试图：{image_path}",
+            f"测试图大小：{Path(image_path).stat().st_size} bytes",
             f"单次发送超时：{timeout}s",
         ]
         if debug:
@@ -753,11 +750,41 @@ class ImasBirthdayPlugin(Star):
         await self._send_test_chain(umo, MessageChain().message(text), timeout, "debug progress")
 
     def _send_test_image_path(self) -> str:
-        path = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "send_test.png"
+        path = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "send_test_large.png"
         path.parent.mkdir(parents=True, exist_ok=True)
-        if not path.exists():
-            path.write_bytes(base64.b64decode(TEST_IMAGE_BASE64))
+        if not path.exists() or path.stat().st_size < 4096:
+            self._write_send_test_png(path)
         return str(path)
+
+    def _write_send_test_png(self, path: Path, width: int = 960, height: int = 540):
+        def chunk(kind: bytes, data: bytes) -> bytes:
+            return (
+                struct.pack(">I", len(data))
+                + kind
+                + data
+                + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+            )
+
+        rows = []
+        for y in range(height):
+            row = bytearray([0])
+            for x in range(width):
+                r = (70 + x * 120 // width + y * 20 // height) % 256
+                g = (110 + y * 100 // height) % 256
+                b = (180 + (x + y) * 60 // (width + height)) % 256
+                if 32 < x < 928 and 32 < y < 508 and (x // 24 + y // 24) % 2 == 0:
+                    r = min(255, r + 18)
+                    g = min(255, g + 18)
+                    b = min(255, b + 18)
+                row.extend((r, g, b))
+            rows.append(bytes(row))
+
+        raw = b"".join(rows)
+        data = b"\x89PNG\r\n\x1a\n"
+        data += chunk("IHDR".encode("ascii"), struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        data += chunk("IDAT".encode("ascii"), zlib.compress(raw, level=6))
+        data += chunk("IEND".encode("ascii"), b"")
+        path.write_bytes(data)
 
     def _send_test_timeout(self) -> int:
         try:
