@@ -18,6 +18,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `send_time`：每日发送时间，默认 `09:00`。
 - `timezone`：日期时区，默认 `Asia/Shanghai`。
 - `include_characters`：是否包含角色，默认开启。
+- `include_kr_characters`：是否包含 `THE IDOLM@STER.KR` 真人企划成员，默认关闭。
 - `require_character_birthday`：当天没有角色生日时不推送，默认开启。
 - `include_seiyuu`：是否包含声优，默认开启。
 - `include_related_people`：是否包含其他相关人士，默认关闭。
@@ -139,7 +140,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 如果 `source` 是本地路径，脚本会复制图片；如果是 `https://...` 图片链接，脚本会下载图片。之后重启/重载插件即可。
 
-`/imasbd assets MM-DD` 可以查看指定日期每个角色的映射和实际读取路径。萌娘百科生日表里的 `ミント` 是 KR 企划成员 Mint，插件会按 `Mint` 显示和匹配，`Mint.jpg` / `ミント.jpg` 都能识别。
+`/imasbd assets MM-DD` 可以查看指定日期每个角色的映射和实际读取路径。萌娘百科生日表里的 `ミント` 是 KR 企划成员 Mint。KR 真人企划成员默认过滤；如果打开 `include_kr_characters`，插件会按 `Mint` 显示和匹配，`Mint.jpg` / `ミント.jpg` 都能识别。
 
 ## 指令
 

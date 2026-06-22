@@ -172,8 +172,33 @@ CHARACTER_REVERSE_ALIASES = {
     alias: name for name, alias in CHARACTER_NAME_ALIASES.items()
 }
 
+KR_CHARACTER_NAMES = {
+    "Mint",
+    "ミント",
+    "寺本来可",
+    "权势玲",
+    "李睿恩",
+    "李绣至",
+    "许怜朱",
+    "李智元",
+    "车智瑟",
+    "黄恩美",
+    "金素利",
+    "千宜英",
+}
+
 CHARACTER_BRAND_OVERRIDES = {
     "Mint": "KR",
+    "寺本来可": "KR",
+    "权势玲": "KR",
+    "李睿恩": "KR",
+    "李绣至": "KR",
+    "许怜朱": "KR",
+    "李智元": "KR",
+    "车智瑟": "KR",
+    "黄恩美": "KR",
+    "金素利": "KR",
+    "千宜英": "KR",
 }
 
 
@@ -473,7 +498,7 @@ class ImasBirthdayPlugin(Star):
         data = await self._get_birthdays()
         date_key = f"{month:02d}-{day:02d}"
         entry = data.get(date_key) or {}
-        characters = self._split_people(entry.get("characters", []))
+        characters = self._visible_characters(entry)
         lines = [
             f"图片目录：{self.assets_dir}",
             f"日期：{date_key}",
@@ -640,7 +665,7 @@ class ImasBirthdayPlugin(Star):
     async def _build_result(self, month: int, day: int) -> dict[str, str]:
         data = await self._get_birthdays()
         entry = data.get(f"{month:02d}-{day:02d}")
-        if self._cfg_bool("require_character_birthday", True) and not self._split_people((entry or {}).get("characters", [])):
+        if self._cfg_bool("require_character_birthday", True) and not self._visible_characters(entry or {}):
             return {"message": "", "card_path": ""}
         message = self._build_message_from_entry(month, day, entry)
         if not message:
@@ -662,7 +687,7 @@ class ImasBirthdayPlugin(Star):
 
         lines: list[str] = []
         if self._cfg_bool("include_characters", True):
-            lines.extend(self._format_lines("characters", entry.get("characters", [])))
+            lines.extend(self._format_lines("characters", self._visible_characters(entry)))
         if self._cfg_bool("include_seiyuu", True):
             lines.extend(self._format_lines("seiyuu", entry.get("seiyuu", [])))
         if self._cfg_bool("include_related_people", False):
@@ -709,7 +734,7 @@ class ImasBirthdayPlugin(Star):
     async def _render_card(self, month: int, day: int, entry: dict[str, list[str]] | None) -> str:
         if not entry:
             return ""
-        characters = self._split_people(entry.get("characters", []))
+        characters = self._visible_characters(entry)
         seiyuu = self._split_people(entry.get("seiyuu", []))
         related_people = self._split_people(entry.get("related_people", []))
         events = entry.get("events", [])
@@ -785,6 +810,20 @@ class ImasBirthdayPlugin(Star):
 
     def _normalize_brand_key(self, value: str) -> str:
         return re.sub(r"[^0-9a-zα]+", "_", value.lower()).strip("_")
+
+    def _visible_characters(self, entry: dict[str, list[str]]) -> list[str]:
+        characters = self._split_people(entry.get("characters", []))
+        if self._cfg_bool("include_kr_characters", False):
+            return characters
+        return [character for character in characters if not self._is_kr_character(character)]
+
+    def _is_kr_character(self, character: str) -> bool:
+        normalized = CHARACTER_NAME_ALIASES.get(character, character)
+        return (
+            character in KR_CHARACTER_NAMES
+            or normalized in KR_CHARACTER_NAMES
+            or self._character_brand(normalized) == "KR"
+        )
 
     def _split_people(self, values: list[str]) -> list[str]:
         people: list[str] = []

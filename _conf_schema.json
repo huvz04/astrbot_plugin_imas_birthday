@@ -26,6 +26,12 @@
     "type": "bool",
     "default": true
   },
+  "include_kr_characters": {
+    "description": "包含 THE IDOLM@STER.KR 真人企划成员",
+    "type": "bool",
+    "default": false,
+    "hint": "默认关闭，会过滤 Mint/ミント 等 KR 真人企划成员。"
+  },
   "require_character_birthday": {
     "description": "当天没有角色生日时不推送",
     "type": "bool",
