@@ -75,6 +75,7 @@
   "message_template": {
     "description": "推送消息模板",
     "type": "text",
-    "default": "今天是 {month}月{day}日，偶像大师相关生日：\n{items}\n祝大家生日快乐！"
+    "default": "今天是 {month}月{day}日，偶像大师相关生日：\n{items}\n祝大家生日快乐！",
+    "hint": "可用变量：{year}、{month}、{day}、{date}、{slash_date}、{birthday_time}、{beijing_time}、{fancy_year}、{fancy_slash_date}、{fancy_birthday_time}、{fancy_beijing_time}、{decorated_beijing_time}、{items}"
   }
 }

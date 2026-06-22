@@ -24,6 +24,26 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `render_card`：是否同时生成生日卡片，默认开启。
 - `card_title` / `card_subtitle`：生日卡标题文案。
 
+`message_template` 支持这些变量：
+
+- `{year}`：当前年份，例如 `2025`
+- `{month}` / `{day}`：生日月日
+- `{date}`：`MM-DD`
+- `{slash_date}`：`YYYY/MM/DD`
+- `{birthday_time}`：`YYYY/MM/DD 00:00`
+- `{beijing_time}`：`北京时间 YYYY/MM/DD 00:00`
+- `{fancy_year}` / `{fancy_slash_date}` / `{fancy_birthday_time}`：把数字转成 `𝟎𝟏𝟐` 风格
+- `{fancy_beijing_time}`：`北京时间 𝟐𝟎𝟐𝟓/𝟎𝟒/𝟎𝟏 𝟎𝟎:𝟎𝟎`
+- `{decorated_beijing_time}`：`°.✩┈ 北京時間 𝟐𝟎𝟐𝟓/𝟎𝟒/𝟎𝟏 𝟎𝟎:𝟎𝟎 ┈✩.°`
+- `{items}`：生日条目列表
+
+例如：
+
+```text
+{decorated_beijing_time}
+祝{items}生日快乐！
+```
+
 ## 本地角色图片
 
 把处理好的角色图片放到：

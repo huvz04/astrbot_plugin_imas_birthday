@@ -47,6 +47,8 @@ CATEGORY_LABELS = {
     "events": "事件",
 }
 
+FANCY_DIGITS = str.maketrans("0123456789", "𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗")
+
 # Put your processed character images in assets/characters/ and map names here.
 # Example:
 # CHARACTER_IMAGE_ASSETS = {
@@ -427,7 +429,33 @@ class ImasBirthdayPlugin(Star):
                 "今天是 {month}月{day}日，偶像大师相关生日：\n{items}\n祝大家生日快乐！",
             )
         )
-        return template.format(month=month, day=day, items="\n".join(lines), date=date_key)
+        return template.format(
+            month=month,
+            day=day,
+            date=date_key,
+            items="\n".join(lines),
+            **self._date_template_vars(month, day),
+        )
+
+    def _date_template_vars(self, month: int, day: int) -> dict[str, str | int]:
+        year = self._now().year
+        slash_date = f"{year}/{month:02d}/{day:02d}"
+        birthday_time = f"{slash_date} 00:00"
+        fancy_birthday_time = self._fancy_digits(birthday_time)
+        return {
+            "year": year,
+            "slash_date": slash_date,
+            "birthday_time": birthday_time,
+            "beijing_time": f"北京时间 {birthday_time}",
+            "fancy_year": self._fancy_digits(str(year)),
+            "fancy_slash_date": self._fancy_digits(slash_date),
+            "fancy_birthday_time": fancy_birthday_time,
+            "fancy_beijing_time": f"北京时间 {fancy_birthday_time}",
+            "decorated_beijing_time": f"°.✩┈ 北京時間 {fancy_birthday_time} ┈✩.°",
+        }
+
+    def _fancy_digits(self, value: str) -> str:
+        return value.translate(FANCY_DIGITS)
 
     async def _render_card(self, month: int, day: int, entry: dict[str, list[str]] | None) -> str:
         if not entry:
