@@ -92,6 +92,8 @@ python .\tools\fetch_moegirl_character_assets.py
 python .\tools\fetch_moegirl_character_assets.py --limit 10 --dry-run
 ```
 
+萌娘百科下载到的缩略图通常会带萌百水印，卡片底部会保留来源感谢。
+
 也可以用手动清单批量导入，用来替换你不满意的图片。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
 
 ```csv

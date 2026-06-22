@@ -568,7 +568,7 @@ class ImasBirthdayPlugin(Star):
                 html_text,
                 {},
                 return_url=False,
-                options={"viewport": {"width": 1200, "height": 900}},
+                options={"viewport": {"width": 1360, "height": 1020}},
             )
         except Exception:
             logger.exception("生日卡片渲染失败，回退为纯文字。")
@@ -645,16 +645,16 @@ class ImasBirthdayPlugin(Star):
 * {{ box-sizing: border-box; }}
 body {{
   margin: 0;
-  width: 1200px;
-  min-height: 960px;
+  width: 1360px;
+  min-height: 1088px;
   font-family: "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   color: #20242c;
   background: #f5f1ea;
 }}
 .card {{
-  width: 1200px;
-  min-height: 960px;
-  padding: 56px;
+  width: 1360px;
+  min-height: 1088px;
+  padding: 64px;
   background:
     radial-gradient(circle at 8% 14%, rgba(240,90,126,.30), transparent 30%),
     radial-gradient(circle at 36% 0%, rgba(242,184,75,.26), transparent 33%),
@@ -674,24 +674,24 @@ body {{
   padding-bottom: 28px;
 }}
 .title {{
-  font-size: 72px;
+  font-size: 80px;
   line-height: .95;
   font-weight: 800;
 }}
 .subtitle {{
   margin-top: 14px;
-  font-size: 25px;
+  font-size: 27px;
   color: #5b6472;
 }}
 .date {{
   text-align: right;
-  font-size: 70px;
+  font-size: 78px;
   font-weight: 800;
   color: #f05a7e;
 }}
 .date span {{
   display: block;
-  font-size: 24px;
+  font-size: 26px;
   color: #5b6472;
   font-weight: 700;
 }}
@@ -699,16 +699,16 @@ body {{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-content: center;
-  gap: 24px;
-  margin-top: 34px;
+  gap: 28px;
+  margin-top: 38px;
 }}
 .idol:nth-child(odd):last-child {{
   grid-column: 1 / -1;
-  width: calc(50% - 12px);
+  width: calc(50% - 14px);
   justify-self: center;
 }}
 .idol {{
-  min-height: 390px;
+  min-height: 448px;
   background: rgba(255,255,255,.58);
   border: 1px solid rgba(255,255,255,.70);
   border-radius: 8px;
@@ -720,7 +720,7 @@ body {{
   -webkit-backdrop-filter: blur(18px) saturate(1.18);
 }}
 .portrait {{
-  height: 292px;
+  height: 342px;
   display: flex;
   align-items: end;
   justify-content: center;
@@ -745,13 +745,13 @@ body {{
   font-weight: 800;
 }}
 .idol-name {{
-  padding: 18px 18px 6px;
-  font-size: 34px;
+  padding: 20px 20px 7px;
+  font-size: 38px;
   font-weight: 800;
   line-height: 1.15;
 }}
 .brand {{
-  padding: 0 18px 18px;
+  padding: 0 20px 20px;
   color: #5b6472;
   font-size: 17px;
   font-weight: 700;
@@ -822,8 +822,8 @@ body {{
   color: #5b6472;
 }}
 .footer {{
-  margin-top: 30px;
-  font-size: 18px;
+  margin-top: 34px;
+  font-size: 19px;
   color: #6d7684;
 }}
 </style>
@@ -839,7 +839,7 @@ body {{
     </section>
     <section class="grid">{item_html}</section>
     <section class="meta">{seiyuu_html}{related_html}{events_html}</section>
-    <section class="footer">Images are local assets prepared by the bot owner. THE IDOLM@STER rights belong to their respective owners.</section>
+    <section class="footer">Character images are sourced from Moegirlpedia and local assets prepared by the bot owner. Thanks to Moegirlpedia. THE IDOLM@STER rights belong to their respective owners.</section>
   </main>
 </body>
 </html>"""
