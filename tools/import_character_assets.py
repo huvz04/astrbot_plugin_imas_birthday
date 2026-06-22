@@ -63,24 +63,54 @@ def read_rows(csv_path: Path) -> list[dict[str, str]]:
 
 
 def normalize_brand(value: str) -> str:
-    value = value.strip().lower()
+    value = re.sub(r"[^0-9a-zα]+", "_", value.strip().lower()).strip("_")
     aliases = {
-        "765": "765as",
-        "765as": "765as",
-        "cg": "cg",
-        "cinderella": "cg",
-        "ml": "ml",
-        "million": "ml",
+        "the_idolmaster": "the_idolmaster",
+        "idolmaster": "the_idolmaster",
+        "imas": "the_idolmaster",
+        "765": "the_idolmaster",
+        "765as": "the_idolmaster",
+        "765pro": "the_idolmaster",
+        "cinderellagirls": "cinderellagirls",
+        "cinderella_girls": "cinderellagirls",
+        "cinderella": "cinderellagirls",
+        "cg": "cinderellagirls",
+        "346": "cinderellagirls",
+        "millionlive": "millionlive",
+        "million_live": "millionlive",
+        "million": "millionlive",
+        "ml": "millionlive",
         "sidem": "sidem",
-        "sc": "shiny",
-        "shiny": "shiny",
-        "gkm": "gakumas",
-        "gakumas": "gakumas",
-        "va": "valiv",
-        "valiv": "valiv",
+        "315": "sidem",
+        "shinycolors": "shinycolors",
+        "shiny_colors": "shinycolors",
+        "shiny": "shinycolors",
+        "sc": "shinycolors",
+        "283": "shinycolors",
+        "gakuen_idolmaster": "gakuen_idolmaster",
+        "gakuen": "gakuen_idolmaster",
+        "gakumas": "gakuen_idolmaster",
+        "gkm": "gakuen_idolmaster",
+        "va_liv": "va_liv",
+        "valiv": "va_liv",
+        "va": "va_liv",
+        "vα_liv": "va_liv",
+        "dearlystars": "dearlystars",
+        "dearly_stars": "dearlystars",
+        "dearly": "dearlystars",
+        "ds": "dearlystars",
+        "876": "876_pro",
+        "876pro": "876_pro",
+        "876_pro": "876_pro",
+        "starlitseason": "starlitseason",
+        "starlit_season": "starlitseason",
+        "starlit": "starlitseason",
+        "961": "961_pro",
+        "961pro": "961_pro",
+        "961_pro": "961_pro",
         "kr": "kr",
     }
-    return aliases.get(value, value or "imas")
+    return aliases.get(value, value or "other")
 
 
 def build_filename(name: str, source: str) -> str:

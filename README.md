@@ -57,19 +57,35 @@ assets/characters/
 
 ```python
 CHARACTER_IMAGE_ASSETS = {
-    "天海春香": "765as/amami_haruka.png",
-    "如月千早": "765as/kisaragi_chihaya.png",
+    "天海春香": "the_idolmaster/amami_haruka.png",
+    "如月千早": "the_idolmaster/kisaragi_chihaya.png",
 }
 ```
 
-推荐按企划建子目录，例如 `765as/`、`ml/`、`cg/`、`sidem/`、`shiny/`、`gakumas/`、`876/`、`valiv/`、`starlit/`。插件会根据第一级目录给卡片打上企划标签，例如 `765PRO ALLSTARS`、`MILLION LIVE! / 765 MILLIONSTARS`、`CINDERELLA GIRLS / 346PRO`、`SideM / 315PRO`、`Gakuen Idolmaster`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
+推荐按官网品牌统一建子目录：
+
+```text
+the_idolmaster/
+cinderellagirls/
+millionlive/
+sidem/
+shinycolors/
+gakuen_idolmaster/
+va_liv/
+dearlystars/
+starlitseason/
+876_pro/
+961_pro/
+```
+
+插件会根据第一级目录给卡片打上企划标签，例如 `THE IDOLM@STER / 765PRO ALLSTARS`、`THE IDOLM@STER CINDERELLA GIRLS`、`THE IDOLM@STER MILLION LIVE!`、`THE IDOLM@STER SideM`、`THE IDOLM@STER SHINY COLORS`、`Gakuen Idolmaster`、`PROJECT IM@S vα-liv`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
 
 也可以用批量导入脚本。这个脚本不是“自动全网搜图”，而是按你的清单批量复制/下载。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
 
 ```csv
 name,brand,source,filename
-天海春香,765as,C:\path\to\amami_haruka.png,amami_haruka.png
-月村手毬,gakumas,https://gakuen.idolmaster-official.jp/assets/img/idol/temari/default.png,tsukimura_temari.png
+天海春香,the_idolmaster,C:\path\to\amami_haruka.png,amami_haruka.png
+月村手毬,gakuen_idolmaster,https://gakuen.idolmaster-official.jp/assets/img/idol/temari/default.png,tsukimura_temari.png
 ```
 
 然后运行：

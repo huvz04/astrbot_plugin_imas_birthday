@@ -74,33 +74,90 @@ def load_generated_character_assets() -> dict[str, str]:
 CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
 
 BRAND_COLORS = {
-    "765AS": "#f05a7e",
-    "ML": "#f2b84b",
-    "CG": "#2f7fd3",
-    "SideM": "#1aa982",
-    "SC": "#8d72d9",
-    "GKM": "#f08a33",
-    "876": "#46b3a9",
-    "VA": "#5c7cfa",
-    "ST": "#7c8ea6",
-    "DS": "#df6ea7",
+    "THE_IDOLMASTER": "#f05a7e",
+    "CINDERELLA_GIRLS": "#2f7fd3",
+    "MILLION_LIVE": "#f2b84b",
+    "SIDEM": "#1aa982",
+    "SHINY_COLORS": "#8d72d9",
+    "GAKUEN_IDOLMASTER": "#f08a33",
+    "VA_LIV": "#5c7cfa",
+    "DEARLY_STARS": "#46b3a9",
+    "STARLIT_SEASON": "#7c8ea6",
+    "876_PRO": "#df6ea7",
+    "961_PRO": "#4d465f",
     "KR": "#d94a4a",
-    "IMAS": "#5b6472",
+    "OTHER": "#5b6472",
 }
 
 BRAND_LABELS = {
-    "765AS": "765PRO ALLSTARS",
-    "ML": "MILLION LIVE! / 765 MILLIONSTARS",
-    "CG": "CINDERELLA GIRLS / 346PRO",
-    "SideM": "SideM / 315PRO",
-    "SC": "SHINY COLORS / 283PRO",
-    "GKM": "Gakuen Idolmaster",
-    "876": "Dearly Stars / 876PRO",
-    "VA": "vα-liv",
-    "ST": "STARLIT SEASON",
-    "DS": "Dearly Stars",
+    "THE_IDOLMASTER": "THE IDOLM@STER / 765PRO ALLSTARS",
+    "CINDERELLA_GIRLS": "THE IDOLM@STER CINDERELLA GIRLS",
+    "MILLION_LIVE": "THE IDOLM@STER MILLION LIVE!",
+    "SIDEM": "THE IDOLM@STER SideM",
+    "SHINY_COLORS": "THE IDOLM@STER SHINY COLORS",
+    "GAKUEN_IDOLMASTER": "Gakuen Idolmaster",
+    "VA_LIV": "PROJECT IM@S vα-liv",
+    "DEARLY_STARS": "THE IDOLM@STER Dearly Stars",
+    "STARLIT_SEASON": "THE IDOLM@STER STARLIT SEASON",
+    "876_PRO": "876 PRODUCTION",
+    "961_PRO": "961 PRODUCTION",
     "KR": "KR",
-    "IMAS": "THE IDOLM@STER",
+    "OTHER": "THE IDOLM@STER",
+}
+
+BRAND_ALIASES = {
+    "the_idolmaster": "THE_IDOLMASTER",
+    "idolmaster": "THE_IDOLMASTER",
+    "imas": "THE_IDOLMASTER",
+    "765": "THE_IDOLMASTER",
+    "765as": "THE_IDOLMASTER",
+    "765pro": "THE_IDOLMASTER",
+    "allstars": "THE_IDOLMASTER",
+    "cinderellagirls": "CINDERELLA_GIRLS",
+    "cinderella_girls": "CINDERELLA_GIRLS",
+    "cinderella": "CINDERELLA_GIRLS",
+    "cg": "CINDERELLA_GIRLS",
+    "346": "CINDERELLA_GIRLS",
+    "millionlive": "MILLION_LIVE",
+    "million_live": "MILLION_LIVE",
+    "million": "MILLION_LIVE",
+    "ml": "MILLION_LIVE",
+    "765ml": "MILLION_LIVE",
+    "sidem": "SIDEM",
+    "315": "SIDEM",
+    "315pro": "SIDEM",
+    "shinycolors": "SHINY_COLORS",
+    "shiny_colors": "SHINY_COLORS",
+    "shiny": "SHINY_COLORS",
+    "sc": "SHINY_COLORS",
+    "283": "SHINY_COLORS",
+    "283pro": "SHINY_COLORS",
+    "gakuen_idolmaster": "GAKUEN_IDOLMASTER",
+    "gakuen": "GAKUEN_IDOLMASTER",
+    "gakumas": "GAKUEN_IDOLMASTER",
+    "gkm": "GAKUEN_IDOLMASTER",
+    "va_liv": "VA_LIV",
+    "va": "VA_LIV",
+    "valiv": "VA_LIV",
+    "va-liv": "VA_LIV",
+    "vα_liv": "VA_LIV",
+    "vα-liv": "VA_LIV",
+    "vαliv": "VA_LIV",
+    "dearlystars": "DEARLY_STARS",
+    "dearly_stars": "DEARLY_STARS",
+    "dearly": "DEARLY_STARS",
+    "ds": "DEARLY_STARS",
+    "876": "876_PRO",
+    "876pro": "876_PRO",
+    "876_pro": "876_PRO",
+    "starlitseason": "STARLIT_SEASON",
+    "starlit_season": "STARLIT_SEASON",
+    "starlit": "STARLIT_SEASON",
+    "st": "STARLIT_SEASON",
+    "961": "961_PRO",
+    "961pro": "961_PRO",
+    "961_pro": "961_PRO",
+    "kr": "KR",
 }
 
 
@@ -518,8 +575,8 @@ class ImasBirthdayPlugin(Star):
         return {
             "name": character,
             "brand": brand,
-            "label": BRAND_LABELS.get(brand, BRAND_LABELS["IMAS"]),
-            "color": BRAND_COLORS.get(brand, BRAND_COLORS["IMAS"]),
+            "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
+            "color": BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]),
             "image": image_path.as_uri() if image_path else "",
         }
 
@@ -536,35 +593,11 @@ class ImasBirthdayPlugin(Star):
         filename = CHARACTER_IMAGE_ASSETS.get(character, "").lower()
         if "/" in filename or "\\" in filename:
             prefix = re.split(r"[/\\]", filename, maxsplit=1)[0].lower()
-            brand_map = {
-                "765": "765AS",
-                "765as": "765AS",
-                "allstars": "765AS",
-                "cg": "CG",
-                "346": "CG",
-                "cinderella": "CG",
-                "ml": "ML",
-                "765ml": "ML",
-                "million": "ML",
-                "sidem": "SideM",
-                "315": "SideM",
-                "sc": "SC",
-                "283": "SC",
-                "shiny": "SC",
-                "gkm": "GKM",
-                "gakumas": "GKM",
-                "876": "876",
-                "ds": "DS",
-                "dearly": "876",
-                "va": "VA",
-                "valiv": "VA",
-                "starlit": "ST",
-                "st": "ST",
-                "stella": "ST",
-                "kr": "KR",
-            }
-            return brand_map.get(prefix, "IMAS")
-        return "IMAS"
+            return BRAND_ALIASES.get(self._normalize_brand_key(prefix), "OTHER")
+        return "OTHER"
+
+    def _normalize_brand_key(self, value: str) -> str:
+        return re.sub(r"[^0-9a-zα]+", "_", value.lower()).strip("_")
 
     def _split_people(self, values: list[str]) -> list[str]:
         people: list[str] = []
