@@ -164,6 +164,18 @@ BRAND_ALIASES = {
     "kr": "KR",
 }
 
+CHARACTER_NAME_ALIASES = {
+    "ミント": "Mint",
+}
+
+CHARACTER_REVERSE_ALIASES = {
+    alias: name for name, alias in CHARACTER_NAME_ALIASES.items()
+}
+
+CHARACTER_BRAND_OVERRIDES = {
+    "Mint": "KR",
+}
+
 
 class BirthdayPageParser(HTMLParser):
     def __init__(self):
@@ -415,28 +427,70 @@ class ImasBirthdayPlugin(Star):
         )
 
     @imasbd.command("assets")
-    async def imasbd_assets(self, event: AstrMessageEvent):
-        """查看今天生日角色的本地图片匹配情况。"""
+    async def imasbd_assets(self, event: AstrMessageEvent, date_text: str = ""):
+        """查看生日角色的本地图片匹配情况。"""
         self._stop_event(event)
-        now = self._now()
+        if date_text:
+            parsed = self._parse_date_text(date_text)
+            if not parsed:
+                yield event.plain_result("日期格式不对，请使用 /imasbd assets MM-DD，例如 /imasbd assets 05-20。")
+                return
+            month, day = parsed
+        else:
+            now = self._now()
+            month, day = now.month, now.day
+        yield event.plain_result(await self._assets_text(month, day))
+        return
+
+    @filter.permission_type(filter.PermissionType.ADMIN)
+    @imasbd.command("migrate-assets")
+    async def imasbd_migrate_assets(self, event: AstrMessageEvent, source_dir: str = ""):
+        """把旧图片目录复制到当前配置的角色图片目录。"""
+        self._stop_event(event)
+        source = Path(source_dir) if source_dir else self.plugin_dir / "assets" / "characters"
+        if not source.is_absolute():
+            source = self.plugin_dir / source
+        copied = self._copy_assets(source, self.assets_dir)
+        yield event.plain_result(f"图片迁移完成：{source} -> {self.assets_dir}\n复制/更新 {copied} 个文件。")
+
+    def _copy_assets(self, source: Path, destination: Path) -> int:
+        if not source.exists():
+            return 0
+        copied = 0
+        for path in source.rglob("*"):
+            if not path.is_file():
+                continue
+            relative_path = path.relative_to(source)
+            target = destination / relative_path
+            if target.exists() and target.stat().st_size == path.stat().st_size:
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target)
+            copied += 1
+        return copied
+
+    async def _assets_text(self, month: int, day: int) -> str:
         data = await self._get_birthdays()
-        entry = data.get(f"{now.month:02d}-{now.day:02d}") or {}
+        date_key = f"{month:02d}-{day:02d}"
+        entry = data.get(date_key) or {}
         characters = self._split_people(entry.get("characters", []))
+        lines = [
+            f"图片目录：{self.assets_dir}",
+            f"日期：{date_key}",
+        ]
         if not characters:
-            yield event.plain_result("今天没有需要匹配图片的角色。")
-            return
-        matched = []
-        missing = []
+            lines.append("没有需要匹配图片的角色。")
+            return "\n".join(lines)
+
         for character in characters:
-            if self._character_image_path(character):
-                matched.append(character)
+            mapped = self._character_asset_filename(character)
+            image_path = self._character_image_path(character)
+            if image_path:
+                lines.append(f"OK {character}: {mapped} -> {image_path}")
             else:
-                missing.append(character)
-        yield event.plain_result(
-            "今日图片匹配：\n"
-            f"已匹配：{self._join_names(matched) or '无'}\n"
-            f"缺图片：{self._join_names(missing) or '无'}"
-        )
+                expected = self.assets_dir / mapped if mapped else "未生成映射"
+                lines.append(f"MISS {character}: {mapped or '未生成映射'} -> {expected}")
+        return "\n".join(lines)
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def imasbd_text_fallback(self, event: AstrMessageEvent):
@@ -462,14 +516,23 @@ class ImasBirthdayPlugin(Star):
             await self._send_result_to_event(event, parsed[0], parsed[1])
             return
         if subcommand == "assets":
-            yield event.plain_result(await self._today_assets_text())
+            date_text = args[1] if len(args) > 1 else ""
+            if date_text:
+                parsed = self._parse_date_text(date_text)
+                if not parsed:
+                    yield event.plain_result("日期格式不对，请使用 /imasbd assets MM-DD，例如 /imasbd assets 05-20。")
+                    return
+                yield event.plain_result(await self._assets_text(parsed[0], parsed[1]))
+                return
+            now = self._now()
+            yield event.plain_result(await self._assets_text(now.month, now.day))
             return
         yield event.plain_result(
             "可用指令：\n"
             "/imasbd sid\n"
             "/imasbd today\n"
             "/imasbd date 06-22\n"
-            "/imasbd assets"
+            "/imasbd assets 06-22"
         )
 
     async def _scheduler(self):
@@ -573,26 +636,6 @@ class ImasBirthdayPlugin(Star):
             if text.startswith(prefix + " "):
                 return [part.strip().lower() for part in text[len(prefix) :].split() if part.strip()]
         return None
-
-    async def _today_assets_text(self) -> str:
-        now = self._now()
-        data = await self._get_birthdays()
-        entry = data.get(f"{now.month:02d}-{now.day:02d}") or {}
-        characters = self._split_people(entry.get("characters", []))
-        if not characters:
-            return "今天没有需要匹配图片的角色。"
-        matched = []
-        missing = []
-        for character in characters:
-            if self._character_image_path(character):
-                matched.append(character)
-            else:
-                missing.append(character)
-        return (
-            "今日图片匹配：\n"
-            f"已匹配：{self._join_names(matched) or '无'}\n"
-            f"缺图片：{self._join_names(missing) or '无'}"
-        )
 
     async def _build_result(self, month: int, day: int) -> dict[str, str]:
         data = await self._get_birthdays()
@@ -710,7 +753,7 @@ class ImasBirthdayPlugin(Star):
         }
 
     def _character_image_path(self, character: str) -> Path | None:
-        filename = CHARACTER_IMAGE_ASSETS.get(character)
+        filename = self._character_asset_filename(character)
         if not filename:
             return None
         path = Path(filename)
@@ -719,11 +762,26 @@ class ImasBirthdayPlugin(Star):
         return path if path.exists() else None
 
     def _character_brand(self, character: str) -> str:
-        filename = CHARACTER_IMAGE_ASSETS.get(character, "").lower()
+        character = CHARACTER_NAME_ALIASES.get(character, character)
+        if character in CHARACTER_BRAND_OVERRIDES:
+            return CHARACTER_BRAND_OVERRIDES[character]
+        filename = self._character_asset_filename(character).lower()
         if "/" in filename or "\\" in filename:
             prefix = re.split(r"[/\\]", filename, maxsplit=1)[0].lower()
             return BRAND_ALIASES.get(self._normalize_brand_key(prefix), "OTHER")
         return "OTHER"
+
+    def _character_asset_filename(self, character: str) -> str:
+        candidates = [
+            character,
+            CHARACTER_NAME_ALIASES.get(character, character),
+            CHARACTER_REVERSE_ALIASES.get(character, character),
+        ]
+        for candidate in dict.fromkeys(candidates):
+            filename = CHARACTER_IMAGE_ASSETS.get(candidate)
+            if filename:
+                return filename
+        return ""
 
     def _normalize_brand_key(self, value: str) -> str:
         return re.sub(r"[^0-9a-zα]+", "_", value.lower()).strip("_")
@@ -733,6 +791,7 @@ class ImasBirthdayPlugin(Star):
         for value in values:
             for item in re.split(r"[、,，]", value):
                 item = item.strip()
+                item = CHARACTER_NAME_ALIASES.get(item, item)
                 if item and item not in people:
                     people.append(item)
         return people

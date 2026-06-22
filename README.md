@@ -94,6 +94,13 @@ python .\tools\sync_character_assets.py
 python .\tools\sync_character_assets.py --assets-dir D:\imas_birthday_assets\characters
 ```
 
+如果图片还在旧插件目录，可以先迁移到当前配置目录：
+
+```powershell
+python .\tools\migrate_character_assets.py --source-dir .\assets\characters
+python .\tools\sync_character_assets.py
+```
+
 也可以从萌娘百科生日页抓取角色链接，并从角色页的主图补齐缺图：
 
 ```powershell
@@ -132,6 +139,8 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 如果 `source` 是本地路径，脚本会复制图片；如果是 `https://...` 图片链接，脚本会下载图片。之后重启/重载插件即可。
 
+`/imasbd assets MM-DD` 可以查看指定日期每个角色的映射和实际读取路径。萌娘百科生日表里的 `ミント` 是 KR 企划成员 Mint，插件会按 `Mint` 显示和匹配，`Mint.jpg` / `ミント.jpg` 都能识别。
+
 ## 指令
 
 ```text
@@ -141,6 +150,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 /imasbd date 06-22
 /imasbd refresh
 /imasbd assets
+/imasbd assets 06-22
 ```
 
 `bind` 和 `refresh` 需要管理员权限。
