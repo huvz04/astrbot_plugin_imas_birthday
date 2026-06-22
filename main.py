@@ -5,6 +5,7 @@ import contextlib
 import importlib.util
 import html
 import re
+import shutil
 import time
 from datetime import datetime
 from html.parser import HTMLParser
@@ -345,12 +346,14 @@ class ImasBirthdayPlugin(Star):
     @imasbd.command("sid")
     async def imasbd_sid(self, event: AstrMessageEvent):
         """查看当前会话 UMO，填入白名单后可主动推送。"""
+        self._stop_event(event)
         yield event.plain_result(f"当前 UMO：{event.unified_msg_origin}")
 
     @filter.permission_type(filter.PermissionType.ADMIN)
     @imasbd.command("bind")
     async def imasbd_bind(self, event: AstrMessageEvent):
         """把当前会话加入生日推送白名单。"""
+        self._stop_event(event)
         umo = event.unified_msg_origin
         white_umos = list(self.config.get("white_umos", []))
         if umo in white_umos:
@@ -365,6 +368,7 @@ class ImasBirthdayPlugin(Star):
     @imasbd.command("refresh")
     async def imasbd_refresh(self, event: AstrMessageEvent):
         """立即刷新萌娘百科生日表缓存。"""
+        self._stop_event(event)
         try:
             data = await self._fetch_birthdays()
             await self._save_cache(data)
@@ -377,6 +381,7 @@ class ImasBirthdayPlugin(Star):
     @imasbd.command("today")
     async def imasbd_today(self, event: AstrMessageEvent):
         """在当前会话预览并发送今天的生日祝贺。"""
+        self._stop_event(event)
         now = self._now()
         result = await self._build_result(now.month, now.day)
         if not result["message"]:
@@ -390,6 +395,7 @@ class ImasBirthdayPlugin(Star):
     @imasbd.command("date")
     async def imasbd_date(self, event: AstrMessageEvent, date_text: str):
         """预览指定日期，格式 MM-DD，例如 /imasbd date 06-22。"""
+        self._stop_event(event)
         parsed = self._parse_date_text(date_text)
         if not parsed:
             yield event.plain_result("日期格式不对，请使用 MM-DD，例如 06-22。")
@@ -407,6 +413,7 @@ class ImasBirthdayPlugin(Star):
     @imasbd.command("assets")
     async def imasbd_assets(self, event: AstrMessageEvent):
         """查看今天生日角色的本地图片匹配情况。"""
+        self._stop_event(event)
         now = self._now()
         data = await self._get_birthdays()
         entry = data.get(f"{now.month:02d}-{now.day:02d}") or {}
@@ -433,9 +440,7 @@ class ImasBirthdayPlugin(Star):
         args = self._parse_imasbd_text(getattr(event, "message_str", ""))
         if args is None:
             return
-        stop_event = getattr(event, "stop_event", None)
-        if callable(stop_event):
-            stop_event()
+        self._stop_event(event)
         subcommand = args[0] if args else "help"
         if subcommand == "sid":
             yield event.plain_result(f"当前 UMO：{event.unified_msg_origin}")
@@ -507,7 +512,7 @@ class ImasBirthdayPlugin(Star):
         result = await self._build_result(month, day)
         if not result["message"]:
             yield_text = f"{month}月{day}日没有匹配到偶像大师相关生日。"
-            await event.send(event.plain_result(yield_text))
+            await self.context.send_message(event.unified_msg_origin, MessageChain().message(yield_text))
             return
         await self.context.send_message(
             event.unified_msg_origin,
@@ -517,8 +522,27 @@ class ImasBirthdayPlugin(Star):
     def _build_message_chain(self, message: str, card_path: str = "") -> MessageChain:
         chain = MessageChain().message(message)
         if card_path:
-            chain.file_image(card_path)
+            chain.file_image(self._image_send_path(card_path))
         return chain
+
+    def _stop_event(self, event: AstrMessageEvent):
+        stop_event = getattr(event, "stop_event", None)
+        if callable(stop_event):
+            stop_event()
+
+    def _image_send_path(self, image_path: str) -> str:
+        path = Path(image_path)
+        if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}:
+            return str(path)
+
+        destination = self.plugin_dir / "data" / "rendered_cards" / f"{path.name}.png"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            shutil.copy2(path, destination)
+            return str(destination)
+        except Exception:
+            logger.exception(f"复制生日卡片到带扩展名路径失败：{image_path}")
+            return image_path
 
     def _parse_imasbd_text(self, message: str) -> list[str] | None:
         text = str(message or "").strip()

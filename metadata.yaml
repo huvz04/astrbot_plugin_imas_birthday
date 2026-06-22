@@ -2,7 +2,7 @@ name: astrbot_plugin_imas_birthday
 display_name: 偶像大师生日提醒
 description: 每天从萌娘百科获取偶像大师角色、声优及相关人士生日，并向白名单群聊发送祝贺。
 short_desc: 偶像大师角色/声优生日群聊祝贺
-version: 0.1.6
+version: 0.1.7
 author: dache
 repo: https://github.com/huvz04/astrbot_plugin_imas_birthday
 support_platforms:
