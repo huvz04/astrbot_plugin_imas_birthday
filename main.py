@@ -16,7 +16,6 @@ import httpx
 
 from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
-import astrbot.api.message_components as Comp
 from astrbot.api.star import Context, Star
 
 
@@ -383,7 +382,10 @@ class ImasBirthdayPlugin(Star):
         if not result["message"]:
             yield event.plain_result("今天没有匹配到偶像大师相关生日。")
             return
-        yield self._build_event_chain_result(event, result["message"], result["card_path"])
+        await self.context.send_message(
+            event.unified_msg_origin,
+            self._build_message_chain(result["message"], result["card_path"]),
+        )
 
     @imasbd.command("date")
     async def imasbd_date(self, event: AstrMessageEvent, date_text: str):
@@ -397,7 +399,10 @@ class ImasBirthdayPlugin(Star):
         if not result["message"]:
             yield event.plain_result(f"{month}月{day}日没有匹配到偶像大师相关生日。")
             return
-        yield self._build_event_chain_result(event, result["message"], result["card_path"])
+        await self.context.send_message(
+            event.unified_msg_origin,
+            self._build_message_chain(result["message"], result["card_path"]),
+        )
 
     @imasbd.command("assets")
     async def imasbd_assets(self, event: AstrMessageEvent):
@@ -467,12 +472,6 @@ class ImasBirthdayPlugin(Star):
         if card_path:
             chain.file_image(card_path)
         return chain
-
-    def _build_event_chain_result(self, event: AstrMessageEvent, message: str, card_path: str = ""):
-        chain = [Comp.Plain(message)]
-        if card_path:
-            chain.append(Comp.Image.fromFileSystem(card_path))
-        return event.chain_result(chain)
 
     async def _build_result(self, month: int, day: int) -> dict[str, str]:
         data = await self._get_birthdays()
