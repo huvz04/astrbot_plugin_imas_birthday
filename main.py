@@ -912,7 +912,45 @@ class ImasBirthdayPlugin(Star):
     def _image_send_debug(self, label: str, original_path: str, send_path: str) -> str:
         send = Path(send_path)
         size = send.stat().st_size if send.exists() else "missing"
-        return f"{label}: original={original_path}, send={send_path}, suffix={send.suffix or 'none'}, size={size}"
+        magic = self._file_magic(send)
+        return f"{label}: original={original_path}, send={send_path}, suffix={send.suffix or 'none'}, size={size}, magic={magic}"
+
+    def _file_magic(self, path: Path) -> str:
+        try:
+            return path.read_bytes()[:12].hex()
+        except Exception:
+            return "unreadable"
+
+    async def _wait_for_stable_image(self, path: Path, attempts: int = 12, delay: float = 0.15) -> bool:
+        last_size = -1
+        stable_count = 0
+        for _ in range(attempts):
+            if path.exists():
+                size = path.stat().st_size
+                if size == last_size and size > 4096 and self._image_suffix_from_magic(path):
+                    stable_count += 1
+                    if stable_count >= 2:
+                        return True
+                else:
+                    stable_count = 0
+                last_size = size
+            await asyncio.sleep(delay)
+        return path.exists() and path.stat().st_size > 4096 and bool(self._image_suffix_from_magic(path))
+
+    def _image_suffix_from_magic(self, path: Path) -> str:
+        try:
+            header = path.read_bytes()[:12]
+        except Exception:
+            return ""
+        if header.startswith(b"\x89PNG\r\n\x1a\n"):
+            return ".png"
+        if header.startswith(b"\xff\xd8\xff"):
+            return ".jpg"
+        if header.startswith(b"GIF87a") or header.startswith(b"GIF89a"):
+            return ".gif"
+        if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+            return ".webp"
+        return ""
 
     def _resolve_character_assets_dir(self) -> Path:
         configured = str(self.config.get("character_assets_dir", "") or "").strip()
@@ -1025,15 +1063,39 @@ class ImasBirthdayPlugin(Star):
             events=events if self._cfg_bool("include_events", False) else [],
         )
         try:
-            return await self.html_render(
+            card_path = await self.html_render(
                 html_text,
                 {},
                 return_url=False,
-                options={"viewport": {"width": 1360, "height": 1020}},
+                options={
+                    "viewport": {"width": 1360, "height": 1020},
+                    "type": "png",
+                    "fullPage": True,
+                },
             )
+            return await self._prepare_rendered_card(card_path)
         except Exception:
             logger.exception("生日卡片渲染失败，回退为纯文字。")
             return ""
+
+    async def _prepare_rendered_card(self, card_path: str) -> str:
+        if not card_path:
+            return ""
+        path = Path(str(card_path).replace("file:///", "", 1).replace("file://", "", 1))
+        if not await self._wait_for_stable_image(path):
+            logger.warning(self._image_send_debug("生日卡片渲染产物无效，跳过发送图片", str(card_path), str(path)))
+            return ""
+        suffix = self._image_suffix_from_magic(path) or path.suffix.lower() or ".png"
+        destination = (
+            Path(tempfile.gettempdir())
+            / "astrbot_plugin_imas_birthday"
+            / "rendered_cards"
+            / f"{path.stem}{suffix}"
+        )
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, destination)
+        logger.info(self._image_send_debug("生日卡片渲染产物已准备", str(card_path), str(destination)))
+        return str(destination)
 
     def _format_lines(self, category: str, values: list[str]) -> list[str]:
         label = CATEGORY_LABELS[category]
