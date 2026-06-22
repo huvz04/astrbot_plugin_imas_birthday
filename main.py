@@ -462,7 +462,7 @@ class ImasBirthdayPlugin(Star):
 
     def _format_lines(self, category: str, values: list[str]) -> list[str]:
         label = CATEGORY_LABELS[category]
-        return [f"- {label}：{value}" for value in values if value]
+        return [f"{label}：{value}" for value in values if value]
 
     def _card_item(self, character: str) -> dict[str, str]:
         brand = self._character_brand(character)
