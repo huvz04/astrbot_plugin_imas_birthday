@@ -24,6 +24,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `include_related_people`：是否包含其他相关人士，默认关闭。
 - `include_events`：是否包含企划事件，默认关闭。
 - `render_card`：是否同时生成生日卡片，默认开启。
+- `enable_send_test`：是否启用图片发送兼容性测试指令，默认关闭。
 - `card_title` / `card_subtitle`：生日卡标题文案。
 
 `message_template` 支持这些变量：
@@ -152,9 +153,10 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 /imasbd refresh
 /imasbd assets
 /imasbd assets 06-22
+/imasbd sendtest
 ```
 
-`bind` 和 `refresh` 需要管理员权限。
+`bind`、`refresh` 和 `sendtest` 需要管理员权限。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。
 
 ## 数据来源
 

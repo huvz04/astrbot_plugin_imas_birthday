@@ -63,6 +63,12 @@
     "type": "bool",
     "default": true
   },
+  "enable_send_test": {
+    "description": "启用图片发送兼容性测试指令",
+    "type": "bool",
+    "default": false,
+    "hint": "开启后管理员可在群里使用 /imasbd sendtest，逐个测试分开发送、组合 file_image、组件本地文件、组件 base64 等图片发送方式。"
+  },
   "character_assets_dir": {
     "description": "角色图片目录",
     "type": "string",

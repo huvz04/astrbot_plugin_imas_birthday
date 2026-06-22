@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 import importlib.util
 import html
@@ -21,11 +22,22 @@ from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
 from astrbot.api.star import Context, Star
 
+try:
+    import astrbot.api.message_components as Comp
+except Exception:
+    Comp = None
+
 
 SOURCE_URL = (
     "https://zh.moegirl.org.cn/"
     "%E5%81%B6%E5%83%8F%E5%A4%A7%E5%B8%88%E7%B3%BB%E5%88%97/"
     "%E7%9B%B8%E5%85%B3%E4%BA%BA%E5%A3%AB%E7%94%9F%E6%97%A5%E4%BF%A1%E6%81%AF"
+)
+TEST_IMAGE_BASE64 = (
+    "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAYklEQVR4nO3PsQ0AIAwAsYH9"
+    "d25oQqKoUBXuzO2ZzM7j3gF8GQwGg8FgMBgMBoPBYDAYDAaDwWAwGAwGg8FgMBgMBoPBYDAY"
+    "DAaDwWAwGAwGg8FgMBgMBoPBYDAYDAaDwWAwGAwGg8Fg8Aec4QJ/BE8btAAAAABJRU5ErkJg"
+    "gg=="
 )
 
 MONTH_NAMES = {
@@ -419,6 +431,18 @@ class ImasBirthdayPlugin(Star):
             return
         yield event.plain_result(f"刷新完成，共缓存 {len(data)} 个日期。")
 
+    @filter.permission_type(filter.PermissionType.ADMIN)
+    @imasbd.command("sendtest")
+    async def imasbd_sendtest(self, event: AstrMessageEvent):
+        """测试当前 OneBot/平台对多种图片发送方式的兼容性。"""
+        self._stop_event(event)
+        if not self._cfg_bool("enable_send_test", False):
+            yield event.plain_result("发送测试默认关闭。请先在插件配置中打开 enable_send_test。")
+            return
+        yield event.plain_result("开始测试图片发送方式，请观察接下来几条消息是否成功显示。")
+        report = await self._run_send_tests(event.unified_msg_origin)
+        yield event.plain_result(report)
+
     @imasbd.command("today")
     async def imasbd_today(self, event: AstrMessageEvent):
         """在当前会话预览并发送今天的生日祝贺。"""
@@ -550,12 +574,21 @@ class ImasBirthdayPlugin(Star):
             now = self._now()
             yield event.plain_result(await self._assets_text(now.month, now.day))
             return
+        if subcommand == "sendtest":
+            if not self._cfg_bool("enable_send_test", False):
+                yield event.plain_result("发送测试默认关闭。请先在插件配置中打开 enable_send_test。")
+                return
+            yield event.plain_result("开始测试图片发送方式，请观察接下来几条消息是否成功显示。")
+            report = await self._run_send_tests(event.unified_msg_origin)
+            yield event.plain_result(report)
+            return
         yield event.plain_result(
             "可用指令：\n"
             "/imasbd sid\n"
             "/imasbd today\n"
             "/imasbd date 06-22\n"
-            "/imasbd assets 06-22"
+            "/imasbd assets 06-22\n"
+            "/imasbd sendtest"
         )
 
     async def _scheduler(self):
@@ -623,6 +656,67 @@ class ImasBirthdayPlugin(Star):
         chain = MessageChain()
         chain.file_image(self._image_send_path(card_path))
         return chain
+
+    async def _run_send_tests(self, umo: str) -> str:
+        image_path = self._send_test_image_path()
+        tests = [
+            ("split_file_image", "文字和图片分开发送，图片使用 MessageChain.file_image"),
+            ("combined_file_image", "同一 MessageChain 内使用 message + file_image"),
+            ("combined_component_file", "同一消息内使用组件 Image.fromFileSystem"),
+            ("combined_component_base64", "同一消息内使用组件 Image.fromBase64"),
+        ]
+        lines = ["图片发送方式测试结果："]
+        for key, description in tests:
+            try:
+                await self._send_one_test_case(umo, key, image_path)
+            except Exception as exc:
+                logger.exception(f"图片发送测试失败：{key}")
+                lines.append(f"FAIL {key}: {type(exc).__name__}: {exc}")
+            else:
+                lines.append(f"PASS {key}: {description}")
+        return "\n".join(lines)
+
+    async def _send_one_test_case(self, umo: str, key: str, image_path: str):
+        text = f"[imasbd sendtest] {key}"
+        if key == "split_file_image":
+            await self._send_test_chain(umo, MessageChain().message(text))
+            await self._send_test_chain(umo, self._build_image_message_chain(image_path))
+            return
+        if key == "combined_file_image":
+            chain = MessageChain().message(text)
+            chain.file_image(image_path)
+            await self._send_test_chain(umo, chain)
+            return
+        if key == "combined_component_file":
+            if Comp is None:
+                raise RuntimeError("astrbot.api.message_components 不可用")
+            await self._send_test_chain(
+                umo,
+                MessageChain(chain=[Comp.Plain(text), Comp.Image.fromFileSystem(image_path)]),
+            )
+            return
+        if key == "combined_component_base64":
+            if Comp is None:
+                raise RuntimeError("astrbot.api.message_components 不可用")
+            data = base64.b64encode(Path(image_path).read_bytes()).decode("ascii")
+            await self._send_test_chain(
+                umo,
+                MessageChain(chain=[Comp.Plain(text), Comp.Image.fromBase64(data)]),
+            )
+            return
+        raise ValueError(f"未知发送测试类型：{key}")
+
+    async def _send_test_chain(self, umo: str, chain: MessageChain):
+        ok = await self.context.send_message(umo, chain)
+        if not ok:
+            raise RuntimeError(f"未找到平台或发送失败：{umo}")
+
+    def _send_test_image_path(self) -> str:
+        path = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "send_test.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            path.write_bytes(base64.b64decode(TEST_IMAGE_BASE64))
+        return str(path)
 
     def _stop_event(self, event: AstrMessageEvent):
         stop_event = getattr(event, "stop_event", None)
