@@ -57,6 +57,12 @@
     "type": "bool",
     "default": true
   },
+  "character_assets_dir": {
+    "description": "角色图片目录",
+    "type": "string",
+    "default": "",
+    "hint": "留空时，AstrBot 部署中默认使用 AstrBot/data/imas_birthday_assets/characters。也可以填绝对路径，避免插件更新覆盖图片。"
+  },
   "card_title": {
     "description": "生日卡主标题",
     "type": "string",

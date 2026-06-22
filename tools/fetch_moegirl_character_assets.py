@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import os
 import re
 import sys
 import time
@@ -83,10 +84,12 @@ def main() -> int:
     parser.add_argument("--size", type=int, default=900, help="Requested thumbnail size.")
     parser.add_argument("--sleep", type=float, default=0.25, help="Delay between pageimage API calls.")
     parser.add_argument("--limit", type=int, default=0, help="Fetch at most N characters, for testing.")
+    parser.add_argument("--assets-dir", default="", help="Directory to store character images.")
     parser.add_argument("--overwrite", action="store_true", help="Redownload images even if files exist.")
     parser.add_argument("--quiet", action="store_true", help="Only print skipped, failed, and summary lines.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned operations without writing files.")
     args = parser.parse_args()
+    assets_dir = Path(os.path.expandvars(args.assets_dir)).expanduser() if args.assets_dir else ASSETS_DIR
 
     with httpx.Client(timeout=60, follow_redirects=True, headers={"User-Agent": USER_AGENT}) as client:
         characters = parse_character_links(fetch_text(client, args.source_url))
@@ -106,7 +109,7 @@ def main() -> int:
             try:
                 image_url = fetch_pageimage_url(client, character.page_title, args.size)
             except httpx.HTTPError as exc:
-                existing_path = existing_relative_path(character)
+                existing_path = existing_relative_path(character, assets_dir)
                 if existing_path:
                     mapping[character.name] = existing_path
                     if not args.quiet:
@@ -118,7 +121,7 @@ def main() -> int:
                 failed.append(character.name)
                 continue
             if not image_url:
-                existing_path = existing_relative_path(character)
+                existing_path = existing_relative_path(character, assets_dir)
                 if existing_path:
                     mapping[character.name] = existing_path
                     if not args.quiet:
@@ -132,7 +135,7 @@ def main() -> int:
 
             suffix = image_suffix(image_url)
             relative_path = f"{character.brand}/{safe_filename(character.name)}{suffix}"
-            destination = ASSETS_DIR / relative_path
+            destination = assets_dir / relative_path
             mapping[character.name] = relative_path.replace("\\", "/")
             if not args.quiet:
                 print(f"[{index}/{len(characters)}] {character.name}: {image_url} -> {destination}")
@@ -269,9 +272,9 @@ def image_suffix(url: str) -> str:
     return ".png"
 
 
-def existing_relative_path(character: CharacterLink) -> str:
+def existing_relative_path(character: CharacterLink, assets_dir: Path) -> str:
     stem = safe_filename(character.name)
-    brand_dir = ASSETS_DIR / character.brand
+    brand_dir = assets_dir / character.brand
     for suffix in (".png", ".jpg", ".jpeg", ".webp"):
         path = brand_dir / f"{stem}{suffix}"
         if path.exists():

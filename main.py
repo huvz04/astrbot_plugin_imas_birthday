@@ -4,8 +4,10 @@ import asyncio
 import contextlib
 import importlib.util
 import html
+import os
 import re
 import shutil
+import tempfile
 import time
 from datetime import datetime
 from html.parser import HTMLParser
@@ -50,7 +52,8 @@ CATEGORY_LABELS = {
 
 FANCY_DIGITS = str.maketrans("0123456789", "𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖𝟗")
 
-# Put your processed character images in assets/characters/ and map names here.
+# Put processed character images in the configured external character_assets_dir.
+# Map character names to relative paths under that directory.
 # Example:
 # CHARACTER_IMAGE_ASSETS = {
 #     "天海春香": "amami_haruka.png",
@@ -327,6 +330,7 @@ class ImasBirthdayPlugin(Star):
         super().__init__(context, config)
         self.config = config or {}
         self.plugin_dir = Path(__file__).resolve().parent
+        self.assets_dir = self._resolve_character_assets_dir()
         self._task: asyncio.Task | None = None
         self._last_sent_date = ""
         if self._cfg_bool("enabled", True):
@@ -535,7 +539,12 @@ class ImasBirthdayPlugin(Star):
         if path.suffix.lower() in {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}:
             return str(path)
 
-        destination = self.plugin_dir / "data" / "rendered_cards" / f"{path.name}.png"
+        destination = (
+            Path(tempfile.gettempdir())
+            / "astrbot_plugin_imas_birthday"
+            / "rendered_cards"
+            / f"{path.name}.png"
+        )
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
             shutil.copy2(path, destination)
@@ -543,6 +552,18 @@ class ImasBirthdayPlugin(Star):
         except Exception:
             logger.exception(f"复制生日卡片到带扩展名路径失败：{image_path}")
             return image_path
+
+    def _resolve_character_assets_dir(self) -> Path:
+        configured = str(self.config.get("character_assets_dir", "") or "").strip()
+        env_value = os.environ.get("IMAS_BIRTHDAY_ASSETS_DIR", "").strip()
+        value = configured or env_value
+        if value:
+            path = Path(os.path.expandvars(value)).expanduser()
+            return path if path.is_absolute() else self.plugin_dir / path
+
+        if self.plugin_dir.parent.name == "plugins":
+            return self.plugin_dir.parent.parent / "imas_birthday_assets" / "characters"
+        return self.plugin_dir / "assets" / "characters"
 
     def _parse_imasbd_text(self, message: str) -> list[str] | None:
         text = str(message or "").strip()
@@ -694,7 +715,11 @@ class ImasBirthdayPlugin(Star):
             return None
         path = Path(filename)
         if not path.is_absolute():
-            path = self.plugin_dir / "assets" / "characters" / filename
+            for base_dir in (self.assets_dir, self.plugin_dir / "assets" / "characters"):
+                candidate = base_dir / filename
+                if candidate.exists():
+                    return candidate
+            return None
         return path if path.exists() else None
 
     def _character_brand(self, character: str) -> str:

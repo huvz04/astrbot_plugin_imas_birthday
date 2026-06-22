@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import os
 import re
 import shutil
 import sys
@@ -12,16 +13,29 @@ from pathlib import Path
 
 
 PLUGIN_DIR = Path(__file__).resolve().parents[1]
-ASSETS_DIR = PLUGIN_DIR / "assets" / "characters"
 GENERATED_MAPPING = PLUGIN_DIR / "character_assets.py"
+
+
+def default_assets_dir() -> Path:
+    env_value = os.environ.get("IMAS_BIRTHDAY_ASSETS_DIR", "").strip()
+    if env_value:
+        return Path(os.path.expandvars(env_value)).expanduser()
+    if PLUGIN_DIR.parent.name == "plugins":
+        return PLUGIN_DIR.parent.parent / "imas_birthday_assets" / "characters"
+    return PLUGIN_DIR / "assets" / "characters"
+
+
+ASSETS_DIR = default_assets_dir()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import local or remote character images for birthday cards.")
     parser.add_argument("csv_path", help="CSV with columns: name, brand, source, filename(optional)")
+    parser.add_argument("--assets-dir", default="", help="Directory to store character images.")
     parser.add_argument("--sleep", type=float, default=0.2, help="Delay between downloads in seconds.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned operations without writing files.")
     args = parser.parse_args()
+    assets_dir = Path(os.path.expandvars(args.assets_dir)).expanduser() if args.assets_dir else ASSETS_DIR
 
     csv_path = Path(args.csv_path)
     rows = read_rows(csv_path)
@@ -36,7 +50,7 @@ def main() -> int:
         source = row["source"].strip()
         filename = row.get("filename", "").strip() or build_filename(name, source)
         relative_path = f"{brand}/{filename}"
-        destination = ASSETS_DIR / relative_path
+        destination = assets_dir / relative_path
         mapping[name] = relative_path.replace("\\", "/")
         print(f"{name}: {source} -> {destination}")
         if args.dry_run:

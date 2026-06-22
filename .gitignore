@@ -7,6 +7,3 @@ assets_manifest.csv
 # Local character images can contain copyrighted official assets.
 assets/characters/*
 !assets/characters/.gitkeep
-
-# Runtime-rendered card images copied with explicit extensions for adapters.
-data/rendered_cards/
