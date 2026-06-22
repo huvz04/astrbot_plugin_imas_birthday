@@ -14,6 +14,7 @@ import time
 import zlib
 from datetime import datetime
 from html.parser import HTMLParser
+from mimetypes import guess_type
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -1024,8 +1025,19 @@ class ImasBirthdayPlugin(Star):
             "brand": brand,
             "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
             "color": BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]),
-            "image": image_path.as_uri() if image_path else "",
+            "image": self._image_data_uri(image_path) if image_path else "",
         }
+
+    def _image_data_uri(self, path: Path | None) -> str:
+        if not path:
+            return ""
+        try:
+            mime_type = guess_type(str(path))[0] or "image/png"
+            data = base64.b64encode(path.read_bytes()).decode("ascii")
+            return f"data:{mime_type};base64,{data}"
+        except Exception:
+            logger.exception(f"读取角色图片失败：{path}")
+            return ""
 
     def _character_image_path(self, character: str) -> Path | None:
         filename = self._character_asset_filename(character)
@@ -1213,10 +1225,21 @@ body {{
   font-weight: 800;
 }}
 .idol-name {{
-  padding: 20px 20px 7px;
+  position: relative;
+  padding: 28px 20px 7px;
   font-size: 38px;
   font-weight: 800;
   line-height: 1.15;
+}}
+.idol-name::before {{
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 13px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--brand);
 }}
 .brand {{
   padding: 0 20px 20px;
@@ -1233,37 +1256,13 @@ body {{
 }}
 .meta-block {{
   position: relative;
-  overflow: hidden;
   background: rgba(255,255,255,.56);
   border: 1px solid rgba(255,255,255,.72);
-  border-left: 8px solid #2f7fd3;
   padding: 18px 22px;
   border-radius: 6px;
   backdrop-filter: blur(16px) saturate(1.12);
   -webkit-backdrop-filter: blur(16px) saturate(1.12);
   box-shadow: 0 12px 30px rgba(32,36,44,.09);
-}}
-.meta-block::after {{
-  content: "";
-  position: absolute;
-  inset: auto 16px 10px 22px;
-  height: 10px;
-  opacity: .26;
-  background: repeating-linear-gradient(
-    90deg,
-    #f05a7e 0 18px,
-    transparent 18px 28px,
-    #2f7fd3 28px 46px,
-    transparent 46px 56px,
-    #f2b84b 56px 74px,
-    transparent 74px 84px,
-    #1aa982 84px 102px,
-    transparent 102px 112px,
-    #8d72d9 112px 130px,
-    transparent 130px 140px,
-    #f08a33 140px 158px,
-    transparent 158px 168px
-  );
 }}
 .meta-title {{
   font-size: 20px;
