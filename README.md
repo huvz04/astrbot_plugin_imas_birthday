@@ -18,6 +18,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `send_time`：每日发送时间，默认 `09:00`。
 - `timezone`：日期时区，默认 `Asia/Shanghai`。
 - `include_characters`：是否包含角色，默认开启。
+- `require_character_birthday`：当天没有角色生日时不推送，默认开启。
 - `include_seiyuu`：是否包含声优，默认开启。
 - `include_related_people`：是否包含其他相关人士，默认关闭。
 - `include_events`：是否包含企划事件，默认关闭。
@@ -63,7 +64,7 @@ CHARACTER_IMAGE_ASSETS = {
 
 推荐按企划建子目录，例如 `765as/`、`cg/`、`ml/`、`sidem/`、`shiny/`、`gakumas/`。插件会根据第一级目录给卡片打上企划标签。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
 
-也可以用批量导入脚本。先复制 `assets_manifest.example.csv`，按下面格式维护清单：
+也可以用批量导入脚本。这个脚本不是“自动全网搜图”，而是按你的清单批量复制/下载。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
 
 ```csv
 name,brand,source,filename
@@ -78,6 +79,8 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 ```
 
 脚本会把图片复制或下载到 `assets/characters/<brand>/`，并生成 `character_assets.py`。插件启动时会自动读取这个生成文件。
+
+如果 `source` 是本地路径，脚本会复制图片；如果是 `https://...` 图片链接，脚本会下载图片。之后重启/重载插件即可。
 
 ## 指令
 

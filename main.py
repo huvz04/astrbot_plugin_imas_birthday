@@ -393,6 +393,8 @@ class ImasBirthdayPlugin(Star):
     async def _build_result(self, month: int, day: int) -> dict[str, str]:
         data = await self._get_birthdays()
         entry = data.get(f"{month:02d}-{day:02d}")
+        if self._cfg_bool("require_character_birthday", True) and not self._split_people((entry or {}).get("characters", [])):
+            return {"message": "", "card_path": ""}
         message = self._build_message_from_entry(month, day, entry)
         if not message:
             return {"message": "", "card_path": ""}
