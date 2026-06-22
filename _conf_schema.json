@@ -63,6 +63,12 @@
     "type": "bool",
     "default": true
   },
+  "birthday_send_mode": {
+    "description": "生日祝贺图片发送方式",
+    "type": "string",
+    "default": "combined_file_image",
+    "hint": "可选：combined_file_image、combined_component_file、combined_component_base64、split_file_image。当前 OneBot/NapCat 测试均通过，默认使用文字和图片同一消息。"
+  },
   "enable_send_test": {
     "description": "启用图片发送兼容性测试指令",
     "type": "bool",

@@ -448,8 +448,7 @@ class ImasBirthdayPlugin(Star):
         if not result["message"]:
             yield event.plain_result("今天没有匹配到偶像大师相关生日。")
             return
-        for ret in self._build_event_results(event, result["message"], result["card_path"]):
-            yield ret
+        await self._send_event_birthday_message(event, result["message"], result["card_path"])
 
     @imasbd.command("date")
     async def imasbd_date(self, event: AstrMessageEvent, date_text: str):
@@ -464,8 +463,7 @@ class ImasBirthdayPlugin(Star):
         if not result["message"]:
             yield event.plain_result(f"{month}月{day}日没有匹配到偶像大师相关生日。")
             return
-        for ret in self._build_event_results(event, result["message"], result["card_path"]):
-            yield ret
+        await self._send_event_birthday_message(event, result["message"], result["card_path"])
 
     @imasbd.command("assets")
     async def imasbd_assets(self, event: AstrMessageEvent, date_text: str = ""):
@@ -546,8 +544,7 @@ class ImasBirthdayPlugin(Star):
             return
         if subcommand == "today":
             now = self._now()
-            async for ret in self._build_event_results_for_date(event, now.month, now.day):
-                yield ret
+            await self._send_event_birthday_message_for_date(event, now.month, now.day)
             return
         if subcommand == "date":
             date_text = args[1] if len(args) > 1 else ""
@@ -555,8 +552,7 @@ class ImasBirthdayPlugin(Star):
             if not parsed:
                 yield event.plain_result("日期格式不对，请使用 /imasbd date MM-DD，例如 /imasbd date 06-22。")
                 return
-            async for ret in self._build_event_results_for_date(event, parsed[0], parsed[1]):
-                yield ret
+            await self._send_event_birthday_message_for_date(event, parsed[0], parsed[1])
             return
         if subcommand == "assets":
             date_text = args[1] if len(args) > 1 else ""
@@ -622,19 +618,34 @@ class ImasBirthdayPlugin(Star):
         for umo in white_umos:
             await self._send_active_message(umo, result["message"], result["card_path"])
 
-    async def _build_event_results_for_date(self, event: AstrMessageEvent, month: int, day: int):
+    async def _send_event_birthday_message_for_date(self, event: AstrMessageEvent, month: int, day: int):
         result = await self._build_result(month, day)
         if not result["message"]:
             yield_text = f"{month}月{day}日没有匹配到偶像大师相关生日。"
-            yield event.plain_result(yield_text)
+            await self.context.send_message(event.unified_msg_origin, MessageChain().message(yield_text))
             return
-        for ret in self._build_event_results(event, result["message"], result["card_path"]):
-            yield ret
+        await self._send_event_birthday_message(event, result["message"], result["card_path"])
 
     async def _send_active_message(self, umo: str, message: str, card_path: str = ""):
+        await self._send_birthday_message(umo, message, card_path)
+
+    async def _send_event_birthday_message(self, event: AstrMessageEvent, message: str, card_path: str = ""):
+        await self._send_birthday_message(event.unified_msg_origin, message, card_path)
+
+    async def _send_birthday_message(self, umo: str, message: str, card_path: str = ""):
+        mode = self._birthday_send_mode()
+        if mode != "split_file_image" and card_path:
+            try:
+                ok = await self.context.send_message(umo, self._build_birthday_message_chain(message, card_path, mode))
+                if not ok:
+                    logger.warning(f"偶像大师生日提醒发送失败，未找到平台：{umo}")
+                return
+            except Exception:
+                logger.exception(f"偶像大师生日提醒组合消息发送失败，降级为分开发送：{mode}")
+
         ok = await self.context.send_message(umo, MessageChain().message(message))
         if not ok:
-            logger.warning(f"偶像大师生日提醒发送失败，未找到平台：{umo}")
+            logger.warning(f"偶像大师生日提醒文字发送失败，未找到平台：{umo}")
             return
         if not card_path:
             return
@@ -643,15 +654,49 @@ class ImasBirthdayPlugin(Star):
         except Exception:
             logger.exception("发送生日卡片图片失败，已保留文字发送结果。")
 
-    def _build_event_results(self, event: AstrMessageEvent, message: str, card_path: str = ""):
-        yield event.plain_result(message)
-        if card_path:
-            yield event.image_result(self._image_send_path(card_path))
-
     def _build_image_message_chain(self, card_path: str) -> MessageChain:
         chain = MessageChain()
         chain.file_image(self._image_send_path(card_path))
         return chain
+
+    def _build_birthday_message_chain(self, message: str, card_path: str, mode: str) -> MessageChain:
+        image_path = self._image_send_path(card_path)
+        if mode == "combined_component_file":
+            if Comp is None:
+                logger.warning("message_components 不可用，改用 combined_file_image。")
+            else:
+                return MessageChain(chain=[Comp.Plain(message), Comp.Image.fromFileSystem(image_path)])
+        if mode == "combined_component_base64":
+            if Comp is None:
+                logger.warning("message_components 不可用，改用 combined_file_image。")
+            else:
+                data = base64.b64encode(Path(image_path).read_bytes()).decode("ascii")
+                return MessageChain(chain=[Comp.Plain(message), Comp.Image.fromBase64(data)])
+
+        chain = MessageChain().message(message)
+        chain.file_image(image_path)
+        return chain
+
+    def _birthday_send_mode(self) -> str:
+        mode = str(self.config.get("birthday_send_mode", "combined_file_image") or "").strip().lower()
+        aliases = {
+            "split": "split_file_image",
+            "combined": "combined_file_image",
+            "file": "combined_file_image",
+            "component_file": "combined_component_file",
+            "base64": "combined_component_base64",
+        }
+        mode = aliases.get(mode, mode)
+        valid_modes = {
+            "split_file_image",
+            "combined_file_image",
+            "combined_component_file",
+            "combined_component_base64",
+        }
+        if mode not in valid_modes:
+            logger.warning(f"未知 birthday_send_mode={mode}，改用 combined_file_image。")
+            return "combined_file_image"
+        return mode
 
     async def _run_send_tests(self, umo: str) -> str:
         image_path = self._send_test_image_path()
