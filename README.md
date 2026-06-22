@@ -62,7 +62,7 @@ CHARACTER_IMAGE_ASSETS = {
 }
 ```
 
-推荐按企划建子目录，例如 `765as/`、`cg/`、`ml/`、`sidem/`、`shiny/`、`gakumas/`。插件会根据第一级目录给卡片打上企划标签。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
+推荐按企划建子目录，例如 `765as/`、`ml/`、`cg/`、`sidem/`、`shiny/`、`gakumas/`、`876/`、`valiv/`、`starlit/`。插件会根据第一级目录给卡片打上企划标签，例如 `765PRO ALLSTARS`、`MILLION LIVE! / 765 MILLIONSTARS`、`CINDERELLA GIRLS / 346PRO`、`SideM / 315PRO`、`Gakuen Idolmaster`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
 
 也可以用批量导入脚本。这个脚本不是“自动全网搜图”，而是按你的清单批量复制/下载。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
 

@@ -74,15 +74,33 @@ def load_generated_character_assets() -> dict[str, str]:
 CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
 
 BRAND_COLORS = {
-    "765": "#f05a7e",
-    "CG": "#2f7fd3",
+    "765AS": "#f05a7e",
     "ML": "#f2b84b",
+    "CG": "#2f7fd3",
     "SideM": "#1aa982",
     "SC": "#8d72d9",
     "GKM": "#f08a33",
+    "876": "#46b3a9",
     "VA": "#5c7cfa",
+    "ST": "#7c8ea6",
+    "DS": "#df6ea7",
     "KR": "#d94a4a",
     "IMAS": "#5b6472",
+}
+
+BRAND_LABELS = {
+    "765AS": "765PRO ALLSTARS",
+    "ML": "MILLION LIVE! / 765 MILLIONSTARS",
+    "CG": "CINDERELLA GIRLS / 346PRO",
+    "SideM": "SideM / 315PRO",
+    "SC": "SHINY COLORS / 283PRO",
+    "GKM": "Gakuen Idolmaster",
+    "876": "Dearly Stars / 876PRO",
+    "VA": "vα-liv",
+    "ST": "STARLIT SEASON",
+    "DS": "Dearly Stars",
+    "KR": "KR",
+    "IMAS": "THE IDOLM@STER",
 }
 
 
@@ -500,6 +518,7 @@ class ImasBirthdayPlugin(Star):
         return {
             "name": character,
             "brand": brand,
+            "label": BRAND_LABELS.get(brand, BRAND_LABELS["IMAS"]),
             "color": BRAND_COLORS.get(brand, BRAND_COLORS["IMAS"]),
             "image": image_path.as_uri() if image_path else "",
         }
@@ -518,19 +537,30 @@ class ImasBirthdayPlugin(Star):
         if "/" in filename or "\\" in filename:
             prefix = re.split(r"[/\\]", filename, maxsplit=1)[0].lower()
             brand_map = {
-                "765": "765",
-                "765as": "765",
+                "765": "765AS",
+                "765as": "765AS",
+                "allstars": "765AS",
                 "cg": "CG",
+                "346": "CG",
                 "cinderella": "CG",
                 "ml": "ML",
+                "765ml": "ML",
                 "million": "ML",
                 "sidem": "SideM",
+                "315": "SideM",
                 "sc": "SC",
+                "283": "SC",
                 "shiny": "SC",
                 "gkm": "GKM",
                 "gakumas": "GKM",
+                "876": "876",
+                "ds": "DS",
+                "dearly": "876",
                 "va": "VA",
                 "valiv": "VA",
+                "starlit": "ST",
+                "st": "ST",
+                "stella": "ST",
                 "kr": "KR",
             }
             return brand_map.get(prefix, "IMAS")
@@ -574,17 +604,23 @@ class ImasBirthdayPlugin(Star):
 body {{
   margin: 0;
   width: 1200px;
-  min-height: 900px;
+  min-height: 960px;
   font-family: "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   color: #20242c;
-  background: #f7f3ec;
+  background: #f5f1ea;
 }}
 .card {{
   width: 1200px;
-  min-height: 900px;
+  min-height: 960px;
   padding: 56px;
   background:
-    linear-gradient(90deg, rgba(240,90,126,.16), rgba(47,127,211,.12) 45%, rgba(242,184,75,.18)),
+    radial-gradient(circle at 8% 14%, rgba(240,90,126,.30), transparent 30%),
+    radial-gradient(circle at 36% 0%, rgba(242,184,75,.26), transparent 33%),
+    radial-gradient(circle at 68% 12%, rgba(47,127,211,.22), transparent 34%),
+    radial-gradient(circle at 95% 20%, rgba(141,114,217,.22), transparent 31%),
+    radial-gradient(circle at 18% 84%, rgba(26,169,130,.24), transparent 34%),
+    radial-gradient(circle at 82% 90%, rgba(240,138,51,.24), transparent 35%),
+    linear-gradient(115deg, rgba(255,255,255,.76), rgba(255,255,255,.36)),
     #f7f3ec;
 }}
 .header {{
@@ -619,25 +655,36 @@ body {{
 }}
 .grid {{
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: center;
+  gap: 24px;
   margin-top: 34px;
 }}
+.idol:nth-child(odd):last-child {{
+  grid-column: 1 / -1;
+  width: calc(50% - 12px);
+  justify-self: center;
+}}
 .idol {{
-  min-height: 410px;
-  background: rgba(255,255,255,.74);
-  border: 2px solid rgba(32,36,44,.11);
+  min-height: 390px;
+  background: rgba(255,255,255,.58);
+  border: 1px solid rgba(255,255,255,.70);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 18px 44px rgba(32,36,44,.12);
+  backdrop-filter: blur(18px) saturate(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
 }}
 .portrait {{
-  height: 320px;
+  height: 292px;
   display: flex;
   align-items: end;
   justify-content: center;
-  background: var(--brand);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.28), rgba(255,255,255,0)),
+    var(--brand);
 }}
 .portrait img {{
   width: 100%;
@@ -664,8 +711,9 @@ body {{
 .brand {{
   padding: 0 18px 18px;
   color: #5b6472;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
+  letter-spacing: .02em;
 }}
 .meta {{
   margin-top: 28px;
@@ -674,10 +722,38 @@ body {{
   gap: 16px;
 }}
 .meta-block {{
-  background: rgba(255,255,255,.62);
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,.56);
+  border: 1px solid rgba(255,255,255,.72);
   border-left: 8px solid #2f7fd3;
   padding: 18px 22px;
   border-radius: 6px;
+  backdrop-filter: blur(16px) saturate(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  box-shadow: 0 12px 30px rgba(32,36,44,.09);
+}}
+.meta-block::after {{
+  content: "";
+  position: absolute;
+  inset: auto 16px 10px 22px;
+  height: 10px;
+  opacity: .26;
+  background: repeating-linear-gradient(
+    90deg,
+    #f05a7e 0 18px,
+    transparent 18px 28px,
+    #2f7fd3 28px 46px,
+    transparent 46px 56px,
+    #f2b84b 56px 74px,
+    transparent 74px 84px,
+    #1aa982 84px 102px,
+    transparent 102px 112px,
+    #8d72d9 112px 130px,
+    transparent 130px 140px,
+    #f08a33 140px 158px,
+    transparent 158px 168px
+  );
 }}
 .meta-title {{
   font-size: 20px;
@@ -728,7 +804,7 @@ body {{
 
     def _birthday_card_item_html(self, item: dict[str, str]) -> str:
         name = html.escape(item["name"])
-        brand = html.escape(item["brand"])
+        label = html.escape(item["label"])
         color = html.escape(item["color"])
         if item["image"]:
             portrait = f'<img src="{html.escape(item["image"], quote=True)}" alt="{name}">'
@@ -737,7 +813,7 @@ body {{
         return f"""<article class="idol" style="--brand:{color}">
   <div class="portrait">{portrait}</div>
   <div class="idol-name">{name}</div>
-  <div class="brand">{brand}</div>
+  <div class="brand">{label}</div>
 </article>"""
 
     def _meta_block(self, title: str, values: list[str]) -> str:
