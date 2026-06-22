@@ -378,14 +378,24 @@ class ImasBirthdayPlugin(Star):
         self.assets_dir = self._resolve_character_assets_dir()
         self._task: asyncio.Task | None = None
         self._last_sent_date = ""
-        if self._cfg_bool("enabled", True):
-            self._task = asyncio.create_task(self._scheduler())
+        self._scheduler_started_at = ""
+
+    @filter.on_astrbot_loaded()
+    async def on_astrbot_loaded(self):
+        self._ensure_scheduler("astrbot_loaded")
 
     async def terminate(self):
         if self._task:
             self._task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._task
+
+    def _ensure_scheduler(self, reason: str):
+        if self._task and not self._task.done():
+            return
+        self._task = asyncio.create_task(self._scheduler())
+        self._scheduler_started_at = self._now().strftime("%Y-%m-%d %H:%M:%S")
+        logger.info(f"偶像大师生日提醒定时任务已启动：reason={reason}, started_at={self._scheduler_started_at}")
 
     @filter.command_group("imasbd")
     def imasbd(self):
@@ -426,6 +436,13 @@ class ImasBirthdayPlugin(Star):
             yield event.plain_result(f"刷新失败：{exc}")
             return
         yield event.plain_result(f"刷新完成，共缓存 {len(data)} 个日期。")
+
+    @imasbd.command("status")
+    async def imasbd_status(self, event: AstrMessageEvent):
+        """查看定时任务状态。"""
+        self._stop_event(event)
+        self._ensure_scheduler("status_command")
+        yield event.plain_result(self._scheduler_status_text())
 
     @filter.permission_type(filter.PermissionType.ADMIN)
     @imasbd.command("sendtest")
@@ -542,6 +559,10 @@ class ImasBirthdayPlugin(Star):
         if subcommand == "sid":
             yield event.plain_result(f"当前 UMO：{event.unified_msg_origin}")
             return
+        if subcommand == "status":
+            self._ensure_scheduler("status_fallback")
+            yield event.plain_result(self._scheduler_status_text())
+            return
         if subcommand == "today":
             now = self._now()
             await self._send_event_birthday_message_for_date(event, now.month, now.day)
@@ -577,6 +598,7 @@ class ImasBirthdayPlugin(Star):
         yield event.plain_result(
             "可用指令：\n"
             "/imasbd sid\n"
+            "/imasbd status\n"
             "/imasbd today\n"
             "/imasbd date 06-22\n"
             "/imasbd assets 06-22\n"
@@ -584,6 +606,7 @@ class ImasBirthdayPlugin(Star):
         )
 
     async def _scheduler(self):
+        logger.info("偶像大师生日提醒定时任务循环开始。")
         while True:
             try:
                 await self._tick()
@@ -598,16 +621,14 @@ class ImasBirthdayPlugin(Star):
             return
         now = self._now()
         send_time = str(self.config.get("send_time", "09:00"))
-        if now.strftime("%H:%M") != send_time:
+        send_minutes = self._parse_send_time_minutes(send_time)
+        if send_minutes is None:
+            logger.warning(f"偶像大师生日提醒 send_time 格式无效：{send_time}")
+            return
+        if not self._is_send_time_due(now, send_minutes):
             return
         today_key = now.strftime("%Y-%m-%d")
         if self._last_sent_date == today_key:
-            return
-
-        result = await self._build_result(now.month, now.day)
-        self._last_sent_date = today_key
-        if not result["message"]:
-            logger.info("今天没有偶像大师生日提醒内容，跳过推送。")
             return
 
         white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
@@ -615,8 +636,16 @@ class ImasBirthdayPlugin(Star):
             logger.warning("偶像大师生日提醒白名单为空，跳过推送。")
             return
 
+        result = await self._build_result(now.month, now.day)
+        if not result["message"]:
+            logger.info("今天没有偶像大师生日提醒内容，跳过推送。")
+            self._last_sent_date = today_key
+            return
+
+        logger.info(f"偶像大师生日提醒开始推送：date={today_key}, targets={len(white_umos)}")
         for umo in white_umos:
             await self._send_active_message(umo, result["message"], result["card_path"])
+        self._last_sent_date = today_key
 
     async def _send_event_birthday_message_for_date(self, event: AstrMessageEvent, month: int, day: int):
         result = await self._build_result(month, day)
@@ -1343,6 +1372,49 @@ body {{
         parser.feed(html)
         parser.close()
         return parser.data
+
+    def _scheduler_status_text(self) -> str:
+        now = self._now()
+        send_time = str(self.config.get("send_time", "09:00"))
+        send_minutes = self._parse_send_time_minutes(send_time)
+        due_text = "unknown" if send_minutes is None else str(self._is_send_time_due(now, send_minutes))
+        task_alive = bool(self._task and not self._task.done())
+        white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
+        lines = [
+            "偶像大师生日提醒状态：",
+            f"enabled: {self._cfg_bool('enabled', True)}",
+            f"scheduler_alive: {task_alive}",
+            f"scheduler_started_at: {self._scheduler_started_at or '未记录'}",
+            f"now: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}",
+            f"send_time: {send_time}",
+            f"send_time_due_today: {due_text}",
+            f"last_sent_date: {self._last_sent_date or '未发送'}",
+            f"white_umos: {len(white_umos)}",
+            f"birthday_send_mode: {self._birthday_send_mode()}",
+        ]
+        if self._task and self._task.done():
+            with contextlib.suppress(asyncio.CancelledError):
+                exc = self._task.exception()
+                if exc:
+                    lines.append(f"scheduler_error: {type(exc).__name__}: {exc}")
+            if self._task.cancelled():
+                lines.append("scheduler_error: task cancelled")
+        return "\n".join(lines)
+
+    def _parse_send_time_minutes(self, text: str) -> int | None:
+        match = re.fullmatch(r"\s*(\d{1,2}):(\d{2})\s*", text or "")
+        if not match:
+            return None
+        hour, minute = int(match.group(1)), int(match.group(2))
+        if hour < 0 or hour > 23 or minute < 0 or minute > 59:
+            return None
+        return hour * 60 + minute
+
+    def _is_send_time_due(self, now: datetime, send_minutes: int) -> bool:
+        now_minutes = now.hour * 60 + now.minute
+        if self._cfg_bool("catch_up_send", True):
+            return now_minutes >= send_minutes
+        return now_minutes == send_minutes
 
     def _now(self) -> datetime:
         timezone_name = str(self.config.get("timezone", "Asia/Shanghai"))

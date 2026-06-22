@@ -16,6 +16,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 
 - `white_umos`：群聊白名单。进入目标群发送 `/imasbd sid` 查看当前 UMO，或使用 `/imasbd bind` 自动加入。
 - `send_time`：每日发送时间，默认 `09:00`。
+- `catch_up_send`：错过当天推送时间后补发，默认开启。
 - `timezone`：日期时区，默认 `Asia/Shanghai`。
 - `include_characters`：是否包含角色，默认开启。
 - `include_kr_characters`：是否包含 `THE IDOLM@STER.KR` 真人企划成员，默认关闭。
@@ -150,6 +151,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 ```text
 /imasbd sid
+/imasbd status
 /imasbd bind
 /imasbd today
 /imasbd date 06-22

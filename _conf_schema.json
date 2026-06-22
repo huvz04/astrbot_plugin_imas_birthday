@@ -16,6 +16,12 @@
     "default": "09:00",
     "hint": "24 小时制，格式 HH:MM，例如 09:00。"
   },
+  "catch_up_send": {
+    "description": "错过当天推送时间后补发",
+    "type": "bool",
+    "default": true,
+    "hint": "开启后，如果插件在 send_time 之后才启动或重载，且当天还没推送，会自动补发一次。"
+  },
   "timezone": {
     "description": "日期与推送时间使用的时区",
     "type": "string",
