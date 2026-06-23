@@ -147,6 +147,8 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 `/imasbd assets MM-DD` 可以查看指定日期每个角色的映射和实际读取路径。萌娘百科生日表里的 `ミント` 是 KR 企划成员 Mint。KR 真人企划成员默认过滤；如果打开 `include_kr_characters`，插件会按 `Mint` 显示和匹配，`Mint.jpg` / `ミント.jpg` 都能识别。
 
+如果想替换某个角色的图，先用 `/imasbd assets MM-DD` 找到该角色的实际文件路径，直接用你准备好的图片覆盖那个文件即可。建议使用竖图或接近卡面比例的图片；生日卡会自动居中裁切。覆盖后重新发送 `/imasbd date MM-DD` 就能看到新图，不需要重新抓取萌娘百科。
+
 ## 指令
 
 ```text

@@ -1068,7 +1068,7 @@ class ImasBirthdayPlugin(Star):
                 {},
                 return_url=False,
                 options={
-                    "viewport": {"width": 1360, "height": 1020},
+                    "viewport": {"width": 980, "height": 1280},
                     "type": "png",
                     "fullPage": True,
                 },
@@ -1209,16 +1209,16 @@ class ImasBirthdayPlugin(Star):
 * {{ box-sizing: border-box; }}
 body {{
   margin: 0;
-  width: 1360px;
-  min-height: 1088px;
+  width: 980px;
+  min-height: 1280px;
   font-family: "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   color: #20242c;
   background: #f5f1ea;
 }}
 .card {{
-  width: 1360px;
-  min-height: 1088px;
-  padding: 64px;
+  width: 980px;
+  min-height: 1280px;
+  padding: 50px;
   background:
     radial-gradient(circle at 8% 14%, rgba(240,90,126,.30), transparent 30%),
     radial-gradient(circle at 36% 0%, rgba(242,184,75,.26), transparent 33%),
@@ -1233,29 +1233,29 @@ body {{
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 32px;
+  gap: 24px;
   border-bottom: 3px solid rgba(32,36,44,.14);
-  padding-bottom: 28px;
+  padding-bottom: 24px;
 }}
 .title {{
-  font-size: 80px;
+  font-size: 64px;
   line-height: .95;
   font-weight: 800;
 }}
 .subtitle {{
-  margin-top: 14px;
-  font-size: 27px;
+  margin-top: 12px;
+  font-size: 22px;
   color: #5b6472;
 }}
 .date {{
   text-align: right;
-  font-size: 78px;
+  font-size: 58px;
   font-weight: 800;
   color: #f05a7e;
 }}
 .date span {{
   display: block;
-  font-size: 26px;
+  font-size: 22px;
   color: #5b6472;
   font-weight: 700;
 }}
@@ -1263,16 +1263,16 @@ body {{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-content: center;
-  gap: 28px;
-  margin-top: 38px;
+  gap: 22px;
+  margin-top: 32px;
 }}
 .idol:nth-child(odd):last-child {{
   grid-column: 1 / -1;
-  width: calc(50% - 14px);
+  width: calc(50% - 11px);
   justify-self: center;
 }}
 .idol {{
-  min-height: 448px;
+  min-height: 520px;
   background: rgba(255,255,255,.58);
   border: 1px solid rgba(255,255,255,.70);
   border-radius: 8px;
@@ -1284,7 +1284,7 @@ body {{
   -webkit-backdrop-filter: blur(18px) saturate(1.18);
 }}
 .portrait {{
-  height: 342px;
+  height: 408px;
   display: flex;
   align-items: end;
   justify-content: center;
@@ -1310,8 +1310,8 @@ body {{
 }}
 .idol-name {{
   position: relative;
-  padding: 28px 20px 7px;
-  font-size: 38px;
+  padding: 27px 18px 7px;
+  font-size: 32px;
   font-weight: 800;
   line-height: 1.15;
 }}
@@ -1319,30 +1319,30 @@ body {{
   content: "";
   position: absolute;
   left: 20px;
-  right: 20px;
+  right: 18px;
   top: 13px;
   height: 7px;
   border-radius: 999px;
   background: var(--brand);
 }}
 .brand {{
-  padding: 0 20px 20px;
+  padding: 0 18px 18px;
   color: #5b6472;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: .02em;
 }}
 .meta {{
-  margin-top: 28px;
+  margin-top: 24px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }}
 .meta-block {{
   position: relative;
   background: rgba(255,255,255,.56);
   border: 1px solid rgba(255,255,255,.72);
-  padding: 18px 22px;
+  padding: 17px 20px;
   border-radius: 6px;
   backdrop-filter: blur(16px) saturate(1.12);
   -webkit-backdrop-filter: blur(16px) saturate(1.12);
@@ -1355,7 +1355,7 @@ body {{
   margin-bottom: 8px;
 }}
 .meta-text {{
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 1.35;
 }}
@@ -1373,8 +1373,8 @@ body {{
   color: #5b6472;
 }}
 .footer {{
-  margin-top: 34px;
-  font-size: 19px;
+  margin-top: 28px;
+  font-size: 15px;
   color: #6d7684;
 }}
 </style>
