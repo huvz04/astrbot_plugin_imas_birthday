@@ -1187,14 +1187,14 @@ class ImasBirthdayPlugin(Star):
         return "、".join(names)
 
     def _card_layout(self, item_count: int) -> dict[str, int]:
-        columns = 1 if item_count <= 1 else 2
-        item_width = 280 if columns == 1 else 210
+        columns = max(1, min(item_count, 3))
+        item_width = 300 if columns == 1 else 260 if columns == 2 else 214
         grid_gap = 12
         card_padding = 30
-        card_width = card_padding * 2 + item_width * columns + grid_gap * (columns - 1)
-        render_width = max(card_width, 760)
-        portrait_height = 260
-        item_min_height = 348
+        card_width = 760
+        render_width = 760
+        portrait_height = 360 if columns == 1 else 320 if columns == 2 else 300
+        item_min_height = portrait_height + 86
         viewport_height = 1280
         return {
             "columns": columns,
@@ -1301,16 +1301,12 @@ body {{
   font-weight: 700;
 }}
 .grid {{
-  display: grid;
-  grid-template-columns: repeat({columns}, {item_width}px);
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  align-items: stretch;
   gap: {grid_gap}px;
   margin-top: 20px;
-}}
-.idol:nth-child(odd):last-child {{
-  grid-column: 1 / -1;
-  width: {item_width}px;
-  justify-self: center;
 }}
 .idol {{
   width: {item_width}px;
@@ -1376,13 +1372,14 @@ body {{
 }}
 .meta {{
   margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat({columns}, {item_width}px);
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
 }}
 .meta-block {{
   position: relative;
+  width: {item_width}px;
   background: rgba(255,255,255,.56);
   border: 1px solid rgba(255,255,255,.72);
   padding: 12px 14px;
