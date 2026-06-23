@@ -25,7 +25,8 @@
   "timezone": {
     "description": "日期与推送时间使用的时区",
     "type": "string",
-    "default": "Asia/Shanghai"
+    "default": "Asia/Tokyo",
+    "hint": "例如 Asia/Tokyo、Asia/Shanghai。send_time、today、每日推送日期都会按这个时区计算。"
   },
   "include_characters": {
     "description": "包含偶像大师登场角色",

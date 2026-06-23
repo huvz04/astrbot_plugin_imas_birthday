@@ -12,7 +12,7 @@ import struct
 import tempfile
 import time
 import zlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from html.parser import HTMLParser
 from mimetypes import guess_type
 from pathlib import Path
@@ -395,7 +395,7 @@ class ImasBirthdayPlugin(Star):
         if self._task and not self._task.done():
             return
         self._task = asyncio.create_task(self._scheduler())
-        self._scheduler_started_at = self._now().strftime("%Y-%m-%d %H:%M:%S")
+        self._scheduler_started_at = self._now().strftime("%Y-%m-%d %H:%M:%S %Z")
         logger.info(f"偶像大师生日提醒定时任务已启动：reason={reason}, started_at={self._scheduler_started_at}")
 
     @filter.command_group("imasbd")
@@ -639,11 +639,11 @@ class ImasBirthdayPlugin(Star):
 
         result = await self._build_result(now.month, now.day)
         if not result["message"]:
-            logger.info("今天没有偶像大师生日提醒内容，跳过推送。")
+            logger.info(f"今天没有偶像大师生日提醒内容，跳过推送：date={today_key}, timezone={now.tzname()}")
             self._last_sent_date = today_key
             return
 
-        logger.info(f"偶像大师生日提醒开始推送：date={today_key}, targets={len(white_umos)}")
+        logger.info(f"偶像大师生日提醒开始推送：date={today_key}, timezone={now.tzname()}, targets={len(white_umos)}")
         for umo in white_umos:
             await self._send_active_message(umo, result["message"], result["card_path"])
         self._last_sent_date = today_key
@@ -1733,6 +1733,14 @@ body {{
         send_time = str(self.config.get("send_time", "09:00"))
         send_minutes = self._parse_send_time_minutes(send_time)
         due_text = "unknown" if send_minutes is None else str(self._is_send_time_due(now, send_minutes))
+        next_send_text = "unknown"
+        next_send_date = "unknown"
+        next_send_due_now = "unknown"
+        if send_minutes is not None:
+            next_send_at, is_due_now = self._next_send_datetime(now, send_minutes)
+            next_send_text = next_send_at.strftime("%Y-%m-%d %H:%M:%S %Z")
+            next_send_date = next_send_at.strftime("%Y-%m-%d")
+            next_send_due_now = str(is_due_now)
         task_alive = bool(self._task and not self._task.done())
         white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
         lines = [
@@ -1740,9 +1748,14 @@ body {{
             f"enabled: {self._cfg_bool('enabled', True)}",
             f"scheduler_alive: {task_alive}",
             f"scheduler_started_at: {self._scheduler_started_at or '未记录'}",
+            f"timezone: {self._timezone_name()}",
             f"now: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}",
             f"send_time: {send_time}",
+            f"catch_up_send: {self._cfg_bool('catch_up_send', True)}",
             f"send_time_due_today: {due_text}",
+            f"next_send_at: {next_send_text}",
+            f"next_send_date: {next_send_date}",
+            f"next_send_due_now: {next_send_due_now}",
             f"last_sent_date: {self._last_sent_date or '未发送'}",
             f"white_umos: {len(white_umos)}",
             f"card_render_mode: {self._card_render_mode()}",
@@ -1772,13 +1785,31 @@ body {{
             return now_minutes >= send_minutes
         return now_minutes == send_minutes
 
+    def _next_send_datetime(self, now: datetime, send_minutes: int) -> tuple[datetime, bool]:
+        scheduled_today = now.replace(
+            hour=send_minutes // 60,
+            minute=send_minutes % 60,
+            second=0,
+            microsecond=0,
+        )
+        today_key = now.strftime("%Y-%m-%d")
+        if self._last_sent_date != today_key:
+            if self._is_send_time_due(now, send_minutes):
+                return scheduled_today, True
+            if now < scheduled_today:
+                return scheduled_today, False
+        return scheduled_today + timedelta(days=1), False
+
+    def _timezone_name(self) -> str:
+        return str(self.config.get("timezone", "Asia/Tokyo") or "Asia/Tokyo")
+
     def _now(self) -> datetime:
-        timezone_name = str(self.config.get("timezone", "Asia/Shanghai"))
+        timezone_name = self._timezone_name()
         try:
             return datetime.now(ZoneInfo(timezone_name))
         except Exception:
-            logger.warning(f"无效时区 {timezone_name}，已回退到 Asia/Shanghai。")
-            return datetime.now(ZoneInfo("Asia/Shanghai"))
+            logger.warning(f"无效时区 {timezone_name}，已回退到 Asia/Tokyo。")
+            return datetime.now(ZoneInfo("Asia/Tokyo"))
 
     def _cfg_bool(self, key: str, default: bool) -> bool:
         return bool(self.config.get(key, default))
