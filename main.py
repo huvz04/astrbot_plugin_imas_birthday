@@ -1195,7 +1195,7 @@ class ImasBirthdayPlugin(Star):
         height = max(
             720,
             padding * 2
-            + 102
+            + 108
             + 20
             + len(rows) * card_height
             + max(0, len(rows) - 1) * gap
@@ -1229,14 +1229,14 @@ class ImasBirthdayPlugin(Star):
 
         y = padding
         draw.text((padding, y), str(self.config.get("card_title", "Happy Birthday")), fill="#20242c", font=title_font)
-        draw.text((padding, y + 44), str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")), fill="#5b6472", font=subtitle_font)
+        draw.text((padding, y + 50), str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")), fill="#5b6472", font=subtitle_font)
         date_text = f"{month:02d}.{day:02d}"
         date_bbox = draw.textbbox((0, 0), date_text, font=date_font)
         date_x = width - padding - (date_bbox[2] - date_bbox[0])
         draw.text((date_x, y + 3), date_text, fill="#f05a7e", font=date_font)
         draw.text((width - padding - 58, y + 43), "Birthday", fill="#5b6472", font=small_font)
-        draw.line((padding, y + 82, width - padding, y + 82), fill=(32, 36, 44, 36), width=3)
-        y += 102
+        draw.line((padding, y + 88, width - padding, y + 88), fill=(32, 36, 44, 36), width=3)
+        y += 108
 
         for row in rows:
             row_width = len(row) * item_width + max(0, len(row) - 1) * gap
@@ -1573,7 +1573,7 @@ body {{
   font-weight: 800;
 }}
 .subtitle {{
-  margin-top: 12px;
+  margin-top: 18px;
   font-size: 13px;
   color: #5b6472;
 }}
