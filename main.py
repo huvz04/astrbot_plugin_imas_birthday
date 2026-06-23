@@ -1068,9 +1068,9 @@ class ImasBirthdayPlugin(Star):
                 {},
                 return_url=False,
                 options={
-                    "viewport": {"width": 980, "height": 1280},
+                    "viewport": {"width": 760, "height": 1280},
                     "type": "png",
-                    "full_page": True,
+                    "full_page": False,
                 },
             )
             return await self._prepare_rendered_card(card_path)
@@ -1209,16 +1209,16 @@ class ImasBirthdayPlugin(Star):
 * {{ box-sizing: border-box; }}
 body {{
   margin: 0;
-  width: 980px;
+  width: 760px;
   min-height: 1280px;
   font-family: "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   color: #20242c;
   background: #f5f1ea;
 }}
 .card {{
-  width: 980px;
+  width: 760px;
   min-height: 1280px;
-  padding: 50px;
+  padding: 38px;
   background:
     radial-gradient(circle at 8% 14%, rgba(240,90,126,.30), transparent 30%),
     radial-gradient(circle at 36% 0%, rgba(242,184,75,.26), transparent 33%),
@@ -1233,29 +1233,29 @@ body {{
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 24px;
+  gap: 18px;
   border-bottom: 3px solid rgba(32,36,44,.14);
   padding-bottom: 24px;
 }}
 .title {{
-  font-size: 64px;
+  font-size: 48px;
   line-height: .95;
   font-weight: 800;
 }}
 .subtitle {{
   margin-top: 12px;
-  font-size: 22px;
+  font-size: 17px;
   color: #5b6472;
 }}
 .date {{
   text-align: right;
-  font-size: 58px;
+  font-size: 42px;
   font-weight: 800;
   color: #f05a7e;
 }}
 .date span {{
   display: block;
-  font-size: 22px;
+  font-size: 17px;
   color: #5b6472;
   font-weight: 700;
 }}
@@ -1263,16 +1263,16 @@ body {{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   justify-content: center;
-  gap: 22px;
-  margin-top: 32px;
+  gap: 16px;
+  margin-top: 24px;
 }}
 .idol:nth-child(odd):last-child {{
   grid-column: 1 / -1;
-  width: calc(50% - 11px);
+  width: calc(50% - 8px);
   justify-self: center;
 }}
 .idol {{
-  min-height: 520px;
+  min-height: 440px;
   background: rgba(255,255,255,.58);
   border: 1px solid rgba(255,255,255,.70);
   border-radius: 8px;
@@ -1284,7 +1284,7 @@ body {{
   -webkit-backdrop-filter: blur(18px) saturate(1.18);
 }}
 .portrait {{
-  height: 408px;
+  height: 336px;
   display: flex;
   align-items: end;
   justify-content: center;
@@ -1310,71 +1310,71 @@ body {{
 }}
 .idol-name {{
   position: relative;
-  padding: 27px 18px 7px;
-  font-size: 32px;
+  padding: 24px 14px 6px;
+  font-size: 25px;
   font-weight: 800;
   line-height: 1.15;
 }}
 .idol-name::before {{
   content: "";
   position: absolute;
-  left: 20px;
-  right: 18px;
-  top: 13px;
-  height: 7px;
+  left: 14px;
+  right: 14px;
+  top: 11px;
+  height: 6px;
   border-radius: 999px;
   background: var(--brand);
 }}
 .brand {{
-  padding: 0 18px 18px;
+  padding: 0 14px 15px;
   color: #5b6472;
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .02em;
 }}
 .meta {{
-  margin-top: 24px;
+  margin-top: 18px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }}
 .meta-block {{
   position: relative;
   background: rgba(255,255,255,.56);
   border: 1px solid rgba(255,255,255,.72);
-  padding: 17px 20px;
+  padding: 14px 16px;
   border-radius: 6px;
   backdrop-filter: blur(16px) saturate(1.12);
   -webkit-backdrop-filter: blur(16px) saturate(1.12);
   box-shadow: 0 12px 30px rgba(32,36,44,.09);
 }}
 .meta-title {{
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 800;
   color: #5b6472;
   margin-bottom: 8px;
 }}
 .meta-text {{
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.35;
 }}
 .empty {{
   grid-column: 1 / -1;
-  min-height: 260px;
+  min-height: 220px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255,255,255,.68);
   border: 2px solid rgba(32,36,44,.11);
   border-radius: 8px;
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 800;
   color: #5b6472;
 }}
 .footer {{
-  margin-top: 28px;
-  font-size: 15px;
+  margin-top: 22px;
+  font-size: 12px;
   color: #6d7684;
 }}
 </style>
