@@ -91,7 +91,7 @@ BRAND_COLORS = {
     "CINDERELLA_GIRLS": "#2f7fd3",
     "MILLION_LIVE": "#f2b84b",
     "SIDEM": "#1aa982",
-    "SHINY_COLORS": "#8d72d9",
+    "SHINY_COLORS": "#5cc8f2",
     "GAKUEN_IDOLMASTER": "#f08a33",
     "VA_LIV": "#5c7cfa",
     "DEARLY_STARS": "#46b3a9",
