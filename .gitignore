@@ -4,6 +4,7 @@ __pycache__/
 # Local manifest for personal override imports.
 assets_manifest.csv
 previews/
+asset_candidates/
 
 # Local character images can contain copyrighted official assets.
 assets/characters/*
