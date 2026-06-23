@@ -22,6 +22,12 @@
     "default": true,
     "hint": "开启后，如果插件在 send_time 之后才启动或重载，且当天还没推送，会自动补发一次。"
   },
+  "catch_up_on_first_start": {
+    "description": "首次启动且已过推送时间时也补发",
+    "type": "bool",
+    "default": false,
+    "hint": "默认关闭，避免新安装或从旧版本升级时，因为没有历史发送状态而向生产群误补发。已有发送状态后，普通重启仍由 catch_up_send 控制。"
+  },
   "timezone": {
     "description": "日期与推送时间使用的时区",
     "type": "string",

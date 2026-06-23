@@ -381,6 +381,8 @@ class ImasBirthdayPlugin(Star):
         self._last_sent_date = ""
         self._pending_retry_date = ""
         self._pending_retry_umos: set[str] = set()
+        self._delivery_state_loaded = False
+        self._delivery_state_exists = False
         self._scheduler_started_at = ""
 
     @filter.on_astrbot_loaded()
@@ -444,7 +446,7 @@ class ImasBirthdayPlugin(Star):
     async def imasbd_status(self, event: AstrMessageEvent):
         """查看定时任务状态。"""
         self._stop_event(event)
-        self._ensure_scheduler("status_command")
+        await self._load_delivery_state()
         yield event.plain_result(self._scheduler_status_text())
 
     @filter.permission_type(filter.PermissionType.ADMIN)
@@ -563,7 +565,7 @@ class ImasBirthdayPlugin(Star):
             yield event.plain_result(f"当前 UMO：{event.unified_msg_origin}")
             return
         if subcommand == "status":
-            self._ensure_scheduler("status_fallback")
+            await self._load_delivery_state()
             yield event.plain_result(self._scheduler_status_text())
             return
         if subcommand == "today":
@@ -622,15 +624,27 @@ class ImasBirthdayPlugin(Star):
     async def _tick(self):
         if not self._cfg_bool("enabled", True):
             return
+        await self._load_delivery_state()
         now = self._now()
         send_time = str(self.config.get("send_time", "09:00"))
         send_minutes = self._parse_send_time_minutes(send_time)
         if send_minutes is None:
             logger.warning(f"偶像大师生日提醒 send_time 格式无效：{send_time}")
             return
+        today_key = now.strftime("%Y-%m-%d")
+        if (
+            not self._delivery_state_exists
+            and self._is_send_time_due(now, send_minutes)
+            and not self._cfg_bool("catch_up_on_first_start", False)
+        ):
+            logger.warning(
+                f"偶像大师生日提醒首次启动时已过今日推送时间，默认不补发以避免误推：date={today_key}, timezone={now.tzname()}"
+            )
+            self._last_sent_date = today_key
+            await self._save_delivery_state()
+            return
         if not self._is_send_time_due(now, send_minutes):
             return
-        today_key = now.strftime("%Y-%m-%d")
         if self._last_sent_date == today_key:
             return
 
@@ -645,6 +659,7 @@ class ImasBirthdayPlugin(Star):
             self._pending_retry_date = ""
             self._pending_retry_umos.clear()
             self._last_sent_date = today_key
+            await self._save_delivery_state()
             return
 
         targets = white_umos
@@ -654,6 +669,7 @@ class ImasBirthdayPlugin(Star):
             logger.warning(f"偶像大师生日提醒没有可重试目标，清理 pending 状态：date={today_key}")
             self._pending_retry_date = ""
             self._pending_retry_umos.clear()
+            await self._save_delivery_state()
             return
 
         logger.info(f"偶像大师生日提醒开始推送：date={today_key}, timezone={now.tzname()}, targets={len(targets)}")
@@ -664,11 +680,13 @@ class ImasBirthdayPlugin(Star):
         if failed_umos:
             self._pending_retry_date = today_key
             self._pending_retry_umos = set(failed_umos)
+            await self._save_delivery_state()
             logger.warning(f"偶像大师生日提醒部分目标发送失败，保留待重试状态：date={today_key}, failed={len(failed_umos)}")
             return
         self._pending_retry_date = ""
         self._pending_retry_umos.clear()
         self._last_sent_date = today_key
+        await self._save_delivery_state()
 
     async def _send_event_birthday_message_for_date(self, event: AstrMessageEvent, month: int, day: int):
         result = await self._build_result(month, day)
@@ -1734,6 +1752,31 @@ body {{
     async def _save_cache(self, data: dict[str, dict[str, list[str]]]):
         await self.put_kv_data("birthday_cache", {"updated_at": int(time.time()), "data": data})
 
+    async def _load_delivery_state(self):
+        if self._delivery_state_loaded:
+            return
+        state = await self.get_kv_data("delivery_state", None)
+        if isinstance(state, dict):
+            self._delivery_state_exists = True
+            self._last_sent_date = str(state.get("last_sent_date", "") or "")
+            self._pending_retry_date = str(state.get("pending_retry_date", "") or "")
+            pending = state.get("pending_retry_umos", [])
+            if isinstance(pending, list):
+                self._pending_retry_umos = {str(item).strip() for item in pending if str(item).strip()}
+        self._delivery_state_loaded = True
+
+    async def _save_delivery_state(self):
+        self._delivery_state_loaded = True
+        self._delivery_state_exists = True
+        await self.put_kv_data(
+            "delivery_state",
+            {
+                "last_sent_date": self._last_sent_date,
+                "pending_retry_date": self._pending_retry_date,
+                "pending_retry_umos": sorted(self._pending_retry_umos),
+            },
+        )
+
     def _is_cache_fresh(self, cache: Any) -> bool:
         if not isinstance(cache, dict) or not cache.get("data"):
             return False
@@ -1772,6 +1815,7 @@ body {{
             f"now: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}",
             f"send_time: {send_time}",
             f"catch_up_send: {self._cfg_bool('catch_up_send', True)}",
+            f"catch_up_on_first_start: {self._cfg_bool('catch_up_on_first_start', False)}",
             f"send_time_due_today: {due_text}",
             f"scheduled_send_at_today: {schedule_status['scheduled_send_at_today']}",
             f"send_pending_today: {schedule_status['send_pending_today']}",

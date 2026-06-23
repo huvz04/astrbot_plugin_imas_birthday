@@ -17,6 +17,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `white_umos`：群聊白名单。进入目标群发送 `/imasbd sid` 查看当前 UMO，或使用 `/imasbd bind` 自动加入。
 - `send_time`：每日发送时间，默认 `09:00`。
 - `catch_up_send`：错过当天推送时间后补发，默认开启。
+- `catch_up_on_first_start`：首次启动且已经过推送时间时是否补发，默认关闭，避免没有历史发送状态时误推生产群。
 - `timezone`：日期时区，默认 `Asia/Tokyo`。`send_time`、`today` 和每日推送日期都会按这个时区计算。
 - `include_characters`：是否包含角色，默认开启。
 - `include_kr_characters`：是否包含 `THE IDOLM@STER.KR` 真人企划成员，默认关闭。
