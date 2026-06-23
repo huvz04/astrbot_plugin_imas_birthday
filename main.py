@@ -1055,13 +1055,19 @@ class ImasBirthdayPlugin(Star):
             return ""
 
         layout = self._card_layout(len(items))
+        card_related_people = related_people if self._cfg_bool("include_related_people", False) else []
+        card_events = events if self._cfg_bool("include_events", False) else []
+        render_mode = self._card_render_mode()
+        if render_mode == "pillow":
+            return self._render_card_with_pillow(month, day, items, seiyuu, card_related_people, card_events, layout)
+
         html_text = self._birthday_card_html(
             month=month,
             day=day,
             items=items,
             seiyuu=seiyuu,
-            related_people=related_people if self._cfg_bool("include_related_people", False) else [],
-            events=events if self._cfg_bool("include_events", False) else [],
+            related_people=card_related_people,
+            events=card_events,
             layout=layout,
         )
         try:
@@ -1079,10 +1085,14 @@ class ImasBirthdayPlugin(Star):
             if prepared:
                 return prepared
             logger.warning("AstrBot html_render 返回非图片产物，尝试使用本地 Pillow 渲染生日卡片。")
-            return self._render_card_with_pillow(month, day, items, seiyuu, related_people, events, layout)
+            if render_mode == "html":
+                return ""
+            return self._render_card_with_pillow(month, day, items, seiyuu, card_related_people, card_events, layout)
         except Exception:
             logger.exception("生日卡片 html_render 渲染失败，尝试使用本地 Pillow 渲染。")
-            return self._render_card_with_pillow(month, day, items, seiyuu, related_people, events, layout)
+            if render_mode == "html":
+                return ""
+            return self._render_card_with_pillow(month, day, items, seiyuu, card_related_people, card_events, layout)
 
     async def _prepare_rendered_card(self, card_path: str) -> str:
         if not card_path:
@@ -1308,6 +1318,21 @@ class ImasBirthdayPlugin(Star):
     def _format_lines(self, category: str, values: list[str]) -> list[str]:
         label = CATEGORY_LABELS[category]
         return [f"{label}：{value}" for value in values if value]
+
+    def _card_render_mode(self) -> str:
+        mode = str(self.config.get("card_render_mode", "pillow") or "").strip().lower()
+        aliases = {
+            "local": "pillow",
+            "pil": "pillow",
+            "t2i": "auto",
+            "html_render": "auto",
+            "remote": "auto",
+        }
+        mode = aliases.get(mode, mode)
+        if mode not in {"pillow", "auto", "html"}:
+            logger.warning(f"未知 card_render_mode={mode}，改用 pillow。")
+            return "pillow"
+        return mode
 
     def _card_item(self, character: str) -> dict[str, str]:
         brand = self._character_brand(character)
@@ -1720,6 +1745,7 @@ body {{
             f"send_time_due_today: {due_text}",
             f"last_sent_date: {self._last_sent_date or '未发送'}",
             f"white_umos: {len(white_umos)}",
+            f"card_render_mode: {self._card_render_mode()}",
             f"birthday_send_mode: {self._birthday_send_mode()}",
         ]
         if self._task and self._task.done():

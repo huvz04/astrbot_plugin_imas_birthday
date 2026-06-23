@@ -64,6 +64,12 @@
     "type": "bool",
     "default": true
   },
+  "card_render_mode": {
+    "description": "生日卡片渲染方式",
+    "type": "string",
+    "default": "pillow",
+    "hint": "可选：pillow、auto、html。默认 pillow 使用本地 Pillow 渲染，样式稳定且不依赖 AstrBot t2i/html_render；auto 会先尝试 html_render，失败后回退 Pillow；html 只使用 html_render。"
+  },
   "render_card_without_character_image": {
     "description": "没有匹配到角色图片时也生成占位生日卡",
     "type": "bool",

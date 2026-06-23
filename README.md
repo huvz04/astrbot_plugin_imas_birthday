@@ -25,6 +25,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `include_related_people`：是否包含其他相关人士，默认关闭。
 - `include_events`：是否包含企划事件，默认关闭。
 - `render_card`：是否同时生成生日卡片，默认开启。
+- `card_render_mode`：生日卡片渲染方式，默认 `pillow`。可选 `pillow`、`auto`、`html`；建议保持 `pillow`，避免 AstrBot 的 t2i/html_render 端点偶发返回错误页或截出异常宽度。
 - `birthday_send_mode`：生日祝贺图片发送方式，默认 `combined_component_base64`，即文字和图片同一条消息，并绕过本地文件类型判断。
 - `enable_send_test`：是否启用图片发送兼容性测试指令，默认关闭。
 - `debug_send_test`：输出图片发送测试调试日志，默认关闭。
