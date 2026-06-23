@@ -1750,7 +1750,10 @@ body {{
     async def _get_birthdays(self) -> dict[str, dict[str, list[str]]]:
         cache = await self.get_kv_data("birthday_cache", None)
         if self._is_cache_fresh(cache):
-            return cache["data"]
+            data = self._clean_birthdays_data(cache["data"])
+            if data != cache["data"]:
+                await self._save_cache(data)
+            return data
         try:
             data = await self._fetch_birthdays()
             await self._save_cache(data)
@@ -1762,6 +1765,7 @@ body {{
             raise
 
     async def _save_cache(self, data: dict[str, dict[str, list[str]]]):
+        data = self._clean_birthdays_data(data)
         await self.put_kv_data("birthday_cache", {"updated_at": int(time.time()), "data": data})
 
     async def _load_delivery_state(self):
@@ -1808,7 +1812,30 @@ body {{
         parser = BirthdayPageParser()
         parser.feed(html)
         parser.close()
-        return parser.data
+        return self._clean_birthdays_data(parser.data)
+
+    def _clean_birthdays_data(self, data: dict[str, dict[str, list[str]]]) -> dict[str, dict[str, list[str]]]:
+        if self._cfg_bool("include_kr_characters", False):
+            return data
+        cleaned: dict[str, dict[str, list[str]]] = {}
+        removed_count = 0
+        for date_key, entry in data.items():
+            next_entry = {
+                "characters": [],
+                "seiyuu": list(entry.get("seiyuu", [])),
+                "related_people": list(entry.get("related_people", [])),
+                "events": list(entry.get("events", [])),
+            }
+            for character in self._split_people(entry.get("characters", [])):
+                if self._is_kr_character(character):
+                    removed_count += 1
+                    continue
+                if character not in next_entry["characters"]:
+                    next_entry["characters"].append(character)
+            cleaned[date_key] = next_entry
+        if removed_count:
+            logger.info(f"生日数据源清洗：已移除 KR 角色 {removed_count} 条。")
+        return cleaned
 
     def _scheduler_status_text(self) -> str:
         now = self._now()

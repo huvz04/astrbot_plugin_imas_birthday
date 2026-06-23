@@ -96,6 +96,14 @@ starlitseason/
 python .\tools\sync_character_assets.py
 ```
 
+如果想预览生日数据并检查 KR 角色过滤结果：
+
+```powershell
+python .\tools\export_birthday_preview.py
+```
+
+它会生成 `previews/birthday_preview.md`、`previews/birthday_preview_filtered.csv` 和 `previews/birthday_preview_removed_kr.csv`，方便直接搜索浏览。
+
 如果想指定图片目录：
 
 ```powershell
