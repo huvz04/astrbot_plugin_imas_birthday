@@ -1070,7 +1070,7 @@ class ImasBirthdayPlugin(Star):
                 {},
                 return_url=False,
                 options={
-                    "viewport": {"width": layout["card_width"], "height": layout["viewport_height"]},
+                    "viewport": {"width": layout["render_width"], "height": layout["viewport_height"]},
                     "type": "png",
                     "full_page": True,
                 },
@@ -1192,6 +1192,7 @@ class ImasBirthdayPlugin(Star):
         grid_gap = 12
         card_padding = 30
         card_width = card_padding * 2 + item_width * columns + grid_gap * (columns - 1)
+        render_width = max(card_width, 760)
         portrait_height = 260
         item_min_height = 348
         viewport_height = 1280
@@ -1201,6 +1202,7 @@ class ImasBirthdayPlugin(Star):
             "grid_gap": grid_gap,
             "card_padding": card_padding,
             "card_width": card_width,
+            "render_width": render_width,
             "portrait_height": portrait_height,
             "item_min_height": item_min_height,
             "viewport_height": viewport_height,
@@ -1238,10 +1240,18 @@ class ImasBirthdayPlugin(Star):
 <meta charset="utf-8">
 <style>
 * {{ box-sizing: border-box; }}
+html {{
+  margin: 0;
+  width: {card_width}px;
+  min-height: {viewport_height}px;
+  overflow: hidden;
+  background: #f5f1ea;
+}}
 body {{
   margin: 0;
   width: {card_width}px;
   min-height: {viewport_height}px;
+  overflow: hidden;
   font-family: "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   color: #20242c;
   background: #f5f1ea;
