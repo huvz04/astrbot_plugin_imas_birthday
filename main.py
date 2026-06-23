@@ -1733,14 +1733,7 @@ body {{
         send_time = str(self.config.get("send_time", "09:00"))
         send_minutes = self._parse_send_time_minutes(send_time)
         due_text = "unknown" if send_minutes is None else str(self._is_send_time_due(now, send_minutes))
-        next_send_text = "unknown"
-        next_send_date = "unknown"
-        next_send_due_now = "unknown"
-        if send_minutes is not None:
-            next_send_at, is_due_now = self._next_send_datetime(now, send_minutes)
-            next_send_text = next_send_at.strftime("%Y-%m-%d %H:%M:%S %Z")
-            next_send_date = next_send_at.strftime("%Y-%m-%d")
-            next_send_due_now = str(is_due_now)
+        schedule_status = self._send_schedule_status(now, send_minutes)
         task_alive = bool(self._task and not self._task.done())
         white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
         lines = [
@@ -1753,9 +1746,11 @@ body {{
             f"send_time: {send_time}",
             f"catch_up_send: {self._cfg_bool('catch_up_send', True)}",
             f"send_time_due_today: {due_text}",
-            f"next_send_at: {next_send_text}",
-            f"next_send_date: {next_send_date}",
-            f"next_send_due_now: {next_send_due_now}",
+            f"scheduled_send_at_today: {schedule_status['scheduled_send_at_today']}",
+            f"send_pending_today: {schedule_status['send_pending_today']}",
+            f"next_send_at: {schedule_status['next_send_at']}",
+            f"next_send_date: {schedule_status['next_send_date']}",
+            f"next_regular_send_at: {schedule_status['next_regular_send_at']}",
             f"last_sent_date: {self._last_sent_date or '未发送'}",
             f"white_umos: {len(white_umos)}",
             f"card_render_mode: {self._card_render_mode()}",
@@ -1785,7 +1780,15 @@ body {{
             return now_minutes >= send_minutes
         return now_minutes == send_minutes
 
-    def _next_send_datetime(self, now: datetime, send_minutes: int) -> tuple[datetime, bool]:
+    def _send_schedule_status(self, now: datetime, send_minutes: int | None) -> dict[str, str]:
+        if send_minutes is None:
+            return {
+                "scheduled_send_at_today": "unknown",
+                "send_pending_today": "unknown",
+                "next_send_at": "unknown",
+                "next_send_date": "unknown",
+                "next_regular_send_at": "unknown",
+            }
         scheduled_today = now.replace(
             hour=send_minutes // 60,
             minute=send_minutes % 60,
@@ -1793,12 +1796,33 @@ body {{
             microsecond=0,
         )
         today_key = now.strftime("%Y-%m-%d")
+        tomorrow_scheduled = scheduled_today + timedelta(days=1)
+        scheduled_today_text = scheduled_today.strftime("%Y-%m-%d %H:%M:%S %Z")
+        tomorrow_text = tomorrow_scheduled.strftime("%Y-%m-%d %H:%M:%S %Z")
         if self._last_sent_date != today_key:
             if self._is_send_time_due(now, send_minutes):
-                return scheduled_today, True
+                return {
+                    "scheduled_send_at_today": scheduled_today_text,
+                    "send_pending_today": "True",
+                    "next_send_at": f"ASAP catch-up for {today_key}",
+                    "next_send_date": today_key,
+                    "next_regular_send_at": tomorrow_text,
+                }
             if now < scheduled_today:
-                return scheduled_today, False
-        return scheduled_today + timedelta(days=1), False
+                return {
+                    "scheduled_send_at_today": scheduled_today_text,
+                    "send_pending_today": "False",
+                    "next_send_at": scheduled_today_text,
+                    "next_send_date": today_key,
+                    "next_regular_send_at": scheduled_today_text,
+                }
+        return {
+            "scheduled_send_at_today": scheduled_today_text,
+            "send_pending_today": "False",
+            "next_send_at": tomorrow_text,
+            "next_send_date": tomorrow_scheduled.strftime("%Y-%m-%d"),
+            "next_regular_send_at": tomorrow_text,
+        }
 
     def _timezone_name(self) -> str:
         return str(self.config.get("timezone", "Asia/Tokyo") or "Asia/Tokyo")
