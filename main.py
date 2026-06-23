@@ -1054,6 +1054,7 @@ class ImasBirthdayPlugin(Star):
         if not items and not self._cfg_bool("render_card_without_character_image", True):
             return ""
 
+        layout = self._card_layout(len(items))
         html_text = self._birthday_card_html(
             month=month,
             day=day,
@@ -1061,6 +1062,7 @@ class ImasBirthdayPlugin(Star):
             seiyuu=seiyuu,
             related_people=related_people if self._cfg_bool("include_related_people", False) else [],
             events=events if self._cfg_bool("include_events", False) else [],
+            layout=layout,
         )
         try:
             card_path = await self.html_render(
@@ -1068,7 +1070,7 @@ class ImasBirthdayPlugin(Star):
                 {},
                 return_url=False,
                 options={
-                    "viewport": {"width": 560, "height": 1280},
+                    "viewport": {"width": layout["card_width"], "height": layout["viewport_height"]},
                     "type": "png",
                     "full_page": True,
                 },
@@ -1184,6 +1186,26 @@ class ImasBirthdayPlugin(Star):
     def _join_names(self, names: list[str]) -> str:
         return "、".join(names)
 
+    def _card_layout(self, item_count: int) -> dict[str, int]:
+        columns = 1 if item_count <= 1 else 2
+        item_width = 280 if columns == 1 else 210
+        grid_gap = 12
+        card_padding = 30
+        card_width = card_padding * 2 + item_width * columns + grid_gap * (columns - 1)
+        portrait_height = 260
+        item_min_height = 348
+        viewport_height = 1280
+        return {
+            "columns": columns,
+            "item_width": item_width,
+            "grid_gap": grid_gap,
+            "card_padding": card_padding,
+            "card_width": card_width,
+            "portrait_height": portrait_height,
+            "item_min_height": item_min_height,
+            "viewport_height": viewport_height,
+        }
+
     def _birthday_card_html(
         self,
         month: int,
@@ -1192,7 +1214,16 @@ class ImasBirthdayPlugin(Star):
         seiyuu: list[str],
         related_people: list[str],
         events: list[str],
+        layout: dict[str, int],
     ) -> str:
+        columns = layout["columns"]
+        item_width = layout["item_width"]
+        grid_gap = layout["grid_gap"]
+        card_padding = layout["card_padding"]
+        card_width = layout["card_width"]
+        portrait_height = layout["portrait_height"]
+        item_min_height = layout["item_min_height"]
+        viewport_height = layout["viewport_height"]
         title = html.escape(str(self.config.get("card_title", "Happy Birthday")))
         subtitle = html.escape(str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")))
         item_html = "\n".join(self._birthday_card_item_html(item) for item in items)
@@ -1209,16 +1240,16 @@ class ImasBirthdayPlugin(Star):
 * {{ box-sizing: border-box; }}
 body {{
   margin: 0;
-  width: 560px;
-  min-height: 1280px;
+  width: {card_width}px;
+  min-height: {viewport_height}px;
   font-family: "Noto Sans CJK SC", "Microsoft YaHei", "Segoe UI", sans-serif;
   color: #20242c;
   background: #f5f1ea;
 }}
 .card {{
-  width: 560px;
-  min-height: 1280px;
-  padding: 30px;
+  width: {card_width}px;
+  min-height: {viewport_height}px;
+  padding: {card_padding}px;
   background:
     radial-gradient(circle at 8% 14%, rgba(240,90,126,.30), transparent 30%),
     radial-gradient(circle at 36% 0%, rgba(242,184,75,.26), transparent 33%),
@@ -1261,18 +1292,19 @@ body {{
 }}
 .grid {{
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat({columns}, {item_width}px);
   justify-content: center;
-  gap: 12px;
+  gap: {grid_gap}px;
   margin-top: 20px;
 }}
 .idol:nth-child(odd):last-child {{
   grid-column: 1 / -1;
-  width: calc(50% - 6px);
+  width: {item_width}px;
   justify-self: center;
 }}
 .idol {{
-  min-height: 348px;
+  width: {item_width}px;
+  min-height: {item_min_height}px;
   background: rgba(255,255,255,.58);
   border: 1px solid rgba(255,255,255,.70);
   border-radius: 8px;
@@ -1284,7 +1316,7 @@ body {{
   -webkit-backdrop-filter: blur(18px) saturate(1.18);
 }}
 .portrait {{
-  height: 260px;
+  height: {portrait_height}px;
   display: flex;
   align-items: end;
   justify-content: center;
@@ -1335,7 +1367,8 @@ body {{
 .meta {{
   margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat({columns}, {item_width}px);
+  justify-content: center;
   gap: 10px;
 }}
 .meta-block {{
