@@ -1413,8 +1413,11 @@ class ImasBirthdayPlugin(Star):
 
     def _character_brand(self, character: str) -> str:
         character = CHARACTER_NAME_ALIASES.get(character, character)
+        base_character = self._base_character_name(character)
         if character in CHARACTER_BRAND_OVERRIDES:
             return CHARACTER_BRAND_OVERRIDES[character]
+        if base_character in CHARACTER_BRAND_OVERRIDES:
+            return CHARACTER_BRAND_OVERRIDES[base_character]
         filename = self._character_asset_filename(character).lower()
         if "/" in filename or "\\" in filename:
             prefix = re.split(r"[/\\]", filename, maxsplit=1)[0].lower()
@@ -1426,12 +1429,17 @@ class ImasBirthdayPlugin(Star):
             character,
             CHARACTER_NAME_ALIASES.get(character, character),
             CHARACTER_REVERSE_ALIASES.get(character, character),
+            self._base_character_name(character),
+            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
         ]
         for candidate in dict.fromkeys(candidates):
             filename = CHARACTER_IMAGE_ASSETS.get(candidate)
             if filename:
                 return filename
         return ""
+
+    def _base_character_name(self, character: str) -> str:
+        return re.sub(r"\s*[（(][^（）()]+[）)]\s*", "", character).strip()
 
     def _normalize_brand_key(self, value: str) -> str:
         return re.sub(r"[^0-9a-zα]+", "_", value.lower()).strip("_")
@@ -1443,10 +1451,14 @@ class ImasBirthdayPlugin(Star):
         return [character for character in characters if not self._is_kr_character(character)]
 
     def _is_kr_character(self, character: str) -> bool:
+        base_character = self._base_character_name(character)
         normalized = CHARACTER_NAME_ALIASES.get(character, character)
+        normalized_base = CHARACTER_NAME_ALIASES.get(base_character, base_character)
         return (
             character in KR_CHARACTER_NAMES
             or normalized in KR_CHARACTER_NAMES
+            or base_character in KR_CHARACTER_NAMES
+            or normalized_base in KR_CHARACTER_NAMES
             or self._character_brand(normalized) == "KR"
         )
 
