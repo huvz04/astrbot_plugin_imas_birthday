@@ -1075,17 +1075,24 @@ class ImasBirthdayPlugin(Star):
                     "full_page": True,
                 },
             )
-            return await self._prepare_rendered_card(card_path)
+            prepared = await self._prepare_rendered_card(card_path)
+            if prepared:
+                return prepared
+            logger.warning("AstrBot html_render 返回非图片产物，尝试使用本地 Pillow 渲染生日卡片。")
+            return self._render_card_with_pillow(month, day, items, seiyuu, related_people, events, layout)
         except Exception:
-            logger.exception("生日卡片渲染失败，回退为纯文字。")
-            return ""
+            logger.exception("生日卡片 html_render 渲染失败，尝试使用本地 Pillow 渲染。")
+            return self._render_card_with_pillow(month, day, items, seiyuu, related_people, events, layout)
 
     async def _prepare_rendered_card(self, card_path: str) -> str:
         if not card_path:
             return ""
         path = Path(str(card_path).replace("file:///", "", 1).replace("file://", "", 1))
         if not await self._wait_for_stable_image(path):
-            logger.warning(self._image_send_debug("生日卡片渲染产物无效，跳过发送图片", str(card_path), str(path)))
+            logger.warning(
+                self._image_send_debug("生日卡片渲染产物无效", str(card_path), str(path))
+                + self._invalid_render_excerpt(path)
+            )
             return ""
         suffix = self._image_suffix_from_magic(path) or path.suffix.lower() or ".png"
         destination = (
@@ -1099,6 +1106,205 @@ class ImasBirthdayPlugin(Star):
         logger.info(self._image_send_debug("生日卡片渲染产物已准备", str(card_path), str(destination)))
         return str(destination)
 
+    def _render_card_with_pillow(
+        self,
+        month: int,
+        day: int,
+        items: list[dict[str, str]],
+        seiyuu: list[str],
+        related_people: list[str],
+        events: list[str],
+        layout: dict[str, int],
+    ) -> str:
+        try:
+            from PIL import Image, ImageDraw, ImageFilter, ImageFont
+        except Exception:
+            logger.exception("本地 Pillow 渲染不可用，请确认 requirements.txt 中的 Pillow 已安装。")
+            return ""
+
+        width = layout["card_width"]
+        padding = layout["card_padding"]
+        gap = layout["grid_gap"]
+        item_width = layout["item_width"]
+        portrait_height = layout["portrait_height"]
+        card_height = portrait_height + 86
+        max_columns = layout["columns"]
+        rows = [items[index : index + max_columns] for index in range(0, len(items), max_columns)] or [[]]
+        meta_blocks = [
+            ("声优", seiyuu),
+            ("相关人士", related_people),
+            ("事件", events),
+        ]
+        meta_blocks = [(title, values) for title, values in meta_blocks if values]
+        meta_rows = [meta_blocks[index : index + max_columns] for index in range(0, len(meta_blocks), max_columns)]
+        height = max(
+            720,
+            padding * 2
+            + 102
+            + 20
+            + len(rows) * card_height
+            + max(0, len(rows) - 1) * gap
+            + (14 + len(meta_rows) * 72 + max(0, len(meta_rows) - 1) * 10 if meta_rows else 0)
+            + 54,
+        )
+
+        image = Image.new("RGB", (width, height), "#f7f3ec")
+        glow = Image.new("RGBA", (width, height), (255, 255, 255, 0))
+        glow_draw = ImageDraw.Draw(glow)
+        for cx, cy, radius, color in [
+            (40, 80, 220, (240, 90, 126, 70)),
+            (290, 0, 240, (242, 184, 75, 56)),
+            (540, 70, 250, (47, 127, 211, 54)),
+            (725, 150, 240, (141, 114, 217, 48)),
+            (120, height - 120, 260, (26, 169, 130, 54)),
+            (610, height - 90, 270, (240, 138, 51, 52)),
+        ]:
+            glow_draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=color)
+        image = Image.alpha_composite(image.convert("RGBA"), glow.filter(ImageFilter.GaussianBlur(34))).convert("RGB")
+        draw = ImageDraw.Draw(image)
+
+        title_font = self._pil_font(ImageFont, 38, bold=True)
+        subtitle_font = self._pil_font(ImageFont, 14)
+        date_font = self._pil_font(ImageFont, 32, bold=True)
+        small_font = self._pil_font(ImageFont, 12, bold=True)
+        name_font = self._pil_font(ImageFont, 20, bold=True)
+        meta_title_font = self._pil_font(ImageFont, 13, bold=True)
+        meta_font = self._pil_font(ImageFont, 16, bold=True)
+        footer_font = self._pil_font(ImageFont, 10)
+
+        y = padding
+        draw.text((padding, y), str(self.config.get("card_title", "Happy Birthday")), fill="#20242c", font=title_font)
+        draw.text((padding, y + 44), str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")), fill="#5b6472", font=subtitle_font)
+        date_text = f"{month:02d}.{day:02d}"
+        date_bbox = draw.textbbox((0, 0), date_text, font=date_font)
+        date_x = width - padding - (date_bbox[2] - date_bbox[0])
+        draw.text((date_x, y + 3), date_text, fill="#f05a7e", font=date_font)
+        draw.text((width - padding - 58, y + 43), "Birthday", fill="#5b6472", font=small_font)
+        draw.line((padding, y + 82, width - padding, y + 82), fill=(32, 36, 44, 36), width=3)
+        y += 102
+
+        for row in rows:
+            row_width = len(row) * item_width + max(0, len(row) - 1) * gap
+            x = (width - row_width) // 2
+            for item in row:
+                self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
+                x += item_width + gap
+            y += card_height + gap
+
+        if meta_rows:
+            y += 2
+        for row in meta_rows:
+            row_width = len(row) * item_width + max(0, len(row) - 1) * 10
+            x = (width - row_width) // 2
+            for title, values in row:
+                draw.rounded_rectangle((x, y, x + item_width, y + 62), radius=6, fill=(255, 255, 255), outline=(232, 232, 232))
+                draw.text((x + 14, y + 10), title, fill="#5b6472", font=meta_title_font)
+                text = "、".join(values)
+                draw.text((x + 14, y + 32), text, fill="#20242c", font=meta_font)
+                x += item_width + 10
+            y += 72
+
+        footer = (
+            "Character images are sourced from Moegirlpedia and local assets prepared by the bot owner. "
+            "Thanks to Moegirlpedia. THE IDOLM@STER rights belong to their respective owners."
+        )
+        footer_lines = self._pil_wrap_text(draw, footer, footer_font, width - padding * 2)
+        footer_y = min(height - padding - len(footer_lines) * 13, y + 12)
+        for line in footer_lines:
+            draw.text((padding, footer_y), line, fill="#6b7280", font=footer_font)
+            footer_y += 13
+
+        destination = (
+            Path(tempfile.gettempdir())
+            / "astrbot_plugin_imas_birthday"
+            / "rendered_cards"
+            / f"pillow_card_{int(time.time() * 1000)}_{month:02d}{day:02d}.png"
+        )
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        image.save(destination, format="PNG")
+        logger.info(self._image_send_debug("生日卡片本地 Pillow 渲染产物已准备", str(destination), str(destination)))
+        return str(destination)
+
+    def _draw_pillow_idol_card(self, draw: Any, canvas: Any, item: dict[str, str], x: int, y: int, width: int, portrait_height: int, height: int, name_font: Any, small_font: Any) -> None:
+        brand_rgb = self._hex_rgb(item.get("color", ""), (99, 111, 129))
+        draw.rounded_rectangle((x, y, x + width, y + height), radius=8, fill=(255, 255, 255), outline=(232, 232, 232))
+        image_path = item.get("path", "")
+        if image_path and Path(image_path).exists():
+            try:
+                portrait = self._pil_cover_image(Path(image_path), width, portrait_height)
+                canvas.paste(portrait, (x, y))
+            except Exception:
+                logger.exception(f"本地卡片读取角色图失败：{image_path}")
+                draw.rectangle((x, y, x + width, y + portrait_height), fill=brand_rgb)
+        else:
+            draw.rectangle((x, y, x + width, y + portrait_height), fill=brand_rgb)
+            first = item.get("name", "?")[:1]
+            bbox = draw.textbbox((0, 0), first, font=name_font)
+            draw.text((x + (width - bbox[2] + bbox[0]) / 2, y + portrait_height / 2 - 18), first, fill=(255, 255, 255), font=name_font)
+        draw.rounded_rectangle((x + 12, y + portrait_height + 10, x + width - 12, y + portrait_height + 15), radius=4, fill=brand_rgb)
+        draw.text((x + 12, y + portrait_height + 25), item.get("name", ""), fill="#20242c", font=name_font)
+        draw.text((x + 12, y + portrait_height + 53), item.get("label", ""), fill="#5b6472", font=small_font)
+
+    def _pil_cover_image(self, path: Path, width: int, height: int) -> Any:
+        from PIL import Image
+
+        source = Image.open(path).convert("RGB")
+        scale = max(width / source.width, height / source.height)
+        resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+        resized = source.resize((max(1, int(source.width * scale)), max(1, int(source.height * scale))), resampling)
+        left = max(0, (resized.width - width) // 2)
+        top = 0
+        return resized.crop((left, top, left + width, top + height))
+
+    def _pil_font(self, image_font: Any, size: int, bold: bool = False) -> Any:
+        candidates = [
+            r"C:\Windows\Fonts\msyhbd.ttc" if bold else r"C:\Windows\Fonts\msyh.ttc",
+            r"C:\Windows\Fonts\simhei.ttf" if bold else r"C:\Windows\Fonts\simsun.ttc",
+            r"C:\Windows\Fonts\YuGothB.ttc" if bold else r"C:\Windows\Fonts\YuGothR.ttc",
+        ]
+        for candidate in candidates:
+            if candidate and Path(candidate).exists():
+                try:
+                    return image_font.truetype(candidate, size)
+                except Exception:
+                    continue
+        return image_font.load_default()
+
+    def _pil_wrap_text(self, draw: Any, text: str, font: Any, max_width: int) -> list[str]:
+        lines: list[str] = []
+        current = ""
+        for char in text:
+            test = current + char
+            bbox = draw.textbbox((0, 0), test, font=font)
+            if current and bbox[2] - bbox[0] > max_width:
+                lines.append(current)
+                current = char
+            else:
+                current = test
+        if current:
+            lines.append(current)
+        return lines
+
+    def _hex_rgb(self, value: str, fallback: tuple[int, int, int]) -> tuple[int, int, int]:
+        value = value.strip().lstrip("#")
+        if len(value) == 6:
+            try:
+                return tuple(int(value[index : index + 2], 16) for index in (0, 2, 4))  # type: ignore[return-value]
+            except ValueError:
+                return fallback
+        return fallback
+
+    def _invalid_render_excerpt(self, path: Path) -> str:
+        try:
+            raw = path.read_bytes()[:500]
+            if raw.lstrip().lower().startswith((b"<!doctype", b"<html")):
+                text = raw.decode("utf-8", errors="replace")
+                text = re.sub(r"\s+", " ", text).strip()
+                return f", html_excerpt={text[:220]}"
+        except Exception:
+            return ""
+        return ""
+
     def _format_lines(self, category: str, values: list[str]) -> list[str]:
         label = CATEGORY_LABELS[category]
         return [f"{label}：{value}" for value in values if value]
@@ -1111,6 +1317,7 @@ class ImasBirthdayPlugin(Star):
             "brand": brand,
             "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
             "color": BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]),
+            "path": str(image_path) if image_path else "",
             "image": self._image_data_uri(image_path) if image_path else "",
         }
 
