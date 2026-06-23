@@ -1958,6 +1958,12 @@ body {{
         return bool(self.config.get(key, default))
 
     def _parse_date_text(self, text: str) -> tuple[int, int] | None:
+        compact_match = re.fullmatch(r"\s*(\d{2})(\d{2})\s*", text)
+        if compact_match:
+            month, day = int(compact_match.group(1)), int(compact_match.group(2))
+            if month < 1 or month > 12 or day < 1 or day > 31:
+                return None
+            return month, day
         match = re.fullmatch(r"\s*(\d{1,2})[-/月](\d{1,2})(?:日)?\s*", text)
         if not match:
             return None

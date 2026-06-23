@@ -167,6 +167,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 /imasbd bind
 /imasbd today
 /imasbd date 06-22
+/imasbd date 0606
 /imasbd refresh
 /imasbd assets
 /imasbd assets 06-22
