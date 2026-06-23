@@ -379,6 +379,8 @@ class ImasBirthdayPlugin(Star):
         self.assets_dir = self._resolve_character_assets_dir()
         self._task: asyncio.Task | None = None
         self._last_sent_date = ""
+        self._pending_retry_date = ""
+        self._pending_retry_umos: set[str] = set()
         self._scheduler_started_at = ""
 
     @filter.on_astrbot_loaded()
@@ -640,12 +642,32 @@ class ImasBirthdayPlugin(Star):
         result = await self._build_result(now.month, now.day)
         if not result["message"]:
             logger.info(f"今天没有偶像大师生日提醒内容，跳过推送：date={today_key}, timezone={now.tzname()}")
+            self._pending_retry_date = ""
+            self._pending_retry_umos.clear()
             self._last_sent_date = today_key
             return
 
-        logger.info(f"偶像大师生日提醒开始推送：date={today_key}, timezone={now.tzname()}, targets={len(white_umos)}")
-        for umo in white_umos:
-            await self._send_active_message(umo, result["message"], result["card_path"])
+        targets = white_umos
+        if self._pending_retry_date == today_key and self._pending_retry_umos:
+            targets = [umo for umo in white_umos if umo in self._pending_retry_umos]
+        if not targets:
+            logger.warning(f"偶像大师生日提醒没有可重试目标，清理 pending 状态：date={today_key}")
+            self._pending_retry_date = ""
+            self._pending_retry_umos.clear()
+            return
+
+        logger.info(f"偶像大师生日提醒开始推送：date={today_key}, timezone={now.tzname()}, targets={len(targets)}")
+        failed_umos: list[str] = []
+        for umo in targets:
+            if not await self._send_active_message(umo, result["message"], result["card_path"]):
+                failed_umos.append(umo)
+        if failed_umos:
+            self._pending_retry_date = today_key
+            self._pending_retry_umos = set(failed_umos)
+            logger.warning(f"偶像大师生日提醒部分目标发送失败，保留待重试状态：date={today_key}, failed={len(failed_umos)}")
+            return
+        self._pending_retry_date = ""
+        self._pending_retry_umos.clear()
         self._last_sent_date = today_key
 
     async def _send_event_birthday_message_for_date(self, event: AstrMessageEvent, month: int, day: int):
@@ -656,20 +678,20 @@ class ImasBirthdayPlugin(Star):
             return
         await self._send_event_birthday_message(event, result["message"], result["card_path"])
 
-    async def _send_active_message(self, umo: str, message: str, card_path: str = ""):
-        await self._send_birthday_message(umo, message, card_path)
+    async def _send_active_message(self, umo: str, message: str, card_path: str = "") -> bool:
+        return await self._send_birthday_message(umo, message, card_path)
 
     async def _send_event_birthday_message(self, event: AstrMessageEvent, message: str, card_path: str = ""):
         await self._send_birthday_message(event.unified_msg_origin, message, card_path)
 
-    async def _send_birthday_message(self, umo: str, message: str, card_path: str = ""):
+    async def _send_birthday_message(self, umo: str, message: str, card_path: str = "") -> bool:
         mode = self._birthday_send_mode()
         if mode != "split_file_image" and card_path:
             try:
                 ok = await self.context.send_message(umo, self._build_birthday_message_chain(message, card_path, mode))
                 if not ok:
                     logger.warning(f"偶像大师生日提醒发送失败，未找到平台：{umo}")
-                return
+                return bool(ok)
             except Exception:
                 logger.exception(f"偶像大师生日提醒组合消息发送失败，降级为分开发送：{mode}")
                 if mode != "combined_component_base64":
@@ -680,20 +702,25 @@ class ImasBirthdayPlugin(Star):
                         )
                         if not ok:
                             logger.warning(f"偶像大师生日提醒 base64 重试发送失败，未找到平台：{umo}")
-                        return
+                        return bool(ok)
                     except Exception:
                         logger.exception("偶像大师生日提醒 base64 组合消息重试失败，继续降级为分开发送。")
 
-        ok = await self.context.send_message(umo, MessageChain().message(message))
-        if not ok:
-            logger.warning(f"偶像大师生日提醒文字发送失败，未找到平台：{umo}")
-            return
-        if not card_path:
-            return
         try:
-            await self.context.send_message(umo, self._build_image_message_chain(card_path))
+            ok = await self.context.send_message(umo, MessageChain().message(message))
+            if not ok:
+                logger.warning(f"偶像大师生日提醒文字发送失败，未找到平台：{umo}")
+                return False
+        except Exception:
+            logger.exception(f"偶像大师生日提醒文字发送异常：{umo}")
+            return False
+        if not card_path:
+            return True
+        try:
+            return bool(await self.context.send_message(umo, self._build_image_message_chain(card_path)))
         except Exception:
             logger.exception("发送生日卡片图片失败，已保留文字发送结果。")
+            return False
 
     def _build_image_message_chain(self, card_path: str) -> MessageChain:
         chain = MessageChain()
@@ -1748,6 +1775,7 @@ body {{
             f"send_time_due_today: {due_text}",
             f"scheduled_send_at_today: {schedule_status['scheduled_send_at_today']}",
             f"send_pending_today: {schedule_status['send_pending_today']}",
+            f"pending_retry_umos: {len(self._pending_retry_umos) if self._pending_retry_date == now.strftime('%Y-%m-%d') else 0}",
             f"next_send_at: {schedule_status['next_send_at']}",
             f"next_send_date: {schedule_status['next_send_date']}",
             f"next_regular_send_at: {schedule_status['next_regular_send_at']}",
@@ -1801,6 +1829,14 @@ body {{
         tomorrow_text = tomorrow_scheduled.strftime("%Y-%m-%d %H:%M:%S %Z")
         if self._last_sent_date != today_key:
             if self._is_send_time_due(now, send_minutes):
+                if self._pending_retry_date == today_key and self._pending_retry_umos:
+                    return {
+                        "scheduled_send_at_today": scheduled_today_text,
+                        "send_pending_today": "True",
+                        "next_send_at": f"ASAP retry for {today_key}",
+                        "next_send_date": today_key,
+                        "next_regular_send_at": tomorrow_text,
+                    }
                 return {
                     "scheduled_send_at_today": scheduled_today_text,
                     "send_pending_today": "True",
