@@ -1070,7 +1070,7 @@ class ImasBirthdayPlugin(Star):
                 options={
                     "viewport": {"width": 980, "height": 1280},
                     "type": "png",
-                    "fullPage": True,
+                    "full_page": True,
                 },
             )
             return await self._prepare_rendered_card(card_path)
