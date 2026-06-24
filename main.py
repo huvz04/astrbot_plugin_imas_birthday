@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import contextlib
+import difflib
 import importlib.util
 import html
 import os
@@ -101,6 +102,15 @@ BRAND_COLORS = {
     "KR": "#d94a4a",
     "OTHER": "#5b6472",
 }
+
+BIRTHDAY_BACKGROUND_BRANDS = [
+    "THE_IDOLMASTER",
+    "CINDERELLA_GIRLS",
+    "MILLION_LIVE",
+    "SIDEM",
+    "SHINY_COLORS",
+    "GAKUEN_IDOLMASTER",
+]
 
 BRAND_LABELS = {
     "THE_IDOLMASTER": "THE IDOLM@STER",
@@ -503,6 +513,16 @@ class ImasBirthdayPlugin(Star):
         yield event.plain_result(await self._assets_text(month, day))
         return
 
+    @imasbd.command("find")
+    async def imasbd_find(self, event: AstrMessageEvent, query: str = ""):
+        """按角色名反查生日，支持轻量模糊查询。"""
+        self._stop_event(event)
+        result = await self._build_find_character_result(query)
+        if not result["message"]:
+            yield event.plain_result(result["error"])
+            return
+        await self._send_event_birthday_message(event, result["message"], result["card_path"])
+
     @filter.permission_type(filter.PermissionType.ADMIN)
     @imasbd.command("migrate-assets")
     async def imasbd_migrate_assets(self, event: AstrMessageEvent, source_dir: str = ""):
@@ -553,6 +573,128 @@ class ImasBirthdayPlugin(Star):
                 lines.append(f"MISS {character}: {mapped or '未生成映射'} -> {expected}")
         return "\n".join(lines)
 
+    async def _find_character_text(self, query: str) -> str:
+        query, matches, error = await self._find_character_matches(query)
+        if error:
+            return error
+
+        best_score, best = matches[0]
+        lines = [f"查询：{query}"]
+        if self._normalize_character_query(best["name"]) != self._normalize_character_query(query):
+            lines.append(f"是否在找：{best['name']}")
+        else:
+            lines.append(f"找到：{best['name']}")
+
+        for score, record in matches[:5]:
+            marker = "★ " if record is best else "  "
+            lines.append(
+                f"{marker}{record['name']}：{self._format_date_key(record['date_key'])}"
+                f"（{record['brand_label']}，匹配度 {score:.2f}）"
+            )
+        if len(matches) > 5:
+            lines.append(f"还有 {len(matches) - 5} 个相近结果，换更完整的名字可以缩小范围。")
+        return "\n".join(lines)
+
+    async def _build_find_character_result(self, query: str) -> dict[str, str]:
+        query, matches, error = await self._find_character_matches(query)
+        if error:
+            return {"message": "", "card_path": "", "error": error}
+
+        best_score, best = matches[0]
+        month, day = self._month_day_from_date_key(best["date_key"])
+        if not month or not day:
+            return {"message": "", "card_path": "", "error": f"找到 {best['name']}，但生日日期格式异常：{best['date_key']}"}
+
+        entry = {
+            "characters": [best["name"]],
+            "seiyuu": [],
+            "related_people": [],
+            "events": [],
+        }
+        message = self._build_message_from_entry(month, day, entry)
+        if not message:
+            return {"message": "", "card_path": "", "error": f"找到 {best['name']}，但当前模板没有生成可发送内容。"}
+
+        if self._normalize_character_query(best["name"]) != self._normalize_character_query(query):
+            message = f"是否在找：{best['name']}\n{message}"
+
+        card_path = ""
+        if self._cfg_bool("render_card", True):
+            card_path = await self._render_card(month, day, entry)
+        return {"message": message, "card_path": card_path, "error": ""}
+
+    async def _find_character_matches(self, query: str) -> tuple[str, list[tuple[float, dict[str, str]]], str]:
+        query = clean_text(query or "")
+        if not query:
+            return query, [], "请提供要查询的角色名，例如：/imasbd find 天海春香"
+
+        data = await self._get_birthdays()
+        records = self._character_birthday_records(data)
+        if not records:
+            return query, [], "当前生日缓存里没有可查询的角色。"
+
+        query_key = self._normalize_character_query(query)
+        matches: list[tuple[float, dict[str, str]]] = []
+        for record in records:
+            name_key = self._normalize_character_query(record["name"])
+            base_key = self._normalize_character_query(self._base_character_name(record["name"]))
+            keys = [name_key, base_key]
+            score = max(self._character_match_score(query_key, key) for key in keys if key)
+            if score >= 0.45:
+                matches.append((score, record))
+
+        matches.sort(key=lambda item: (-item[0], item[1]["date_key"], item[1]["name"]))
+        if not matches:
+            return query, [], f"没有找到「{query}」对应的小偶像生日。"
+        return query, matches, ""
+
+    def _character_birthday_records(self, data: dict[str, dict[str, list[str]]]) -> list[dict[str, str]]:
+        records_by_name: dict[str, dict[str, str]] = {}
+        for date_key, entry in data.items():
+            for character in self._visible_characters(entry):
+                name = self._base_character_name(character)
+                if not name:
+                    continue
+                brand = self._character_brand(name)
+                record = {
+                    "name": name,
+                    "date_key": date_key,
+                    "brand_label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
+                }
+                previous = records_by_name.get(name)
+                if previous is None or date_key < previous["date_key"]:
+                    records_by_name[name] = record
+        return list(records_by_name.values())
+
+    def _normalize_character_query(self, text: str) -> str:
+        text = CHARACTER_NAME_ALIASES.get(text, text)
+        text = self._base_character_name(text)
+        text = text.lower()
+        return re.sub(r"[\s·・．.。\-_/＿—~～（）()【】\[\]「」『』]+", "", text)
+
+    def _character_match_score(self, query_key: str, name_key: str) -> float:
+        if not query_key or not name_key:
+            return 0.0
+        if query_key == name_key:
+            return 1.0
+        if query_key in name_key or name_key in query_key:
+            return 0.92
+        return difflib.SequenceMatcher(None, query_key, name_key, autojunk=False).ratio()
+
+    def _format_date_key(self, date_key: str) -> str:
+        try:
+            month_text, day_text = date_key.split("-", 1)
+            return f"{int(month_text)}月{int(day_text)}日（{date_key}）"
+        except Exception:
+            return date_key
+
+    def _month_day_from_date_key(self, date_key: str) -> tuple[int, int] | tuple[None, None]:
+        try:
+            month_text, day_text = date_key.split("-", 1)
+            return int(month_text), int(day_text)
+        except Exception:
+            return None, None
+
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def imasbd_text_fallback(self, event: AstrMessageEvent):
         """Fallback for adapters that log /imasbd text but do not dispatch command groups."""
@@ -592,6 +734,14 @@ class ImasBirthdayPlugin(Star):
             now = self._now()
             yield event.plain_result(await self._assets_text(now.month, now.day))
             return
+        if subcommand == "find":
+            query = " ".join(args[1:]) if len(args) > 1 else ""
+            result = await self._build_find_character_result(query)
+            if not result["message"]:
+                yield event.plain_result(result["error"])
+                return
+            await self._send_event_birthday_message(event, result["message"], result["card_path"])
+            return
         if subcommand == "sendtest":
             if not self._cfg_bool("enable_send_test", False):
                 yield event.plain_result("发送测试默认关闭。请先在插件配置中打开 enable_send_test。")
@@ -607,6 +757,7 @@ class ImasBirthdayPlugin(Star):
             "/imasbd today\n"
             "/imasbd date 06-22\n"
             "/imasbd assets 06-22\n"
+            "/imasbd find 天海春香\n"
             "/imasbd sendtest"
         )
 
@@ -1203,19 +1354,7 @@ class ImasBirthdayPlugin(Star):
             + 54,
         )
 
-        image = Image.new("RGB", (width, height), "#f7f3ec")
-        glow = Image.new("RGBA", (width, height), (255, 255, 255, 0))
-        glow_draw = ImageDraw.Draw(glow)
-        for cx, cy, radius, color in [
-            (40, 80, 220, (240, 90, 126, 70)),
-            (290, 0, 240, (242, 184, 75, 56)),
-            (540, 70, 250, (47, 127, 211, 54)),
-            (725, 150, 240, (141, 114, 217, 48)),
-            (120, height - 120, 260, (26, 169, 130, 54)),
-            (610, height - 90, 270, (240, 138, 51, 52)),
-        ]:
-            glow_draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=color)
-        image = Image.alpha_composite(image.convert("RGBA"), glow.filter(ImageFilter.GaussianBlur(34))).convert("RGB")
+        image = self._pillow_six_brand_background(Image, ImageDraw, ImageFilter, width, height)
         draw = ImageDraw.Draw(image)
 
         title_font = self._pil_font(ImageFont, 38, bold=True)
@@ -1279,6 +1418,27 @@ class ImasBirthdayPlugin(Star):
         image.save(destination, format="PNG")
         logger.info(self._image_send_debug("生日卡片本地 Pillow 渲染产物已准备", str(destination), str(destination)))
         return str(destination)
+
+    def _pillow_six_brand_background(self, image_module: Any, image_draw: Any, image_filter: Any, width: int, height: int) -> Any:
+        base = image_module.new("RGBA", (width, height), "#f7f3ec")
+        sectors = image_module.new("RGBA", (width, height), (255, 255, 255, 0))
+        draw = image_draw.Draw(sectors)
+        radius = int(((width * width + height * height) ** 0.5) * 0.72)
+        cx = width // 2
+        cy = height // 2
+        bbox = (cx - radius, cy - radius, cx + radius, cy + radius)
+        for index, brand in enumerate(BIRTHDAY_BACKGROUND_BRANDS):
+            rgb = self._hex_rgb(BRAND_COLORS[brand], (120, 130, 145))
+            start = -90 + index * 60
+            draw.pieslice(bbox, start=start, end=start + 60, fill=(*rgb, 104))
+
+        softened = sectors.filter(image_filter.GaussianBlur(32))
+        image = image_module.alpha_composite(base, softened)
+        frost = image_module.new("RGBA", (width, height), (255, 255, 255, 100))
+        image = image_module.alpha_composite(image, frost)
+        veil = image_module.new("RGBA", (width, height), (255, 248, 238, 34))
+        image = image_module.alpha_composite(image, veil)
+        return image.convert("RGB")
 
     def _draw_pillow_idol_card(self, draw: Any, canvas: Any, item: dict[str, str], x: int, y: int, width: int, portrait_height: int, height: int, name_font: Any, small_font: Any) -> None:
         brand_rgb = self._hex_rgb(item.get("color", ""), (99, 111, 129))
@@ -1546,18 +1706,41 @@ body {{
   background: #f5f1ea;
 }}
 .card {{
+  position: relative;
+  overflow: hidden;
   width: {card_width}px;
   min-height: {viewport_height}px;
   padding: {card_padding}px;
+  background: #f7f3ec;
+}}
+.card::before {{
+  content: "";
+  position: absolute;
+  inset: -42px;
   background:
-    radial-gradient(circle at 8% 14%, rgba(240,90,126,.30), transparent 30%),
-    radial-gradient(circle at 36% 0%, rgba(242,184,75,.26), transparent 33%),
-    radial-gradient(circle at 68% 12%, rgba(47,127,211,.22), transparent 34%),
-    radial-gradient(circle at 95% 20%, rgba(141,114,217,.22), transparent 31%),
-    radial-gradient(circle at 18% 84%, rgba(26,169,130,.24), transparent 34%),
-    radial-gradient(circle at 82% 90%, rgba(240,138,51,.24), transparent 35%),
-    linear-gradient(115deg, rgba(255,255,255,.76), rgba(255,255,255,.36)),
-    #f7f3ec;
+    conic-gradient(from -90deg at 50% 50%,
+      rgba(240,90,126,.40) 0deg 60deg,
+      rgba(47,127,211,.36) 60deg 120deg,
+      rgba(242,184,75,.38) 120deg 180deg,
+      rgba(26,169,130,.36) 180deg 240deg,
+      rgba(92,200,242,.36) 240deg 300deg,
+      rgba(240,138,51,.38) 300deg 360deg);
+  filter: blur(24px);
+  transform: scale(1.04);
+}}
+.card::after {{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.39);
+}}
+.header,
+.rule,
+.grid,
+.meta,
+.footer {{
+  position: relative;
+  z-index: 1;
 }}
 .header {{
   display: flex;

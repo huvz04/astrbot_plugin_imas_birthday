@@ -171,8 +171,11 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 /imasbd refresh
 /imasbd assets
 /imasbd assets 06-22
+/imasbd find 天海春香
 /imasbd sendtest
 ```
+
+`/imasbd find 名字` 只查询生日表里的角色条目，不会匹配声优、相关人士或事件。它支持轻量模糊查询，例如 `/imasbd find 天海真香` 会按 `天海春香` 生成单人生日预览；消息和卡片只包含这个角色，不带同日其他角色或声优信息。
 
 `bind`、`refresh` 和 `sendtest` 需要管理员权限。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。需要详细定位时打开 `debug_send_test`，插件会在 AstrBot 日志和群聊里输出每一步进度；某一步卡住会按 `send_test_timeout` 超时并继续下一项。
 
