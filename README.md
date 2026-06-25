@@ -92,12 +92,11 @@ starlitseason/
 
 ## 透明立绘素材模式
 
-新素材模式会优先使用透明 PNG 立绘，并用角色应援色渲染小偶像卡片背景。配置项 `card_asset_mode` 可选：
+生日卡默认使用旧角色图片/卡面图，适合直接放你手动挑好的卡面。透明 PNG 立绘模式仍保留为可选实验功能。配置项 `card_asset_mode` 可选：
 
 ```text
-auto      # 默认：优先透明立绘，缺失时回退旧角色图片
+image     # 默认：只使用旧角色图片/卡面图
 portrait  # 只使用透明立绘，缺失时显示占位
-image     # 只使用旧角色图片/卡面图
 ```
 
 如果不同企划想走不同素材，可以设置 `card_asset_mode_by_brand`。每行或用分号都可以：
@@ -110,7 +109,7 @@ sidem=portrait
 gakuen_idolmaster=portrait
 ```
 
-这里的 `image` 会使用旧的 `character_assets_dir` 图片或你手动替换过的卡面图，不会给透明立绘额外铺应援色背景；`portrait` 才会使用透明立绘和角色应援色面板。支持的企划 key 包括 `the_idolmaster`、`cinderellagirls`、`millionlive`、`sidem`、`shinycolors`、`gakuen_idolmaster`、`va_liv`、`dearlystars`、`starlitseason`、`876_pro`、`961_pro`。
+这里的 `image` 会使用旧的 `character_assets_dir` 图片或你手动替换过的卡面图，不会给透明立绘额外铺应援色背景；旧配置里的 `auto` 也会按 `image` 处理。只有显式设置 `portrait` 才会使用透明立绘和角色应援色面板。支持的企划 key 包括 `the_idolmaster`、`cinderellagirls`、`millionlive`、`sidem`、`shinycolors`、`gakuen_idolmaster`、`va_liv`、`dearlystars`、`starlitseason`、`876_pro`、`961_pro`。
 
 透明立绘建议放在插件目录外，配置项 `character_portraits_dir` 留空时，AstrBot 部署中默认使用：
 

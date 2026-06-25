@@ -1502,7 +1502,6 @@ class ImasBirthdayPlugin(Star):
 
     def _draw_pillow_idol_card(self, draw: Any, canvas: Any, item: dict[str, str], x: int, y: int, width: int, portrait_height: int, height: int, name_font: Any, small_font: Any) -> None:
         brand_rgb = self._hex_rgb(item.get("color", ""), (99, 111, 129))
-        project_rgb = self._hex_rgb(item.get("project_color", ""), (99, 111, 129))
         draw.rounded_rectangle((x, y, x + width, y + height), radius=8, fill=(255, 255, 255), outline=(232, 232, 232))
         image_path = item.get("path", "")
         if image_path and Path(image_path).exists():
@@ -1522,9 +1521,7 @@ class ImasBirthdayPlugin(Star):
             draw.text((x + (width - bbox[2] + bbox[0]) / 2, y + portrait_height / 2 - 18), first, fill=(255, 255, 255), font=name_font)
         draw.rounded_rectangle((x + 12, y + portrait_height + 10, x + width - 12, y + portrait_height + 15), radius=4, fill=brand_rgb)
         draw.text((x + 12, y + portrait_height + 25), item.get("name", ""), fill="#20242c", font=name_font)
-        label_y = y + portrait_height + 55
-        draw.rounded_rectangle((x + 12, label_y + 2, x + 26, label_y + 10), radius=4, fill=project_rgb)
-        draw.text((x + 32, label_y - 1), item.get("label", ""), fill="#5b6472", font=small_font)
+        draw.text((x + 12, y + portrait_height + 53), item.get("label", ""), fill="#5b6472", font=small_font)
 
     def _draw_pillow_portrait_panel(self, draw: Any, canvas: Any, path: Path, x: int, y: int, width: int, height: int, brand_rgb: tuple[int, int, int]) -> None:
         from PIL import Image
@@ -1637,14 +1634,13 @@ class ImasBirthdayPlugin(Star):
             "brand": brand,
             "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
             "color": self._character_color(character, brand),
-            "project_color": BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]),
             "path": str(selected_path) if selected_path else "",
             "image": self._image_data_uri(selected_path) if selected_path else "",
             "asset_kind": asset_kind,
         }
 
     def _card_asset_mode(self) -> str:
-        return self._normalize_card_asset_mode(str(self.config.get("card_asset_mode", "auto") or ""), "card_asset_mode")
+        return self._normalize_card_asset_mode(str(self.config.get("card_asset_mode", "image") or ""), "card_asset_mode")
 
     def _card_asset_mode_for_brand(self, brand: str) -> str:
         return self._card_asset_mode_overrides().get(brand, self._card_asset_mode())
@@ -1682,6 +1678,8 @@ class ImasBirthdayPlugin(Star):
     def _normalize_card_asset_mode(self, mode: str, config_key: str) -> str:
         mode = mode.strip().lower()
         aliases = {
+            "": "image",
+            "auto": "image",
             "transparent": "portrait",
             "transparent_portrait": "portrait",
             "portrait_asset": "portrait",
@@ -1692,9 +1690,9 @@ class ImasBirthdayPlugin(Star):
             "card": "image",
         }
         mode = aliases.get(mode, mode)
-        if mode not in {"auto", "portrait", "image"}:
-            logger.warning(f"未知 {config_key}={mode}，改用 auto。")
-            return "auto"
+        if mode not in {"portrait", "image"}:
+            logger.warning(f"未知 {config_key}={mode}，改用 image。")
+            return "image"
         return mode
 
     def _image_data_uri(self, path: Path | None) -> str:
@@ -2028,22 +2026,11 @@ body {{
   background: var(--brand);
 }}
 .brand {{
-  display: flex;
-  align-items: center;
-  gap: 7px;
   padding: 0 12px 12px;
   color: #5b6472;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .02em;
-}}
-.brand::before {{
-  content: "";
-  width: 14px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--project);
-  flex: 0 0 auto;
 }}
 .meta {{
   margin-top: 14px;
@@ -2114,13 +2101,12 @@ body {{
         name = html.escape(item["name"])
         label = html.escape(item["label"])
         color = html.escape(item["color"])
-        project_color = html.escape(item.get("project_color", color))
         portrait_class = "portrait is-portrait" if item.get("asset_kind") == "portrait" else "portrait"
         if item["image"]:
             portrait = f'<img src="{html.escape(item["image"], quote=True)}" alt="{name}">'
         else:
             portrait = f'<div class="placeholder">{html.escape(item["name"][:1])}</div>'
-        return f"""<article class="idol" style="--brand:{color};--project:{project_color}">
+        return f"""<article class="idol" style="--brand:{color}">
   <div class="{portrait_class}">{portrait}</div>
   <div class="idol-name">{name}</div>
   <div class="brand">{label}</div>
