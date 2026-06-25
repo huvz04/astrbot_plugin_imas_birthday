@@ -25,6 +25,7 @@ import httpx
 from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
 from astrbot.api.star import Context, Star
+from astrbot.core.star.filter.command import GreedyStr
 
 try:
     import astrbot.api.message_components as Comp
@@ -70,22 +71,38 @@ FANCY_DIGITS = str.maketrans("0123456789", "𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖
 #     "如月千早": "kisaragi_chihaya.png",
 # }
 CHARACTER_IMAGE_ASSETS: dict[str, str] = {}
+CHARACTER_PORTRAIT_ASSETS: dict[str, str] = {}
+CHARACTER_COLORS: dict[str, str] = {}
 
 
 def load_generated_character_assets() -> dict[str, str]:
-    path = Path(__file__).resolve().with_name("character_assets.py")
+    return load_generated_mapping("character_assets.py", "CHARACTER_IMAGE_ASSETS")
+
+
+def load_generated_character_portraits() -> dict[str, str]:
+    return load_generated_mapping("character_portraits.py", "CHARACTER_PORTRAIT_ASSETS")
+
+
+def load_generated_character_colors() -> dict[str, str]:
+    return load_generated_mapping("character_colors.py", "CHARACTER_COLORS")
+
+
+def load_generated_mapping(filename: str, variable_name: str) -> dict[str, str]:
+    path = Path(__file__).resolve().with_name(filename)
     if not path.exists():
         return {}
-    spec = importlib.util.spec_from_file_location("imas_birthday_character_assets", path)
+    spec = importlib.util.spec_from_file_location(f"imas_birthday_{path.stem}", path)
     if not spec or not spec.loader:
         return {}
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    assets = getattr(module, "CHARACTER_IMAGE_ASSETS", {})
+    assets = getattr(module, variable_name, {})
     return assets if isinstance(assets, dict) else {}
 
 
 CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
+CHARACTER_PORTRAIT_ASSETS.update(load_generated_character_portraits())
+CHARACTER_COLORS.update(load_generated_character_colors())
 
 BRAND_COLORS = {
     "THE_IDOLMASTER": "#f05a7e",
@@ -387,13 +404,18 @@ class ImasBirthdayPlugin(Star):
         self.config = config or {}
         self.plugin_dir = Path(__file__).resolve().parent
         self.assets_dir = self._resolve_character_assets_dir()
+        self.portraits_dir = self._resolve_character_portraits_dir()
         self._task: asyncio.Task | None = None
         self._last_sent_date = ""
+        self._suppressed_first_start_date = ""
         self._pending_retry_date = ""
         self._pending_retry_umos: set[str] = set()
         self._delivery_state_loaded = False
         self._delivery_state_exists = False
         self._scheduler_started_at = ""
+        with contextlib.suppress(RuntimeError):
+            asyncio.get_running_loop()
+            self._ensure_scheduler("init")
 
     @filter.on_astrbot_loaded()
     async def on_astrbot_loaded(self):
@@ -460,6 +482,18 @@ class ImasBirthdayPlugin(Star):
         yield event.plain_result(self._scheduler_status_text())
 
     @filter.permission_type(filter.PermissionType.ADMIN)
+    @imasbd.command("reset-state")
+    async def imasbd_reset_state(self, event: AstrMessageEvent):
+        """清除每日自动推送的投递状态。"""
+        self._stop_event(event)
+        self._last_sent_date = ""
+        self._suppressed_first_start_date = ""
+        self._pending_retry_date = ""
+        self._pending_retry_umos.clear()
+        await self._save_delivery_state()
+        yield event.plain_result("已清除生日提醒投递状态。若当前已过 send_time，定时器会在下一轮按配置判断是否补发。")
+
+    @filter.permission_type(filter.PermissionType.ADMIN)
     @imasbd.command("sendtest")
     async def imasbd_sendtest(self, event: AstrMessageEvent):
         """测试当前 OneBot/平台对多种图片发送方式的兼容性。"""
@@ -514,7 +548,7 @@ class ImasBirthdayPlugin(Star):
         return
 
     @imasbd.command("find")
-    async def imasbd_find(self, event: AstrMessageEvent, query: str = ""):
+    async def imasbd_find(self, event: AstrMessageEvent, query: GreedyStr):
         """按角色名反查生日，支持轻量模糊查询。"""
         self._stop_event(event)
         result = await self._build_find_character_result(query)
@@ -557,6 +591,9 @@ class ImasBirthdayPlugin(Star):
         characters = self._visible_characters(entry)
         lines = [
             f"图片目录：{self.assets_dir}",
+            f"透明立绘目录：{self.portraits_dir}",
+            f"素材模式：{self._card_asset_mode()}",
+            f"企划素材覆盖：{self._card_asset_mode_overrides_text()}",
             f"日期：{date_key}",
         ]
         if not characters:
@@ -564,13 +601,19 @@ class ImasBirthdayPlugin(Star):
             return "\n".join(lines)
 
         for character in characters:
+            brand = self._character_brand(character)
+            mode = self._card_asset_mode_for_brand(brand)
             mapped = self._character_asset_filename(character)
+            portrait_mapped = self._character_portrait_filename(character)
             image_path = self._character_image_path(character)
+            portrait_path = self._character_portrait_path(character)
+            if portrait_path:
+                lines.append(f"PORTRAIT {character} [{brand}/{mode}]: {portrait_mapped} -> {portrait_path}")
             if image_path:
-                lines.append(f"OK {character}: {mapped} -> {image_path}")
+                lines.append(f"IMAGE {character} [{brand}/{mode}]: {mapped} -> {image_path}")
             else:
                 expected = self.assets_dir / mapped if mapped else "未生成映射"
-                lines.append(f"MISS {character}: {mapped or '未生成映射'} -> {expected}")
+                lines.append(f"MISS {character} [{brand}/{mode}]: {mapped or '未生成映射'} -> {expected}")
         return "\n".join(lines)
 
     async def _find_character_text(self, query: str) -> str:
@@ -754,6 +797,7 @@ class ImasBirthdayPlugin(Star):
             "可用指令：\n"
             "/imasbd sid\n"
             "/imasbd status\n"
+            "/imasbd reset-state\n"
             "/imasbd today\n"
             "/imasbd date 06-22\n"
             "/imasbd assets 06-22\n"
@@ -783,6 +827,8 @@ class ImasBirthdayPlugin(Star):
             logger.warning(f"偶像大师生日提醒 send_time 格式无效：{send_time}")
             return
         today_key = now.strftime("%Y-%m-%d")
+        if self._suppressed_first_start_date == today_key and self._last_sent_date != today_key:
+            return
         if (
             not self._delivery_state_exists
             and self._is_send_time_due(now, send_minutes)
@@ -791,7 +837,7 @@ class ImasBirthdayPlugin(Star):
             logger.warning(
                 f"偶像大师生日提醒首次启动时已过今日推送时间，默认不补发以避免误推：date={today_key}, timezone={now.tzname()}"
             )
-            self._last_sent_date = today_key
+            self._suppressed_first_start_date = today_key
             await self._save_delivery_state()
             return
         if not self._is_send_time_due(now, send_minutes):
@@ -807,6 +853,7 @@ class ImasBirthdayPlugin(Star):
         result = await self._build_result(now.month, now.day)
         if not result["message"]:
             logger.info(f"今天没有偶像大师生日提醒内容，跳过推送：date={today_key}, timezone={now.tzname()}")
+            self._suppressed_first_start_date = ""
             self._pending_retry_date = ""
             self._pending_retry_umos.clear()
             self._last_sent_date = today_key
@@ -834,6 +881,7 @@ class ImasBirthdayPlugin(Star):
             await self._save_delivery_state()
             logger.warning(f"偶像大师生日提醒部分目标发送失败，保留待重试状态：date={today_key}, failed={len(failed_umos)}")
             return
+        self._suppressed_first_start_date = ""
         self._pending_retry_date = ""
         self._pending_retry_umos.clear()
         self._last_sent_date = today_key
@@ -1160,6 +1208,18 @@ class ImasBirthdayPlugin(Star):
             return self.plugin_dir.parent.parent / "imas_birthday_assets" / "characters"
         return self.plugin_dir / "assets" / "characters"
 
+    def _resolve_character_portraits_dir(self) -> Path:
+        configured = str(self.config.get("character_portraits_dir", "") or "").strip()
+        env_value = os.environ.get("IMAS_BIRTHDAY_PORTRAITS_DIR", "").strip()
+        value = configured or env_value
+        if value:
+            path = Path(os.path.expandvars(value)).expanduser()
+            return path if path.is_absolute() else self.plugin_dir / path
+
+        if self.plugin_dir.parent.name == "plugins":
+            return self.plugin_dir.parent.parent / "imas_birthday_assets" / "portraits"
+        return self.plugin_dir / "assets" / "portraits"
+
     def _parse_imasbd_text(self, message: str) -> list[str] | None:
         text = str(message or "").strip()
         for prefix in ("/imasbd", "／imasbd"):
@@ -1399,8 +1459,8 @@ class ImasBirthdayPlugin(Star):
             y += 72
 
         footer = (
-            "Character images are sourced from Moegirlpedia and local assets prepared by the bot owner. "
-            "Thanks to Moegirlpedia. THE IDOLM@STER rights belong to their respective owners."
+            "Character images are sourced from local assets prepared by the bot owner, Moegirlpedia, official sites, and fan DBs. "
+            "Thanks to Moegirlpedia and the asset data providers. THE IDOLM@STER rights belong to their respective owners."
         )
         footer_lines = self._pil_wrap_text(draw, footer, footer_font, width - padding * 2)
         footer_y = min(height - padding - len(footer_lines) * 13, y + 12)
@@ -1446,8 +1506,11 @@ class ImasBirthdayPlugin(Star):
         image_path = item.get("path", "")
         if image_path and Path(image_path).exists():
             try:
-                portrait = self._pil_cover_image(Path(image_path), width, portrait_height)
-                canvas.paste(portrait, (x, y))
+                if item.get("asset_kind") == "portrait":
+                    self._draw_pillow_portrait_panel(draw, canvas, Path(image_path), x, y, width, portrait_height, brand_rgb)
+                else:
+                    portrait = self._pil_cover_image(Path(image_path), width, portrait_height)
+                    canvas.paste(portrait, (x, y))
             except Exception:
                 logger.exception(f"本地卡片读取角色图失败：{image_path}")
                 draw.rectangle((x, y, x + width, y + portrait_height), fill=brand_rgb)
@@ -1459,6 +1522,20 @@ class ImasBirthdayPlugin(Star):
         draw.rounded_rectangle((x + 12, y + portrait_height + 10, x + width - 12, y + portrait_height + 15), radius=4, fill=brand_rgb)
         draw.text((x + 12, y + portrait_height + 25), item.get("name", ""), fill="#20242c", font=name_font)
         draw.text((x + 12, y + portrait_height + 53), item.get("label", ""), fill="#5b6472", font=small_font)
+
+    def _draw_pillow_portrait_panel(self, draw: Any, canvas: Any, path: Path, x: int, y: int, width: int, height: int, brand_rgb: tuple[int, int, int]) -> None:
+        from PIL import Image
+
+        panel = Image.new("RGBA", (width, height), (*brand_rgb, 255))
+
+        source = Image.open(path).convert("RGBA")
+        resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+        scale = min((width * 0.92) / source.width, (height * 0.96) / source.height)
+        resized = source.resize((max(1, int(source.width * scale)), max(1, int(source.height * scale))), resampling)
+        px = (width - resized.width) // 2
+        py = height - resized.height
+        panel.alpha_composite(resized, (px, py))
+        canvas.paste(panel.convert("RGB"), (x, y))
 
     def _pil_cover_image(self, path: Path, width: int, height: int) -> Any:
         from PIL import Image
@@ -1541,15 +1618,80 @@ class ImasBirthdayPlugin(Star):
 
     def _card_item(self, character: str) -> dict[str, str]:
         brand = self._character_brand(character)
+        portrait_path = self._character_portrait_path(character)
         image_path = self._character_image_path(character)
+        asset_mode = self._card_asset_mode_for_brand(brand)
+        selected_path: Path | None = None
+        asset_kind = "placeholder"
+        if asset_mode in {"auto", "portrait"} and portrait_path:
+            selected_path = portrait_path
+            asset_kind = "portrait"
+        elif asset_mode in {"auto", "image"} and image_path:
+            selected_path = image_path
+            asset_kind = "image"
         return {
             "name": character,
             "brand": brand,
             "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
-            "color": BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]),
-            "path": str(image_path) if image_path else "",
-            "image": self._image_data_uri(image_path) if image_path else "",
+            "color": self._character_color(character, brand),
+            "path": str(selected_path) if selected_path else "",
+            "image": self._image_data_uri(selected_path) if selected_path else "",
+            "asset_kind": asset_kind,
         }
+
+    def _card_asset_mode(self) -> str:
+        return self._normalize_card_asset_mode(str(self.config.get("card_asset_mode", "auto") or ""), "card_asset_mode")
+
+    def _card_asset_mode_for_brand(self, brand: str) -> str:
+        return self._card_asset_mode_overrides().get(brand, self._card_asset_mode())
+
+    def _card_asset_mode_overrides_text(self) -> str:
+        overrides = self._card_asset_mode_overrides()
+        if not overrides:
+            return "未配置"
+        return ", ".join(f"{brand}={mode}" for brand, mode in sorted(overrides.items()))
+
+    def _card_asset_mode_overrides(self) -> dict[str, str]:
+        text = str(self.config.get("card_asset_mode_by_brand", "") or "").strip()
+        if not text:
+            return {}
+        result: dict[str, str] = {}
+        for raw_item in re.split(r"[\n;,]+", text):
+            item = raw_item.strip()
+            if not item:
+                continue
+            if "=" in item:
+                raw_brand, raw_mode = item.split("=", 1)
+            elif ":" in item:
+                raw_brand, raw_mode = item.split(":", 1)
+            else:
+                logger.warning(f"忽略无效 card_asset_mode_by_brand 条目：{item}")
+                continue
+            brand = BRAND_ALIASES.get(self._normalize_brand_key(raw_brand), raw_brand.strip().upper())
+            if brand not in BRAND_LABELS:
+                logger.warning(f"忽略未知企划 card_asset_mode_by_brand={raw_brand}")
+                continue
+            mode = self._normalize_card_asset_mode(raw_mode, f"card_asset_mode_by_brand.{brand}")
+            result[brand] = mode
+        return result
+
+    def _normalize_card_asset_mode(self, mode: str, config_key: str) -> str:
+        mode = mode.strip().lower()
+        aliases = {
+            "transparent": "portrait",
+            "transparent_portrait": "portrait",
+            "portrait_asset": "portrait",
+            "portraits": "portrait",
+            "old": "image",
+            "legacy": "image",
+            "moegirl": "image",
+            "card": "image",
+        }
+        mode = aliases.get(mode, mode)
+        if mode not in {"auto", "portrait", "image"}:
+            logger.warning(f"未知 {config_key}={mode}，改用 auto。")
+            return "auto"
+        return mode
 
     def _image_data_uri(self, path: Path | None) -> str:
         if not path:
@@ -1570,6 +1712,29 @@ class ImasBirthdayPlugin(Star):
         if not path.is_absolute():
             path = self.assets_dir / filename
         return path if path.exists() else None
+
+    def _character_portrait_path(self, character: str) -> Path | None:
+        filename = self._character_portrait_filename(character)
+        if not filename:
+            return None
+        path = Path(filename)
+        if not path.is_absolute():
+            path = self.portraits_dir / filename
+        return path if path.exists() else None
+
+    def _character_color(self, character: str, brand: str) -> str:
+        candidates = [
+            character,
+            CHARACTER_NAME_ALIASES.get(character, character),
+            CHARACTER_REVERSE_ALIASES.get(character, character),
+            self._base_character_name(character),
+            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
+        ]
+        for candidate in dict.fromkeys(candidates):
+            color = CHARACTER_COLORS.get(candidate)
+            if color:
+                return color
+        return BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"])
 
     def _character_brand(self, character: str) -> str:
         character = CHARACTER_NAME_ALIASES.get(character, character)
@@ -1594,6 +1759,20 @@ class ImasBirthdayPlugin(Star):
         ]
         for candidate in dict.fromkeys(candidates):
             filename = CHARACTER_IMAGE_ASSETS.get(candidate)
+            if filename:
+                return filename
+        return ""
+
+    def _character_portrait_filename(self, character: str) -> str:
+        candidates = [
+            character,
+            CHARACTER_NAME_ALIASES.get(character, character),
+            CHARACTER_REVERSE_ALIASES.get(character, character),
+            self._base_character_name(character),
+            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
+        ]
+        for candidate in dict.fromkeys(candidates):
+            filename = CHARACTER_PORTRAIT_ASSETS.get(candidate)
             if filename:
                 return filename
         return ""
@@ -1808,6 +1987,15 @@ body {{
   object-fit: cover;
   object-position: center top;
 }}
+.portrait.is-portrait {{
+  background: var(--brand);
+}}
+.portrait.is-portrait img {{
+  width: 92%;
+  height: 96%;
+  object-fit: contain;
+  object-position: center bottom;
+}}
 .placeholder {{
   width: 100%;
   height: 100%;
@@ -1902,7 +2090,7 @@ body {{
     </section>
     <section class="grid">{item_html}</section>
     <section class="meta">{seiyuu_html}{related_html}{events_html}</section>
-    <section class="footer">Character images are sourced from Moegirlpedia and local assets prepared by the bot owner. Thanks to Moegirlpedia. THE IDOLM@STER rights belong to their respective owners.</section>
+    <section class="footer">Character images are sourced from local assets prepared by the bot owner, Moegirlpedia, official sites, and fan DBs. Thanks to Moegirlpedia and the asset data providers. THE IDOLM@STER rights belong to their respective owners.</section>
   </main>
 </body>
 </html>"""
@@ -1911,12 +2099,13 @@ body {{
         name = html.escape(item["name"])
         label = html.escape(item["label"])
         color = html.escape(item["color"])
+        portrait_class = "portrait is-portrait" if item.get("asset_kind") == "portrait" else "portrait"
         if item["image"]:
             portrait = f'<img src="{html.escape(item["image"], quote=True)}" alt="{name}">'
         else:
             portrait = f'<div class="placeholder">{html.escape(item["name"][:1])}</div>'
         return f"""<article class="idol" style="--brand:{color}">
-  <div class="portrait">{portrait}</div>
+  <div class="{portrait_class}">{portrait}</div>
   <div class="idol-name">{name}</div>
   <div class="brand">{label}</div>
 </article>"""
@@ -1958,6 +2147,7 @@ body {{
         if isinstance(state, dict):
             self._delivery_state_exists = True
             self._last_sent_date = str(state.get("last_sent_date", "") or "")
+            self._suppressed_first_start_date = str(state.get("suppressed_first_start_date", "") or "")
             self._pending_retry_date = str(state.get("pending_retry_date", "") or "")
             pending = state.get("pending_retry_umos", [])
             if isinstance(pending, list):
@@ -1971,6 +2161,7 @@ body {{
             "delivery_state",
             {
                 "last_sent_date": self._last_sent_date,
+                "suppressed_first_start_date": self._suppressed_first_start_date,
                 "pending_retry_date": self._pending_retry_date,
                 "pending_retry_umos": sorted(self._pending_retry_umos),
             },
@@ -2046,8 +2237,13 @@ body {{
             f"next_send_date: {schedule_status['next_send_date']}",
             f"next_regular_send_at: {schedule_status['next_regular_send_at']}",
             f"last_sent_date: {self._last_sent_date or '未发送'}",
+            f"suppressed_first_start_date: {self._suppressed_first_start_date or '未记录'}",
             f"white_umos: {len(white_umos)}",
             f"card_render_mode: {self._card_render_mode()}",
+            f"card_asset_mode: {self._card_asset_mode()}",
+            f"card_asset_mode_by_brand: {self._card_asset_mode_overrides_text()}",
+            f"character_assets_dir: {self.assets_dir}",
+            f"character_portraits_dir: {self.portraits_dir}",
             f"birthday_send_mode: {self._birthday_send_mode()}",
         ]
         if self._task and self._task.done():
@@ -2093,6 +2289,14 @@ body {{
         tomorrow_scheduled = scheduled_today + timedelta(days=1)
         scheduled_today_text = scheduled_today.strftime("%Y-%m-%d %H:%M:%S %Z")
         tomorrow_text = tomorrow_scheduled.strftime("%Y-%m-%d %H:%M:%S %Z")
+        if self._suppressed_first_start_date == today_key and self._last_sent_date != today_key:
+            return {
+                "scheduled_send_at_today": scheduled_today_text,
+                "send_pending_today": "False",
+                "next_send_at": tomorrow_text,
+                "next_send_date": tomorrow_scheduled.strftime("%Y-%m-%d"),
+                "next_regular_send_at": tomorrow_text,
+            }
         if self._last_sent_date != today_key:
             if self._is_send_time_due(now, send_minutes):
                 if self._pending_retry_date == today_key and self._pending_retry_umos:

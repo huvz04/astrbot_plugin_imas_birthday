@@ -9,3 +9,5 @@ asset_candidates/
 # Local character images can contain copyrighted official assets.
 assets/characters/*
 !assets/characters/.gitkeep
+assets/portraits/*
+!assets/portraits/.gitkeep

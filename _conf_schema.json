@@ -82,6 +82,24 @@
     "type": "bool",
     "default": true
   },
+  "card_asset_mode": {
+    "description": "生日卡素材模式",
+    "type": "string",
+    "default": "auto",
+    "hint": "可选：auto、portrait、image。auto 优先使用透明立绘和角色应援色背景，缺失时回退旧角色图片；portrait 只使用透明立绘；image 只使用旧角色图片。"
+  },
+  "card_asset_mode_by_brand": {
+    "description": "按企划覆盖生日卡素材模式",
+    "type": "text",
+    "default": "",
+    "hint": "每行或用分号填写 brand=mode，例如 millionlive=image;shinycolors=image;gakuen_idolmaster=portrait。brand 可用 the_idolmaster、cinderellagirls、millionlive、sidem、shinycolors、gakuen_idolmaster 等；mode 可选 auto、portrait、image。"
+  },
+  "character_portraits_dir": {
+    "description": "透明立绘目录",
+    "type": "string",
+    "default": "",
+    "hint": "留空时，AstrBot 部署中默认使用 AstrBot/data/imas_birthday_assets/portraits。也可以填绝对路径，避免插件更新覆盖图片。"
+  },
   "birthday_send_mode": {
     "description": "生日祝贺图片发送方式",
     "type": "string",

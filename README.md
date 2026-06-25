@@ -90,6 +90,48 @@ starlitseason/
 
 插件会根据第一级目录给卡片打上官网品牌名，例如 `THE IDOLM@STER`、`シンデレラガールズ`、`ミリオンライブ！`、`SideM`、`シャイニーカラーズ`、`学園アイドルマスター`、`ヴイアライヴ`。图片建议提前裁成竖图或方图，卡片会用 `object-fit: cover` 自动铺满。
 
+## 透明立绘素材模式
+
+新素材模式会优先使用透明 PNG 立绘，并用角色应援色渲染小偶像卡片背景。配置项 `card_asset_mode` 可选：
+
+```text
+auto      # 默认：优先透明立绘，缺失时回退旧角色图片
+portrait  # 只使用透明立绘，缺失时显示占位
+image     # 只使用旧角色图片/卡面图
+```
+
+如果不同企划想走不同素材，可以设置 `card_asset_mode_by_brand`。每行或用分号都可以：
+
+```text
+millionlive=image
+shinycolors=image
+cinderellagirls=portrait
+sidem=portrait
+gakuen_idolmaster=portrait
+```
+
+这里的 `image` 会使用旧的 `character_assets_dir` 图片或你手动替换过的卡面图，不会给透明立绘额外铺应援色背景；`portrait` 才会使用透明立绘和角色应援色面板。支持的企划 key 包括 `the_idolmaster`、`cinderellagirls`、`millionlive`、`sidem`、`shinycolors`、`gakuen_idolmaster`、`va_liv`、`dearlystars`、`starlitseason`、`876_pro`、`961_pro`。
+
+透明立绘建议放在插件目录外，配置项 `character_portraits_dir` 留空时，AstrBot 部署中默认使用：
+
+```text
+AstrBot/data/imas_birthday_assets/portraits/
+```
+
+本地拉取透明立绘和角色色映射：
+
+```powershell
+python .\tools\fetch_portrait_assets.py
+```
+
+脚本会从可稳定映射的 DB/官网源拉取透明 PNG：`imas.gamedbs.jp/mlth`、`imas.gamedbs.jp/cg`、SideM 官网、学马官网，并复用本地已有的闪彩官方立绘缓存。已有文件默认跳过，生成 `character_portraits.py` 与 `character_colors.py`；没法高置信匹配的条目会写到 `asset_candidates/portrait_unmatched.csv`。
+
+如果线上素材目录不在仓库里：
+
+```powershell
+python .\tools\fetch_portrait_assets.py --portraits-dir D:\imas_birthday_assets\portraits
+```
+
 如果已经有图片，或被萌娘百科限流了，直接扫描本地图片目录生成映射，不会访问网络：
 
 ```powershell
@@ -164,6 +206,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 ```text
 /imasbd sid
 /imasbd status
+/imasbd reset-state
 /imasbd bind
 /imasbd today
 /imasbd date 06-22
@@ -177,7 +220,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 `/imasbd find 名字` 只查询生日表里的角色条目，不会匹配声优、相关人士或事件。它支持轻量模糊查询，例如 `/imasbd find 天海真香` 会按 `天海春香` 生成单人生日预览；消息和卡片只包含这个角色，不带同日其他角色或声优信息。
 
-`bind`、`refresh` 和 `sendtest` 需要管理员权限。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。需要详细定位时打开 `debug_send_test`，插件会在 AstrBot 日志和群聊里输出每一步进度；某一步卡住会按 `send_test_timeout` 超时并继续下一项。
+`bind`、`refresh`、`reset-state` 和 `sendtest` 需要管理员权限。`reset-state` 会清除每日自动推送状态，不会立即主动发送；如果当前已经过 `send_time` 且配置允许补发，定时器会在下一轮按正常逻辑补发。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。需要详细定位时打开 `debug_send_test`，插件会在 AstrBot 日志和群聊里输出每一步进度；某一步卡住会按 `send_test_timeout` 超时并继续下一项。
 
 `birthday_send_mode` 可选：
 
