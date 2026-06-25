@@ -1520,8 +1520,35 @@ class ImasBirthdayPlugin(Star):
             bbox = draw.textbbox((0, 0), first, font=name_font)
             draw.text((x + (width - bbox[2] + bbox[0]) / 2, y + portrait_height / 2 - 18), first, fill=(255, 255, 255), font=name_font)
         draw.rounded_rectangle((x + 12, y + portrait_height + 10, x + width - 12, y + portrait_height + 15), radius=4, fill=brand_rgb)
+        self._draw_pillow_brand_logo(canvas, item, x, y + portrait_height, width, 86)
         draw.text((x + 12, y + portrait_height + 25), item.get("name", ""), fill="#20242c", font=name_font)
         draw.text((x + 12, y + portrait_height + 53), item.get("label", ""), fill="#5b6472", font=small_font)
+
+    def _draw_pillow_brand_logo(self, canvas: Any, item: dict[str, str], x: int, y: int, width: int, height: int) -> None:
+        logo_path = item.get("logo_path", "")
+        if not logo_path:
+            return
+        path = Path(logo_path)
+        if not path.exists():
+            return
+        try:
+            from PIL import Image
+
+            logo = Image.open(path).convert("RGBA")
+            resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+            max_width = max(1, int(width * 0.42))
+            max_height = max(1, int(height * 0.74))
+            scale = min(max_width / logo.width, max_height / logo.height)
+            target_width = max(1, int(logo.width * scale))
+            target_height = max(1, int(logo.height * scale))
+            logo = logo.resize((target_width, target_height), resampling)
+            alpha = logo.getchannel("A").point(lambda value: int(value * 0.11))
+            logo.putalpha(alpha)
+            px = x + width - target_width - 8
+            py = y + height - target_height - 6
+            canvas.paste(logo, (px, py), logo)
+        except Exception:
+            logger.exception(f"企划 logo 底纹渲染失败：{logo_path}")
 
     def _draw_pillow_portrait_panel(self, draw: Any, canvas: Any, path: Path, x: int, y: int, width: int, height: int, brand_rgb: tuple[int, int, int]) -> None:
         from PIL import Image
@@ -1634,6 +1661,9 @@ class ImasBirthdayPlugin(Star):
             "brand": brand,
             "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
             "color": self._character_color(character, brand),
+            "project_color": BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]),
+            "logo_path": str(self._brand_logo_path(brand, "png") or ""),
+            "logo_image": self._image_data_uri(self._brand_logo_path(brand, "svg")),
             "path": str(selected_path) if selected_path else "",
             "image": self._image_data_uri(selected_path) if selected_path else "",
             "asset_kind": asset_kind,
@@ -1737,6 +1767,11 @@ class ImasBirthdayPlugin(Star):
             if color:
                 return color
         return BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"])
+
+    def _brand_logo_path(self, brand: str, suffix: str = "svg") -> Path | None:
+        suffix = suffix.strip().lstrip(".") or "svg"
+        path = self.plugin_dir / "assets" / "brand_marks" / f"{brand}.{suffix}"
+        return path if path.exists() else None
 
     def _character_brand(self, character: str) -> str:
         character = CHARACTER_NAME_ALIASES.get(character, character)
@@ -1962,6 +1997,7 @@ body {{
   margin-top: 20px;
 }}
 .idol {{
+  position: relative;
   width: {item_width}px;
   min-height: {item_min_height}px;
   background: rgba(255,255,255,.58);
@@ -2010,6 +2046,7 @@ body {{
 }}
 .idol-name {{
   position: relative;
+  z-index: 1;
   padding: 21px 12px 5px;
   font-size: 20px;
   font-weight: 800;
@@ -2026,11 +2063,26 @@ body {{
   background: var(--brand);
 }}
 .brand {{
+  position: relative;
+  z-index: 1;
   padding: 0 12px 12px;
   color: #5b6472;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .02em;
+}}
+.brand-logo {{
+  position: absolute;
+  z-index: 0;
+  right: 8px;
+  bottom: 6px;
+  width: 42%;
+  height: 74%;
+  object-fit: contain;
+  object-position: right center;
+  opacity: .11;
+  pointer-events: none;
+  user-select: none;
 }}
 .meta {{
   margin-top: 14px;
@@ -2101,15 +2153,19 @@ body {{
         name = html.escape(item["name"])
         label = html.escape(item["label"])
         color = html.escape(item["color"])
+        project_color = html.escape(item.get("project_color", color))
+        logo_image = item.get("logo_image", "")
         portrait_class = "portrait is-portrait" if item.get("asset_kind") == "portrait" else "portrait"
         if item["image"]:
             portrait = f'<img src="{html.escape(item["image"], quote=True)}" alt="{name}">'
         else:
             portrait = f'<div class="placeholder">{html.escape(item["name"][:1])}</div>'
-        return f"""<article class="idol" style="--brand:{color}">
+        logo_html = f'<img class="brand-logo" src="{html.escape(logo_image, quote=True)}" alt="">' if logo_image else ""
+        return f"""<article class="idol" style="--brand:{color};--project:{project_color}">
   <div class="{portrait_class}">{portrait}</div>
   <div class="idol-name">{name}</div>
   <div class="brand">{label}</div>
+  {logo_html}
 </article>"""
 
     def _meta_block(self, title: str, values: list[str]) -> str:

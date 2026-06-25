@@ -111,6 +111,8 @@ gakuen_idolmaster=portrait
 
 这里的 `image` 会使用旧的 `character_assets_dir` 图片或你手动替换过的卡面图，不会给透明立绘额外铺应援色背景；旧配置里的 `auto` 也会按 `image` 处理。只有显式设置 `portrait` 才会使用透明立绘和角色应援色面板。支持的企划 key 包括 `the_idolmaster`、`cinderellagirls`、`millionlive`、`sidem`、`shinycolors`、`gakuen_idolmaster`、`va_liv`、`dearlystars`、`starlitseason`、`876_pro`、`961_pro`。
 
+生日卡的角色名上方色条使用角色应援色；白色信息区右侧会以低透明度渲染 `assets/brand_marks/` 里的企划 icon，作为不抢正文的底纹。
+
 透明立绘建议放在插件目录外，配置项 `character_portraits_dir` 留空时，AstrBot 部署中默认使用：
 
 ```text
