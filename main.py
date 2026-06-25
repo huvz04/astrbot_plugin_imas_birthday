@@ -103,6 +103,14 @@ def load_generated_mapping(filename: str, variable_name: str) -> dict[str, str]:
 CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
 CHARACTER_PORTRAIT_ASSETS.update(load_generated_character_portraits())
 CHARACTER_COLORS.update(load_generated_character_colors())
+CHARACTER_COLORS.update(
+    {
+        "灯里爱夏": "#ff4554",
+        "上水流宇宙": "#56ccf2",
+        "蕾特拉": "#d7f930",
+        "レトラ": "#d7f930",
+    }
+)
 
 BRAND_COLORS = {
     "THE_IDOLMASTER": "#f05a7e",
@@ -1545,7 +1553,8 @@ class ImasBirthdayPlugin(Star):
             alpha = logo.getchannel("A").point(lambda value: int(value * 0.8))
             logo.putalpha(alpha)
             px = x + width - target_width - 8
-            py = y + height - target_height - 6
+            vertical_offset = 8 if item.get("brand") == "VA_LIV" else 0
+            py = y + max(0, (height - target_height) // 2) + vertical_offset
             canvas.paste(logo, (px, py), logo)
         except Exception:
             logger.exception(f"企划 logo 底纹渲染失败：{logo_path}")
@@ -2075,12 +2084,13 @@ body {{
   position: absolute;
   z-index: 0;
   right: 8px;
-  bottom: 6px;
+  top: var(--logo-y, 50%);
   width: 42%;
   height: 74%;
   object-fit: contain;
   object-position: right center;
   opacity: .8;
+  transform: translateY(-50%);
   pointer-events: none;
   user-select: none;
 }}
@@ -2161,7 +2171,8 @@ body {{
         else:
             portrait = f'<div class="placeholder">{html.escape(item["name"][:1])}</div>'
         logo_html = f'<img class="brand-logo" src="{html.escape(logo_image, quote=True)}" alt="">' if logo_image else ""
-        return f"""<article class="idol" style="--brand:{color};--project:{project_color}">
+        logo_y = "58%" if item.get("brand") == "VA_LIV" else "50%"
+        return f"""<article class="idol" style="--brand:{color};--project:{project_color};--logo-y:{logo_y}">
   <div class="{portrait_class}">{portrait}</div>
   <div class="idol-name">{name}</div>
   <div class="brand">{label}</div>
