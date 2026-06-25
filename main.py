@@ -1542,7 +1542,7 @@ class ImasBirthdayPlugin(Star):
             target_width = max(1, int(logo.width * scale))
             target_height = max(1, int(logo.height * scale))
             logo = logo.resize((target_width, target_height), resampling)
-            alpha = logo.getchannel("A").point(lambda value: int(value * 0.11))
+            alpha = logo.getchannel("A").point(lambda value: int(value * 0.8))
             logo.putalpha(alpha)
             px = x + width - target_width - 8
             py = y + height - target_height - 6
@@ -2080,7 +2080,7 @@ body {{
   height: 74%;
   object-fit: contain;
   object-position: right center;
-  opacity: .11;
+  opacity: .8;
   pointer-events: none;
   user-select: none;
 }}
