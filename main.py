@@ -1553,7 +1553,11 @@ class ImasBirthdayPlugin(Star):
             alpha = logo.getchannel("A").point(lambda value: int(value * 0.8))
             logo.putalpha(alpha)
             px = x + width - target_width - 8
-            vertical_offset = 8 if item.get("brand") == "VA_LIV" else 0
+            vertical_offset = {
+                "VA_LIV": 8,
+                "SIDEM": 2,
+                "MILLION_LIVE": 4,
+            }.get(item.get("brand", ""), 3)
             py = y + max(0, (height - target_height) // 2) + vertical_offset
             canvas.paste(logo, (px, py), logo)
         except Exception:
@@ -2171,7 +2175,11 @@ body {{
         else:
             portrait = f'<div class="placeholder">{html.escape(item["name"][:1])}</div>'
         logo_html = f'<img class="brand-logo" src="{html.escape(logo_image, quote=True)}" alt="">' if logo_image else ""
-        logo_y = "58%" if item.get("brand") == "VA_LIV" else "50%"
+        logo_y = {
+            "VA_LIV": "58%",
+            "SIDEM": "52%",
+            "MILLION_LIVE": "54%",
+        }.get(item.get("brand", ""), "53%")
         return f"""<article class="idol" style="--brand:{color};--project:{project_color};--logo-y:{logo_y}">
   <div class="{portrait_class}">{portrait}</div>
   <div class="idol-name">{name}</div>
