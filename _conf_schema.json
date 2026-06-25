@@ -8,7 +8,7 @@
     "description": "允许主动推送的群聊 UMO 白名单",
     "type": "list",
     "default": [],
-    "hint": "在目标群使用 /imasbd sid 查看当前 UMO，或用 /imasbd bind 自动加入。"
+    "hint": "在目标群使用 /imasbd sid 查看当前 UMO，或用 /imasbd bind 自动加入。完整格式类似 aiocqhttp:GroupMessage:123456；仅填写纯数字群号时会按 OneBot 群聊兼容。"
   },
   "send_time": {
     "description": "每日推送时间",

@@ -451,7 +451,7 @@ class ImasBirthdayPlugin(Star):
         """把当前会话加入生日推送白名单。"""
         self._stop_event(event)
         umo = event.unified_msg_origin
-        white_umos = list(self.config.get("white_umos", []))
+        white_umos = self._configured_white_umos()
         if umo in white_umos:
             yield event.plain_result("当前会话已经在白名单里。")
             return
@@ -845,7 +845,7 @@ class ImasBirthdayPlugin(Star):
         if self._last_sent_date == today_key:
             return
 
-        white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
+        white_umos = self._configured_white_umos()
         if not white_umos:
             logger.warning("偶像大师生日提醒白名单为空，跳过推送。")
             return
@@ -2151,7 +2151,11 @@ body {{
             self._pending_retry_date = str(state.get("pending_retry_date", "") or "")
             pending = state.get("pending_retry_umos", [])
             if isinstance(pending, list):
-                self._pending_retry_umos = {str(item).strip() for item in pending if str(item).strip()}
+                self._pending_retry_umos = {
+                    normalized
+                    for item in pending
+                    if (normalized := self._normalize_umo(str(item).strip()))
+                }
         self._delivery_state_loaded = True
 
     async def _save_delivery_state(self):
@@ -2218,7 +2222,9 @@ body {{
         due_text = "unknown" if send_minutes is None else str(self._is_send_time_due(now, send_minutes))
         schedule_status = self._send_schedule_status(now, send_minutes)
         task_alive = bool(self._task and not self._task.done())
-        white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
+        white_umos = self._configured_white_umos()
+        raw_white_umos = [str(item).strip() for item in self.config.get("white_umos", []) if str(item).strip()]
+        normalized_warning_count = sum(1 for item in raw_white_umos if item and item != self._normalize_umo(item))
         lines = [
             "偶像大师生日提醒状态：",
             f"enabled: {self._cfg_bool('enabled', True)}",
@@ -2239,6 +2245,7 @@ body {{
             f"last_sent_date: {self._last_sent_date or '未发送'}",
             f"suppressed_first_start_date: {self._suppressed_first_start_date or '未记录'}",
             f"white_umos: {len(white_umos)}",
+            f"white_umos_normalized: {normalized_warning_count}",
             f"card_render_mode: {self._card_render_mode()}",
             f"card_asset_mode: {self._card_asset_mode()}",
             f"card_asset_mode_by_brand: {self._card_asset_mode_overrides_text()}",
@@ -2254,6 +2261,30 @@ body {{
             if self._task.cancelled():
                 lines.append("scheduler_error: task cancelled")
         return "\n".join(lines)
+
+    def _configured_white_umos(self) -> list[str]:
+        result: list[str] = []
+        for raw_item in self.config.get("white_umos", []):
+            item = str(raw_item).strip()
+            if not item:
+                continue
+            normalized = self._normalize_umo(item)
+            if normalized not in result:
+                result.append(normalized)
+        return result
+
+    def _normalize_umo(self, value: str) -> str:
+        value = str(value or "").strip()
+        if not value:
+            return ""
+        if value.count(":") >= 2:
+            return value
+        if re.fullmatch(r"\d+", value):
+            normalized = f"aiocqhttp:GroupMessage:{value}"
+            logger.warning(f"white_umos 使用了裸群号，已按 OneBot 群聊兼容为 UMO：{value} -> {normalized}")
+            return normalized
+        logger.warning(f"white_umos 条目不是合法 UMO，可能无法主动发送：{value}")
+        return value
 
     def _parse_send_time_minutes(self, text: str) -> int | None:
         match = re.fullmatch(r"\s*(\d{1,2}):(\d{2})\s*", text or "")
