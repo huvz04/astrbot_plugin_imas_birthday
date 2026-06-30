@@ -6,6 +6,7 @@ import contextlib
 import difflib
 import importlib.util
 import html
+import json
 import os
 import re
 import shutil
@@ -73,6 +74,7 @@ FANCY_DIGITS = str.maketrans("0123456789", "𝟎𝟏𝟐𝟑𝟒𝟓𝟔𝟕𝟖
 CHARACTER_IMAGE_ASSETS: dict[str, str] = {}
 CHARACTER_PORTRAIT_ASSETS: dict[str, str] = {}
 CHARACTER_COLORS: dict[str, str] = {}
+CHARACTER_PROFILES: dict[str, dict[str, Any]] = {}
 
 
 def load_generated_character_assets() -> dict[str, str]:
@@ -87,7 +89,11 @@ def load_generated_character_colors() -> dict[str, str]:
     return load_generated_mapping("character_colors.py", "CHARACTER_COLORS")
 
 
-def load_generated_mapping(filename: str, variable_name: str) -> dict[str, str]:
+def load_generated_character_profiles() -> dict[str, dict[str, Any]]:
+    return load_generated_mapping("character_profiles.py", "CHARACTER_PROFILES")
+
+
+def load_generated_mapping(filename: str, variable_name: str) -> dict[str, Any]:
     path = Path(__file__).resolve().with_name(filename)
     if not path.exists():
         return {}
@@ -103,6 +109,7 @@ def load_generated_mapping(filename: str, variable_name: str) -> dict[str, str]:
 CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
 CHARACTER_PORTRAIT_ASSETS.update(load_generated_character_portraits())
 CHARACTER_COLORS.update(load_generated_character_colors())
+CHARACTER_PROFILES.update(load_generated_character_profiles())
 CHARACTER_COLORS.update(
     {
         "灯里爱夏": "#ff4554",
@@ -111,6 +118,19 @@ CHARACTER_COLORS.update(
         "レトラ": "#d7f930",
     }
 )
+
+IMASBD_PLUGIN_INSTANCE: Any | None = None
+
+
+async def call_imasbd_api(action: str = "today", **kwargs: Any) -> dict[str, Any]:
+    """Module-level entrypoint for other plugins that import this module."""
+    if IMASBD_PLUGIN_INSTANCE is None:
+        return {
+            "ok": False,
+            "action": action,
+            "error": "astrbot_plugin_imas_birthday 尚未加载或已卸载。",
+        }
+    return await IMASBD_PLUGIN_INSTANCE.imasbd_api(action, **kwargs)
 
 BRAND_COLORS = {
     "THE_IDOLMASTER": "#f05a7e",
@@ -409,6 +429,8 @@ def clean_text(text: str) -> str:
 class ImasBirthdayPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig | None = None):
         super().__init__(context, config)
+        global IMASBD_PLUGIN_INSTANCE
+        IMASBD_PLUGIN_INSTANCE = self
         self.config = config or {}
         self.plugin_dir = Path(__file__).resolve().parent
         self.assets_dir = self._resolve_character_assets_dir()
@@ -430,6 +452,9 @@ class ImasBirthdayPlugin(Star):
         self._ensure_scheduler("astrbot_loaded")
 
     async def terminate(self):
+        global IMASBD_PLUGIN_INSTANCE
+        if IMASBD_PLUGIN_INSTANCE is self:
+            IMASBD_PLUGIN_INSTANCE = None
         if self._task:
             self._task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -646,15 +671,292 @@ class ImasBirthdayPlugin(Star):
             lines.append(f"还有 {len(matches) - 5} 个相近结果，换更完整的名字可以缩小范围。")
         return "\n".join(lines)
 
-    async def _build_find_character_result(self, query: str) -> dict[str, str]:
+    async def imasbd_api(
+        self,
+        action: str = "today",
+        *,
+        date_text: str = "",
+        query: str = "",
+        render_card: bool | None = None,
+    ) -> dict[str, Any]:
+        """Internal read-only API for other plugins/LLM tools.
+
+        It builds the same data used by /imasbd commands but never sends messages.
+        """
+        action_key = str(action or "today").strip().lower()
+        aliases = {
+            "now": "today",
+            "birthday": "date",
+            "day": "date",
+            "search": "find",
+            "character": "profile",
+            "idol": "profile",
+            "info": "profile",
+            "asset": "assets",
+            "debug_assets": "assets",
+        }
+        action_key = aliases.get(action_key, action_key)
+
+        if action_key == "status":
+            await self._load_delivery_state()
+            return {
+                "ok": True,
+                "action": action_key,
+                "text": self._scheduler_status_text(),
+            }
+
+        if action_key == "find":
+            return await self._build_find_character_result(query, render_card=render_card, include_matches=True)
+
+        if action_key == "profile":
+            return await self._build_character_profile_result(query)
+
+        if action_key in {"today", "date", "assets"}:
+            if action_key == "today":
+                now = self._now()
+                month, day = now.month, now.day
+            else:
+                parsed = self._parse_date_text(date_text)
+                if not parsed:
+                    return {
+                        "ok": False,
+                        "action": action_key,
+                        "error": "日期格式不对，请使用 MM-DD 或 MMDD，例如 06-22 / 0622。",
+                    }
+                month, day = parsed
+
+            if action_key == "assets":
+                return {
+                    "ok": True,
+                    "action": action_key,
+                    "date_key": f"{month:02d}-{day:02d}",
+                    "month": month,
+                    "day": day,
+                    "text": await self._assets_text(month, day),
+                }
+            return await self._build_date_api_result(month, day, action_key, render_card=render_card)
+
+        return {
+            "ok": False,
+            "action": action_key,
+            "error": "未知 action，可用：today / date / find / profile / assets / status。",
+        }
+
+    @filter.llm_tool(name="imasbd_character_profile")
+    async def imasbd_character_profile(
+        self,
+        event: AstrMessageEvent,
+        query: str,
+    ) -> str:
+        """查询偶像大师角色的结构化基础档案。用于生日、企划归属、CV、年龄、身高、体重、血型、出身、爱好、特技、代表色、本地图片路径等硬事实。
+
+        Args:
+            query(string): 角色名或常见别名。尽量短，例如“月村手毬”“灯里愛夏”“如月千早”。
+        """
+        clean_query = str(query or "").strip()
+        if not clean_query:
+            return json.dumps(
+                {
+                    "ok": False,
+                    "action": "profile",
+                    "error": "缺少角色名。",
+                    "profile": {},
+                },
+                ensure_ascii=False,
+            )
+        result = await self._build_character_profile_result(clean_query)
+        return json.dumps(result, ensure_ascii=False, default=str)
+
+    @filter.llm_tool(name="imasbd_birthday_lookup")
+    async def imasbd_birthday_lookup(
+        self,
+        event: AstrMessageEvent,
+        date_text: str = "",
+    ) -> str:
+        """查询指定日期或今天的偶像大师生日条目。用于“今天谁生日”“6月3日是谁生日”这类生日事实，不用于剧情或人物性格。
+
+        Args:
+            date_text(string): 日期，格式 MM-DD 或 MMDD。留空表示今天。
+        """
+        clean_date = str(date_text or "").strip()
+        if clean_date:
+            result = await self.imasbd_api("date", date_text=clean_date, render_card=False)
+        else:
+            result = await self.imasbd_api("today", render_card=False)
+        return json.dumps(result, ensure_ascii=False, default=str)
+
+    async def _build_character_profile_result(self, query: str) -> dict[str, Any]:
         query, matches, error = await self._find_character_matches(query)
         if error:
-            return {"message": "", "card_path": "", "error": error}
+            return {
+                "ok": False,
+                "action": "profile",
+                "query": query,
+                "error": error,
+                "profile": {},
+                "matches": [],
+            }
+        best_score, best = matches[0]
+        profile = self._character_profile_payload(best["name"], best["date_key"])
+        return {
+            "ok": True,
+            "action": "profile",
+            "query": query,
+            "profile": profile,
+            "best_match": {
+                "name": best["name"],
+                "date_key": best["date_key"],
+                "brand_label": best["brand_label"],
+                "score": best_score,
+            },
+            "matches": [
+                {
+                    "name": record["name"],
+                    "date_key": record["date_key"],
+                    "brand_label": record["brand_label"],
+                    "score": score,
+                }
+                for score, record in matches[:5]
+            ],
+            "error": "",
+        }
+
+    async def _build_date_api_result(
+        self,
+        month: int,
+        day: int,
+        action: str,
+        *,
+        render_card: bool | None = None,
+    ) -> dict[str, Any]:
+        data = await self._get_birthdays()
+        date_key = f"{month:02d}-{day:02d}"
+        entry = data.get(date_key)
+        result = await self._build_result(month, day, render_card=render_card)
+        if not result["message"]:
+            return {
+                "ok": False,
+                "action": action,
+                "date_key": date_key,
+                "month": month,
+                "day": day,
+                "entry": self._entry_payload(entry),
+                "message": "",
+                "card_path": "",
+                "error": f"{month}月{day}日没有匹配到偶像大师相关生日。",
+            }
+        return {
+            "ok": True,
+            "action": action,
+            "date_key": date_key,
+            "month": month,
+            "day": day,
+            "entry": self._entry_payload(entry),
+            "message": result["message"],
+            "card_path": result["card_path"],
+            "error": "",
+        }
+
+    def _entry_payload(self, entry: dict[str, list[str]] | None) -> dict[str, Any]:
+        entry = entry or {}
+        characters = self._visible_characters(entry)
+        return {
+            "characters": characters,
+            "profiles": [self._character_profile_payload(character) for character in characters],
+            "seiyuu": self._split_people(entry.get("seiyuu", [])),
+            "related_people": self._split_people(entry.get("related_people", [])),
+            "events": list(entry.get("events", [])),
+        }
+
+    def _character_profile_payload(self, character: str, date_key: str = "") -> dict[str, Any]:
+        name = self._base_character_name(CHARACTER_NAME_ALIASES.get(character, character))
+        brand = self._character_brand(name)
+        profile = self._lookup_character_profile(name)
+        birthday = str(profile.get("birthday") or date_key or "")
+        image_path = self._character_image_path(name)
+        portrait_path = self._character_portrait_path(name)
+        payload: dict[str, Any] = {
+            "name": name,
+            "birthday": birthday,
+            "brand": brand,
+            "brand_label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
+            "color": self._character_color(name, brand),
+            "image_asset": self._character_asset_filename(name),
+            "image_path": str(image_path) if image_path else "",
+            "portrait_asset": self._character_portrait_filename(name),
+            "portrait_path": str(portrait_path) if portrait_path else "",
+        }
+        for key in (
+            "summary",
+            "introduction",
+            "name_jp",
+            "name_kana",
+            "name_en",
+            "cv",
+            "age",
+            "height",
+            "weight",
+            "measurements",
+            "birthday_text",
+            "blood_type",
+            "zodiac",
+            "dominant_hand",
+            "type",
+            "agency",
+            "hometown",
+            "hobby",
+            "specialty",
+            "favorite",
+            "school",
+            "class",
+            "unit",
+            "debut",
+            "source_title",
+            "source_url",
+        ):
+            value = profile.get(key)
+            if value not in (None, "", []):
+                payload[key] = value
+        raw = profile.get("raw")
+        if isinstance(raw, dict) and raw:
+            payload["raw"] = raw
+        return payload
+
+    def _lookup_character_profile(self, character: str) -> dict[str, Any]:
+        candidates = [
+            character,
+            CHARACTER_NAME_ALIASES.get(character, character),
+            CHARACTER_REVERSE_ALIASES.get(character, character),
+            self._base_character_name(character),
+            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
+        ]
+        for candidate in dict.fromkeys(candidates):
+            profile = CHARACTER_PROFILES.get(candidate)
+            if isinstance(profile, dict):
+                return profile
+        return {}
+
+    async def _build_find_character_result(
+        self,
+        query: str,
+        *,
+        render_card: bool | None = None,
+        include_matches: bool = False,
+    ) -> dict[str, Any]:
+        query, matches, error = await self._find_character_matches(query)
+        if error:
+            result: dict[str, Any] = {"ok": False, "message": "", "card_path": "", "error": error}
+            if include_matches:
+                result.update({"action": "find", "query": query, "matches": []})
+            return result
 
         best_score, best = matches[0]
         month, day = self._month_day_from_date_key(best["date_key"])
         if not month or not day:
-            return {"message": "", "card_path": "", "error": f"找到 {best['name']}，但生日日期格式异常：{best['date_key']}"}
+            result = {"ok": False, "message": "", "card_path": "", "error": f"找到 {best['name']}，但生日日期格式异常：{best['date_key']}"}
+            if include_matches:
+                result.update({"action": "find", "query": query, "matches": []})
+            return result
 
         entry = {
             "characters": [best["name"]],
@@ -664,15 +966,48 @@ class ImasBirthdayPlugin(Star):
         }
         message = self._build_message_from_entry(month, day, entry)
         if not message:
-            return {"message": "", "card_path": "", "error": f"找到 {best['name']}，但当前模板没有生成可发送内容。"}
+            result = {"ok": False, "message": "", "card_path": "", "error": f"找到 {best['name']}，但当前模板没有生成可发送内容。"}
+            if include_matches:
+                result.update({"action": "find", "query": query, "matches": []})
+            return result
 
         if self._normalize_character_query(best["name"]) != self._normalize_character_query(query):
             message = f"是否在找：{best['name']}\n{message}"
 
         card_path = ""
-        if self._cfg_bool("render_card", True):
+        should_render_card = self._cfg_bool("render_card", True) if render_card is None else bool(render_card)
+        if should_render_card:
             card_path = await self._render_card(month, day, entry)
-        return {"message": message, "card_path": card_path, "error": ""}
+        result = {
+            "ok": True,
+            "action": "find",
+            "query": query,
+            "date_key": best["date_key"],
+            "month": month,
+            "day": day,
+            "best_match": {
+                "name": best["name"],
+                "date_key": best["date_key"],
+                "brand_label": best["brand_label"],
+                "score": best_score,
+            },
+            "profile": self._character_profile_payload(best["name"], best["date_key"]),
+            "entry": self._entry_payload(entry),
+            "message": message,
+            "card_path": card_path,
+            "error": "",
+        }
+        if include_matches:
+            result["matches"] = [
+                {
+                    "name": record["name"],
+                    "date_key": record["date_key"],
+                    "brand_label": record["brand_label"],
+                    "score": score,
+                }
+                for score, record in matches[:5]
+            ]
+        return result
 
     async def _find_character_matches(self, query: str) -> tuple[str, list[tuple[float, dict[str, str]]], str]:
         query = clean_text(query or "")
@@ -1237,7 +1572,7 @@ class ImasBirthdayPlugin(Star):
                 return [part.strip().lower() for part in text[len(prefix) :].split() if part.strip()]
         return None
 
-    async def _build_result(self, month: int, day: int) -> dict[str, str]:
+    async def _build_result(self, month: int, day: int, *, render_card: bool | None = None) -> dict[str, str]:
         data = await self._get_birthdays()
         entry = data.get(f"{month:02d}-{day:02d}")
         if self._cfg_bool("require_character_birthday", True) and not self._visible_characters(entry or {}):
@@ -1246,7 +1581,8 @@ class ImasBirthdayPlugin(Star):
         if not message:
             return {"message": "", "card_path": ""}
         card_path = ""
-        if self._cfg_bool("render_card", True):
+        should_render_card = self._cfg_bool("render_card", True) if render_card is None else bool(render_card)
+        if should_render_card:
             card_path = await self._render_card(month, day, entry)
         return {"message": message, "card_path": card_path}
 

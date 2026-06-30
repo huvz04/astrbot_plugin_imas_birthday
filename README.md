@@ -180,6 +180,24 @@ python .\tools\fetch_moegirl_character_assets.py --assets-dir D:\imas_birthday_a
 
 萌娘百科下载到的缩略图通常会带萌百水印，卡片底部会保留来源感谢。
 
+如果想给内部 LLM 接口补充生日以外的角色资料，可以生成 `character_profiles.py`：
+
+```powershell
+python .\tools\fetch_moegirl_character_profiles.py --limit 10 --dry-run
+python .\tools\fetch_moegirl_character_profiles.py
+```
+
+脚本会复用萌娘百科生日表里的角色链接，逐个读取角色页的基础资料字段和页面开头简介，生成 `character_profiles.py`。已有档案默认跳过，可以分批慢慢跑；如果要重抓，加 `--overwrite`。目前会尽量映射 `summary`、`introduction`、`cv`、`age`、`height`、`weight`、`measurements`、`birthday_text`、`blood_type`、`dominant_hand`、`type`、`agency`、`hometown`、`hobby`、`specialty`、`school`、`unit`、`debut` 等常见字段，未标准化但有用的字段会放在 `raw` 里。
+
+## LLM 工具
+
+插件暴露给 LLM 两个工具：
+
+- `imasbd_character_profile(query)`：查偶像大师角色基础档案，适合生日、企划归属、CV、年龄、身高、体重、血型、出身、爱好、特技、代表色、本地图片路径等硬事实。
+- `imasbd_birthday_lookup(date_text="")`：查今天或指定日期的生日条目，`date_text` 支持 `MM-DD` 或 `MMDD`，留空表示今天。
+
+建议把这些结构化工具当作硬档案来源；知识库只负责性格细节、剧情语料、口癖、关系网、剧情事件、现场梗和黑话缩写。模块级内部接口见下方“内部接口”。
+
 也可以用手动清单批量导入，用来替换你不满意的图片。先复制 `assets_manifest.example.csv` 为 `assets_manifest.csv`，按下面格式维护清单：
 
 ```csv
@@ -222,6 +240,29 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 `/imasbd find 名字` 只查询生日表里的角色条目，不会匹配声优、相关人士或事件。它支持轻量模糊查询，例如 `/imasbd find 天海真香` 会按 `天海春香` 生成单人生日预览；消息和卡片只包含这个角色，不带同日其他角色或声优信息。
 
 `bind`、`refresh`、`reset-state` 和 `sendtest` 需要管理员权限。`reset-state` 会清除每日自动推送状态，不会立即主动发送；如果当前已经过 `send_time` 且配置允许补发，定时器会在下一轮按正常逻辑补发。`sendtest` 还需要先在配置里打开 `enable_send_test`，它会实际测试分开发送、组合 `file_image`、组件本地文件、组件 base64 等图片发送方式，方便排查 OneBot/aiocqhttp/NapCat 的图片兼容性。需要详细定位时打开 `debug_send_test`，插件会在 AstrBot 日志和群聊里输出每一步进度；某一步卡住会按 `send_test_timeout` 超时并继续下一项。
+
+## 内部接口
+
+插件实例提供只读接口 `await plugin.imasbd_api(...)`，供其他插件或 LLM tool 包装调用。它只返回结构化数据，不会主动向群聊发送消息。
+
+```python
+result = await imas_plugin.imasbd_api("date", date_text="06-22", render_card=False)
+result = await imas_plugin.imasbd_api("find", query="天海真香", render_card=True)
+result = await imas_plugin.imasbd_api("profile", query="天海春香")
+result = await imas_plugin.imasbd_api("today")
+result = await imas_plugin.imasbd_api("assets", date_text="06-22")
+result = await imas_plugin.imasbd_api("status")
+```
+
+如果隔壁插件不方便拿到插件实例，也可以导入模块级入口：
+
+```python
+from data.plugins.astrbot_plugin_imas_birthday.main import call_imasbd_api
+
+result = await call_imasbd_api("profile", query="天海真香")
+```
+
+返回值是 `dict`，常用字段包括 `ok`、`action`、`date_key`、`entry`、`message`、`card_path`、`error`。`render_card=False` 可以只取文本和生日数据，避免 LLM 查询时生成图片；`find` 会额外返回 `best_match` 和最多 5 条 `matches`；`profile` 会返回单个角色的 `profile`，包括 `name`、`birthday`、`brand`、`brand_label`、`color`、`summary`、`introduction`、`cv`、`age`、`height`、`weight`、`birthday_text`、`blood_type`、`hometown`、`hobby`、`specialty`、`agency`、`image_path`、`portrait_path`、`source_url` 和 `raw`。
 
 `birthday_send_mode` 可选：
 
