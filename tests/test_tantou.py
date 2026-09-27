@@ -87,10 +87,17 @@ plugin_module = load_plugin()
 
 
 class Event:
-    def __init__(self, user="1001", group="100", text="", owner="测试P"):
+    def __init__(self, user="1001", group="100", text="", owner="测试P", mentions=None):
         self.user, self.group, self.message_str, self.owner = user, group, text, owner
         self.unified_msg_origin = f"bot:GroupMessage:{group}" if group else f"bot:FriendMessage:{user}"
         self.extras = {}
+        self.messages = [Plain(text), *(At(qq) for qq in (mentions or []))]
+
+    def get_messages(self):
+        return self.messages
+
+    def get_self_id(self):
+        return "9999"
 
     def get_group_id(self):
         return self.group
@@ -187,11 +194,122 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
     async def test_mixed_batch_and_individual_choices(self):
         result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 千早 qzxv987")
         self.assertIn("没找到「qzxv987」", result)
-        self.assertEqual(await self.follows(), ["花海佑芽"])
+        self.assertEqual(await self.follows(), [])
         pending = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]
-        self.assertEqual(len(pending["items"]), 2)
-        await self.plugin._change_tantou(self.event, "加推确认", "1 0")
+        self.assertEqual(len(pending["items"]), 3)
+        await self.plugin._change_tantou(self.event, "加推确认", "1 0 0")
         self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬"])
+
+    async def test_corrected_batch_keeps_original_positions_until_every_name_is_valid(self):
+        await self.plugin._change_tantou(self.event, "加推", "花海咲季")
+        result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 一ノ瀬 志希 qzxv987 如月千早")
+        self.assertIn("尚未保存", result)
+        self.assertEqual(await self.follows(), ["花海咲季"])
+        result = await self.plugin._change_tantou(self.event, "加推确认", "1 another_typo")
+        self.assertIn("仍未匹配", result)
+        self.assertEqual(await self.follows(), ["花海咲季"])
+        result = await self.plugin._change_tantou(self.event, "加推确认", "月村 手毬 高木 順二朗")
+        self.assertIn("添加成功", result)
+        expected = ["花海咲季", "花海佑芽", "月村手毬", "一之濑志希", "高木顺二朗", "如月千早"]
+        self.assertEqual(await self.follows(), expected)
+        restored = make_plugin(self.plugin.storage)
+        self.assertEqual((await restored._tantou_group(self.event.unified_msg_origin))[self.event.user], expected)
+
+    async def test_repeated_confirmation_choices_and_duplicates_preserve_first_position(self):
+        await self.plugin._change_tantou(self.event, "加推", "手毬 一ノ瀬 花海佑芽 月村手毬")
+        self.assertEqual(await self.follows(), [])
+        result = await self.plugin._change_tantou(self.event, "加推确认", "1 1")
+        self.assertIn("添加成功", result)
+        self.assertEqual(await self.follows(), ["月村手毬", "一之濑志希", "花海佑芽"])
+
+    async def test_expired_or_replaced_draft_never_adds_exact_names_early(self):
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬 qzxv987 花海佑芽")
+        self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]["expires"] = 0
+        self.assertIn("过期", await self.plugin._change_tantou(self.event, "加推确认", "0"))
+        self.assertEqual(await self.follows(), [])
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬 qzxv987 花海佑芽")
+        await self.plugin._change_tantou(self.event, "加推", "一ノ瀬 志希 月村手毬 花海佑芽")
+        self.assertEqual(await self.follows(), ["一之濑志希", "月村手毬", "花海佑芽"])
+        self.assertNotIn((self.event.unified_msg_origin, self.event.user), self.plugin._tantou_pending)
+
+    async def test_clear_only_own_group_and_cancels_draft_but_keeps_p_name(self):
+        other = Event(user="1002")
+        another_group = Event(group="200")
+        for event in (self.event, other, another_group):
+            await self.plugin._change_tantou(event, "加推", "月村手毬")
+        await self.plugin._change_tantou(self.event, "担当改名", "花海")
+        await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬")
+        result = await self.plugin._change_tantou(self.event, "清空担当", "")
+        self.assertIn("已清空", result)
+        self.assertEqual(await self.follows(), [])
+        self.assertEqual(await self.follows(other), ["月村手毬"])
+        self.assertEqual(await self.follows(another_group), ["月村手毬"])
+        self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, ["月村手毬"]), ["1002"])
+        self.assertIn("没有待确认", await self.plugin._change_tantou(self.event, "加推确认", "1"))
+        self.assertEqual(await self.plugin._tantou_owner(self.event.unified_msg_origin, self.event.user), "花海")
+        await self.plugin._change_tantou(self.event, "加推", "花海佑芽 月村手毬")
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬"])
+        for event, args in ((self.event, "1002"), (Event(mentions=["1002"]), "")):
+            self.assertIn("只清空你", await self.plugin._change_tantou(event, "清空担当", args))
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬"])
+
+    async def test_other_overview_uses_saved_p_name_and_stays_in_current_group(self):
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬 花海佑芽")
+        await self.plugin._change_tantou(self.event, "担当改名", "ℒℴѵℯ•唯爱 丘比.✧=₂✭")
+        viewer = Event(user="1002", owner="这是查看者")
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=["card.png"]) as render:
+            by_id = await self.plugin._tantou_overview(viewer, "1001")
+            by_at = await self.plugin._tantou_overview(Event(user="1002", mentions=["9999", "1001"]))
+        self.assertEqual(by_id["message"], by_at["message"])
+        self.assertTrue(by_id["message"].startswith("ℒℴѵℯ•唯爱 丘比.✧=₂✭P\n"))
+        self.assertEqual(render.call_args.args[1], ["月村手毬", "花海佑芽"])
+        elsewhere = await self.plugin._tantou_overview(Event(user="1002", group="200"), "1001")
+        self.assertEqual(elsewhere["message"], "这位群友还没有在本群登记担当。")
+        self.assertEqual(elsewhere["card_path"], "")
+
+    async def test_p_name_survives_nickname_change_and_restart_and_can_reset(self):
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬")
+        await self.plugin._change_tantou(self.event, "担当改名", "花海P")
+        restored = make_plugin(self.plugin.storage)
+        with patch.object(restored, "_render_tantou_cards", return_value=["card.png"]):
+            result = await restored._tantou_overview(Event(owner="改过的群昵称"))
+            self.assertTrue(result["message"].startswith("花海P\n"))
+            self.assertIn("恢复", await restored._change_tantou(Event(owner="改过的群昵称"), "担当改名", "重置"))
+            result = await restored._tantou_overview(Event(user="1002"), "1001")
+            self.assertTrue(result["message"].startswith("改过的群昵称P\n"))
+        self.assertEqual((await restored._tantou_group(self.event.unified_msg_origin))[self.event.user], ["月村手毬"])
+
+    async def test_unknown_saved_owner_never_uses_viewers_nickname(self):
+        self.plugin.storage[f"tantou_v1:{self.event.unified_msg_origin}"] = {"3000": ["月村手毬"]}
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=["card.png"]):
+            result = await self.plugin._tantou_overview(Event(owner="查看者名字"), "3000")
+        self.assertTrue(result["message"].startswith("3000P\n"))
+
+    async def test_target_validation_and_new_commands_dispatch_once(self):
+        for args, mentions in (("随便聊聊", []), ("", ["1001", "1002"]), ("", ["all"]), ("1002", ["1001"])):
+            result = await self.plugin._tantou_overview(Event(mentions=mentions), args)
+            self.assertIn("用法", result["message"])
+            self.assertEqual(result["card_path"], "")
+        rename = Event(text="担当改名 花海")
+        self.assertIn("花海P", ([reply async for reply in self.plugin.tantou_text_fallback(rename)])[0])
+        self.assertEqual([reply async for reply in self.plugin.tantou_rename(rename, "花海")], [])
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬")
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=["card.png"]), patch.object(self.plugin, "_send_tantou_cards", new_callable=AsyncMock) as send:
+            query = Event(user="1002", text="担当", mentions=["1001"])
+            self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(query)], [])
+            self.assertEqual([reply async for reply in self.plugin.tantou_show(query)], [])
+            self.assertEqual(send.await_count, 1)
+            self.assertTrue(send.call_args.args[1]["message"].startswith("花海P\n"))
+            native_query = Event(user="1002", text="/担当 1001")
+            self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(native_query)], [])
+            self.assertEqual([reply async for reply in self.plugin.tantou_show(native_query, "1001")], [])
+            self.assertEqual(send.await_count, 2)
+        rejected = [reply async for reply in self.plugin.tantou_clear(Event(text="/清空担当 1002"), "1002")]
+        self.assertIn("只清空你", rejected[0])
+        self.assertEqual(await self.follows(), ["月村手毬"])
+        clear = Event(text="清空担当")
+        self.assertIn("已清空", ([reply async for reply in self.plugin.tantou_text_fallback(clear)])[0])
+        self.assertEqual([reply async for reply in self.plugin.tantou_clear(clear)], [])
 
     async def test_confirmation_scoped_expiry_and_invalid_choices(self):
         await self.plugin._change_tantou(self.event, "加推", "手毬")
@@ -214,13 +332,14 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.follows(), [])
 
     async def test_failed_storage_keeps_confirmation_for_retry(self):
-        await self.plugin._change_tantou(self.event, "加推", "手毬")
+        await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 一ノ瀬 志希")
         with patch.object(self.plugin, "put_kv_data", side_effect=RuntimeError("storage failure")):
             with self.assertLogs("test_tantou", level="ERROR"):
                 result = await self.plugin._change_tantou(self.event, "加推确认", "1")
         self.assertIn("登记失败", result)
         self.assertEqual(await self.follows(), [])
         self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推确认", "1"))
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬", "一之濑志希"])
 
     async def test_simultaneous_users_do_not_overwrite(self):
         users = [Event(user=str(i)) for i in range(12)]
@@ -275,7 +394,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         replies = [text async for text in self.plugin.tantou_add(event, "月村手毬")]
         self.assertIn("添加成功", replies[0])
         empty = await self.plugin._tantou_overview(Event(user="2000"))
-        self.assertIn("还没有登记", empty["message"])
+        self.assertEqual(empty["message"], "还没有登记担当，发送「加推 月村手毬」试试。")
         self.assertEqual(empty["card_path"], "")
 
     async def test_overview_has_all_names_and_real_image(self):
@@ -563,8 +682,19 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(all(len(chain.chain) == 1 and not isinstance(chain.chain[0], Plain) for _, chain in self.plugin.sent))
         with patch.object(self.plugin, "_render_tantou_overview", return_value="card.png") as render:
             self.plugin._render_tantou_cards("测试P", names)
-        self.assertEqual([len(call.args[1]) for call in render.call_args_list], [10, 9])
+        self.assertEqual([len(call.args[1]) for call in render.call_args_list], [12, 7])
         self.assertEqual(render.call_args_list[0].kwargs["brands"], render.call_args_list[1].kwargs["brands"])
+
+    async def test_pagination_fills_rows_keeps_order_and_limits_page_size(self):
+        catalogue = list(self.plugin._idol_catalogue)
+        for count, sizes in ((12, [12]), (18, [18]), (19, [12, 7]), (20, [12, 8]), (36, [18, 18]), (37, [18, 12, 7]), (55, [18, 18, 12, 7])):
+            with self.subTest(count=count), patch.object(self.plugin, "_render_tantou_overview", return_value="card.png") as render:
+                self.plugin._render_tantou_cards("花海", catalogue[:count])
+                pages = [call.args[1] for call in render.call_args_list]
+                self.assertEqual([len(page) for page in pages], sizes)
+                self.assertEqual([name for page in pages for name in page], catalogue[:count])
+                self.assertTrue(all(len(page) % 6 == 0 for page in pages[:-1]))
+                self.assertTrue(all(0 < len(page) <= 18 for page in pages))
 
 
 if __name__ == "__main__":

@@ -603,7 +603,7 @@ class ImasBirthdayPlugin(Star):
 
     @filter.command("加推确认")
     async def tantou_confirm(self, event: AstrMessageEvent, choices: GreedyStr = ""):
-        """按候选序号确认加推，多个序号用空格分隔，0 跳过。"""
+        """按原顺序确认候选或填写修正后的完整名字，0 跳过。"""
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._change_tantou(event, "加推确认", str(choices)))
 
@@ -614,14 +614,26 @@ class ImasBirthdayPlugin(Star):
             yield event.plain_result(await self._change_tantou(event, "减推", str(names)))
 
     @filter.command("担当")
-    async def tantou_show(self, event: AstrMessageEvent):
-        """用图片展示自己在本群登记的全部担当。"""
+    async def tantou_show(self, event: AstrMessageEvent, target: GreedyStr = ""):
+        """展示自己或本群指定群友的担当，可用 @ 或 QQ 号。"""
         if self._claim_tantou_event(event):
-            result = await self._tantou_overview(event)
+            result = await self._tantou_overview(event, str(target))
             if result["card_path"]:
                 await self._send_tantou_cards(event, result)
             else:
                 yield event.plain_result(result["message"])
+
+    @filter.command("清空担当")
+    async def tantou_clear(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        """清空自己在本群登记的担当及待确认的加推。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "清空担当", str(args)))
+
+    @filter.command("担当改名")
+    async def tantou_rename(self, event: AstrMessageEvent, name: GreedyStr = ""):
+        """设置本群名片的 P 名，填写“重置”恢复群昵称。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "担当改名", str(name)))
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def tantou_text_fallback(self, event: AstrMessageEvent):
@@ -631,17 +643,15 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推确认", "减推", "担当"}:
+        if command not in {"加推", "加推确认", "减推", "担当", "清空担当", "担当改名"}:
             return
         args = parts[1] if len(parts) > 1 else ""
-        if command == "担当" and args:
-            return
         if not self._claim_tantou_event(event):
             return
         if command != "担当":
             yield event.plain_result(await self._change_tantou(event, command, args))
             return
-        result = await self._tantou_overview(event)
+        result = await self._tantou_overview(event, args)
         if result["card_path"]:
             await self._send_tantou_cards(event, result)
         else:
@@ -658,6 +668,38 @@ class ImasBirthdayPlugin(Star):
         if not event.get_group_id():
             return "", ""
         return str(event.unified_msg_origin), str(event.get_sender_id() or "")
+
+    def _tantou_mentions(self, event: AstrMessageEvent) -> list[str]:
+        messages = event.get_messages() if hasattr(event, "get_messages") else []
+        bot_id = str(event.get_self_id() or "") if hasattr(event, "get_self_id") else ""
+        at_type = getattr(Comp, "At", ())
+        return list(dict.fromkeys(str(part.qq) for part in messages if isinstance(part, at_type) and str(part.qq) != bot_id))
+
+    def _tantou_target(self, event: AstrMessageEvent, args: str) -> tuple[str, str]:
+        mentions = self._tantou_mentions(event)
+        usage = "用法：担当、担当 @群友 或 担当 QQ号；一次查看一人。"
+        explicit = re.fullmatch(r"@?([0-9]+)", args.strip())
+        if mentions:
+            if len(mentions) != 1 or mentions[0] in {"all", "0"}:
+                return "", usage
+            if args.strip() and (not explicit or explicit.group(1) != mentions[0]):
+                return "", usage
+            return mentions[0], ""
+        if not args.strip():
+            return str(event.get_sender_id() or ""), ""
+        return (explicit.group(1), "") if explicit else ("", usage)
+
+    async def _tantou_owner(self, umo: str, user_id: str, nickname: str = "") -> str:
+        key = f"tantou_profiles_v1:{umo}"
+        profiles = await self.get_kv_data(key, {})
+        profiles = profiles if isinstance(profiles, dict) else {}
+        profile = profiles.get(user_id, {})
+        profile = profile if isinstance(profile, dict) else {}
+        nickname = clean_text(nickname)
+        if nickname and profile.get("nickname") != nickname:
+            profiles[user_id] = profile = {**profile, "nickname": nickname}
+            await self.put_kv_data(key, profiles)
+        return str(profile.get("name") or profile.get("nickname") or user_id)
 
     async def _tantou_group(self, umo: str) -> dict[str, list[str]]:
         await self._load_idol_catalogue()
@@ -749,13 +791,13 @@ class ImasBirthdayPlugin(Star):
                     candidates.setdefault(self._exact_name_key(alias), set()).add(name)
         return {key: next(iter(values)) for key, values in candidates.items() if len(values) == 1}
 
-    def _split_tantou_names(self, text: str, aliases: dict[str, str]) -> list[str]:
+    def _split_tantou_names(self, text: str, aliases: dict[str, str], *, deduplicate: bool = True) -> list[str]:
         parts, result, index = text.split(), [], 0
         while index < len(parts):
             end = next((end for end in range(len(parts), index, -1) if self._exact_name_key(" ".join(parts[index:end])) in aliases), index + 1)
             result.append(" ".join(parts[index:end]))
             index = end
-        return list(dict.fromkeys(result))
+        return list(dict.fromkeys(result)) if deduplicate else result
 
     async def _tantou_records(self) -> list[str]:
         await self._load_idol_catalogue()
@@ -770,13 +812,36 @@ class ImasBirthdayPlugin(Star):
         umo, user_id = self._tantou_identity(event)
         if not umo or not user_id:
             return "请在群聊里登记和查看担当。"
-        if not args.split():
-            examples = {"加推": "加推 月村手毬 花海佑芽", "减推": "减推 月村手毬", "加推确认": "加推确认 1（按候选顺序填写序号，0 跳过）"}
+        if command == "清空担当" and (args.strip() or self._tantou_mentions(event)):
+            return "用法：清空担当；只清空你在本群的登记。"
+        if command != "清空担当" and not args.split():
+            examples = {"加推": "加推 月村手毬", "减推": "减推 月村手毬", "加推确认": "加推确认 1（按待修正名字的顺序填写序号或完整名字，0 跳过）", "担当改名": "担当改名 你的CN（填写“重置”恢复群昵称）"}
             return f"用法：{examples[command]}"
         async with self._tantou_lock:
             try:
+                await self._tantou_owner(umo, user_id, str(event.get_sender_name() or ""))
+                if command == "清空担当":
+                    group = await self._tantou_group(umo)
+                    group.pop(user_id, None)
+                    await self.put_kv_data(f"tantou_v1:{umo}", group)
+                    self._tantou_pending.pop((umo, user_id), None)
+                    return "已清空你在本群登记的担当。"
+                if command == "担当改名":
+                    name = clean_text(args)
+                    if len(NicknameText.graphemes(name)) > 80:
+                        return "P 名最多 80 个字符，请缩短后重试。"
+                    key = f"tantou_profiles_v1:{umo}"
+                    profiles = await self.get_kv_data(key, {})
+                    profile = dict(profiles.get(user_id, {}))
+                    if name == "重置":
+                        profile.pop("name", None)
+                    else:
+                        profile["name"] = name
+                    profiles[user_id] = profile
+                    await self.put_kv_data(key, profiles)
+                    return "已恢复使用群昵称。" if name == "重置" else f"名片 P 名已设为：{self._tantou_producer_name(name)}"
                 if command == "加推确认":
-                    return await self._confirm_tantou(umo, user_id, args.split())
+                    return await self._confirm_tantou(umo, user_id, args)
                 records = await self._tantou_records()
                 aliases = self._tantou_alias_index(records)
                 tokens = self._split_tantou_names(args, aliases)
@@ -784,9 +849,9 @@ class ImasBirthdayPlugin(Star):
                     return "一次最多处理 30 个名字，请分次发送。"
                 resolved = {query: aliases[self._exact_name_key(query)] for query in tokens if self._exact_name_key(query) in aliases}
                 self._tantou_pending.pop((umo, user_id), None)
-                group = await self._tantou_group(umo)
-                current = list(group.get(user_id, []))
                 if command == "减推":
+                    group = await self._tantou_group(umo)
+                    current = list(group.get(user_id, []))
                     removed = list(dict.fromkeys(name for name in resolved.values() if name in current))
                     group[user_id] = [name for name in current if name not in removed]
                     if not group[user_id]:
@@ -797,17 +862,9 @@ class ImasBirthdayPlugin(Star):
                     if missing:
                         lines.append("未登记这些完整名字：" + "、".join(missing))
                     return "\n".join(lines)
-                exact = list(dict.fromkeys(resolved.values()))
-                added = [name for name in exact if name not in current]
-                existing = [name for name in exact if name in current]
-                if added:
-                    group[user_id] = current + added
-                    await self.put_kv_data(f"tantou_v1:{umo}", group)
-                lines = ["添加成功：" + "、".join(added)] if added else []
-                if existing:
-                    lines.append("已经加推：" + "、".join(existing))
-                pending = []
-                for query in tokens:
+                batch = [resolved.get(query) for query in tokens]
+                lines, pending = [], []
+                for position, query in enumerate(tokens):
                     if query in resolved:
                         continue
                     key = self._normalize_character_query(query)
@@ -816,37 +873,52 @@ class ImasBirthdayPlugin(Star):
                         key=lambda item: (-item[0], item[1]),
                     )
                     candidates = [name for score, name in matches if score >= 0.45][:5]
+                    pending.append({"query": query, "candidates": candidates, "position": position})
                     if not candidates:
-                        lines.append(f"没找到「{query}」，请检查名字。")
+                        lines.append(f"没找到「{query}」，请填写修正后的完整名字，或用 0 跳过。")
                         continue
-                    pending.append({"query": query, "candidates": candidates})
                     lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {name}" for index, name in enumerate(candidates, 1)))
                 now = time.monotonic()
                 self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
                 if pending:
-                    self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending}
-                    example = " ".join("1" for _ in pending)
-                    lines.append(f"按上面每个名字的顺序发送：加推确认 {example}\n可改成其他序号，0 表示跳过；5 分钟内有效。")
-                return "\n".join(lines)
+                    self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending, "batch": batch}
+                    example = " ".join("1" if item["candidates"] else "完整名字" for item in pending)
+                    lines.insert(0, "本次加推尚未保存，确认后按原顺序添加。")
+                    lines.append(f"按上面待修正名字的顺序发送：加推确认 {example}\n可填写候选序号或修正后的完整名字，0 表示跳过；5 分钟内有效。")
+                    return "\n".join(lines)
+                return await self._append_tantou_batch(umo, user_id, batch)
             except Exception:
                 logger.exception("担当登记失败")
                 return "担当登记失败，请稍后重试。"
 
-    async def _confirm_tantou(self, umo: str, user_id: str, choices: list[str]) -> str:
+    async def _confirm_tantou(self, umo: str, user_id: str, args: str) -> str:
         pending = self._tantou_pending.get((umo, user_id))
         if not pending or pending["expires"] <= time.monotonic():
             self._tantou_pending.pop((umo, user_id), None)
             return "没有待确认的加推，或确认已过期。请重新发送「加推 名字」。"
         items = pending["items"]
+        aliases = self._tantou_alias_index(await self._tantou_records())
+        choices = self._split_tantou_names(args, aliases, deduplicate=False)
         if len(choices) != len(items):
-            return f"请按候选顺序填写 {len(items)} 个序号，用空格分隔；0 表示跳过。"
-        selected = []
+            return f"请按待修正名字的顺序填写 {len(items)} 个序号或完整名字，用空格分隔；0 表示跳过。"
+        selected = list(pending["batch"])
         for item, choice in zip(items, choices):
-            if not choice.isascii() or not choice.isdigit() or int(choice) > len(item["candidates"]):
-                return f"「{item['query']}」的序号应为 0—{len(item['candidates'])}，0 表示跳过。"
-            if int(choice):
-                selected.append(item["candidates"][int(choice) - 1])
-        selected = list(dict.fromkeys(selected))
+            if choice.isascii() and choice.isdigit():
+                index = int(choice)
+                if index > len(item["candidates"]):
+                    return f"「{item['query']}」的序号应为 0—{len(item['candidates'])}，也可填写完整名字；0 表示跳过。"
+                selected[item["position"]] = item["candidates"][index - 1] if index else None
+            else:
+                name = aliases.get(self._exact_name_key(choice))
+                if not name:
+                    return f"修正后的「{choice}」仍未匹配到完整名字；请重新填写，或用 0 跳过。"
+                selected[item["position"]] = name
+        result = await self._append_tantou_batch(umo, user_id, selected)
+        self._tantou_pending.pop((umo, user_id), None)
+        return result
+
+    async def _append_tantou_batch(self, umo: str, user_id: str, selected: list[str | None]) -> str:
+        selected = list(dict.fromkeys(name for name in selected if name))
         group = await self._tantou_group(umo)
         current = list(group.get(user_id, []))
         added = [name for name in selected if name not in current]
@@ -854,21 +926,24 @@ class ImasBirthdayPlugin(Star):
         if added:
             group[user_id] = current + added
             await self.put_kv_data(f"tantou_v1:{umo}", group)
-        self._tantou_pending.pop((umo, user_id), None)
         lines = ["添加成功：" + "、".join(added)] if added else []
         if existing:
             lines.append("已经加推：" + "、".join(existing))
         return "\n".join(lines) or "已跳过，未添加担当。"
 
-    async def _tantou_overview(self, event: AstrMessageEvent) -> dict[str, Any]:
-        umo, user_id = self._tantou_identity(event)
-        if not umo or not user_id:
+    async def _tantou_overview(self, event: AstrMessageEvent, args: str = "") -> dict[str, Any]:
+        umo, sender_id = self._tantou_identity(event)
+        if not umo or not sender_id:
             return {"message": "请在群聊里登记和查看担当。", "card_path": ""}
+        user_id, error = self._tantou_target(event, args)
+        if error:
+            return {"message": error, "card_path": ""}
         async with self._tantou_lock:
             names = list((await self._tantou_group(umo)).get(user_id, []))
+            owner = await self._tantou_owner(umo, user_id, str(event.get_sender_name() or "") if user_id == sender_id else "")
         if not names:
-            return {"message": "还没有登记担当，发送「加推 月村手毬 花海佑芽」试试。", "card_path": ""}
-        owner = str(event.get_sender_name() or user_id)
+            message = "还没有登记担当，发送「加推 月村手毬」试试。" if user_id == sender_id else "这位群友还没有在本群登记担当。"
+            return {"message": message, "card_path": ""}
         message = self._tantou_producer_name(owner) + "\n担当アイドル\n" + "、".join(self._tantou_display_name(name) for name in names)
         try:
             await self._prepare_tantou_icons(names)
@@ -2218,8 +2293,13 @@ class ImasBirthdayPlugin(Star):
         if not names:
             return []
         page_count = (len(names) + 17) // 18
-        page_size = (len(names) + page_count - 1) // page_count
-        pages = [names[index:index + page_size] for index in range(0, len(names), page_size)]
+        pages, offset = [], 0
+        for pages_left in range(page_count, 0, -1):
+            remaining = len(names) - offset
+            balanced_size = (remaining + pages_left - 1) // pages_left
+            page_size = remaining if pages_left == 1 else min(18, ((balanced_size + 5) // 6) * 6)
+            pages.append(names[offset:offset + page_size])
+            offset += page_size
         selected_brands = {self._character_brand(name) for name in names}
         brands = [brand for brand in BRAND_COLORS if brand in selected_brands]
         return [self._render_tantou_overview(owner, page, brands=brands) for page in pages]
