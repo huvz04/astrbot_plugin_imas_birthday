@@ -13,6 +13,7 @@ import shutil
 import struct
 import tempfile
 import time
+import unicodedata
 import zlib
 from datetime import datetime, timedelta
 from html.parser import HTMLParser
@@ -110,6 +111,7 @@ CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
 CHARACTER_PORTRAIT_ASSETS.update(load_generated_character_portraits())
 CHARACTER_COLORS.update(load_generated_character_colors())
 CHARACTER_PROFILES.update(load_generated_character_profiles())
+CHARACTER_TANTOU_ICONS = load_generated_mapping("character_tantou_icons.py", "CHARACTER_TANTOU_ICONS")
 CHARACTER_COLORS.update(
     {
         "灯里爱夏": "#ff4554",
@@ -435,6 +437,15 @@ class ImasBirthdayPlugin(Star):
         self.plugin_dir = Path(__file__).resolve().parent
         self.assets_dir = self._resolve_character_assets_dir()
         self.portraits_dir = self._resolve_character_portraits_dir()
+        self.tantou_icons_dir = self._resolve_tantou_icons_dir()
+        self._tantou_lock = asyncio.Lock()
+        self._tantou_icons_lock = asyncio.Lock()
+        self._tantou_pending: dict[tuple[str, str], dict[str, Any]] = {}
+        self._idol_catalogue = {name: dict(record) for name, record in CHARACTER_TANTOU_ICONS.items()}
+        self._idol_catalogue_loaded = False
+        self._idol_catalogue_lock = asyncio.Lock()
+        self._catalogue_task: asyncio.Task | None = None
+        self._catalogue_next_refresh = 0.0
         self._task: asyncio.Task | None = None
         self._last_sent_date = ""
         self._suppressed_first_start_date = ""
@@ -455,6 +466,10 @@ class ImasBirthdayPlugin(Star):
         global IMASBD_PLUGIN_INSTANCE
         if IMASBD_PLUGIN_INSTANCE is self:
             IMASBD_PLUGIN_INSTANCE = None
+        if self._catalogue_task:
+            self._catalogue_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._catalogue_task
         if self._task:
             self._task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -471,6 +486,348 @@ class ImasBirthdayPlugin(Star):
     def imasbd(self):
         """偶像大师生日提醒"""
         pass
+
+    @filter.command("加推")
+    async def tantou_add(self, event: AstrMessageEvent, names: GreedyStr = ""):
+        """添加一个或多个担当，空格分隔；近似名字需要确认。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "加推", str(names)))
+
+    @filter.command("加推确认")
+    async def tantou_confirm(self, event: AstrMessageEvent, choices: GreedyStr = ""):
+        """按候选序号确认加推，多个序号用空格分隔，0 跳过。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "加推确认", str(choices)))
+
+    @filter.command("减推")
+    async def tantou_remove(self, event: AstrMessageEvent, names: GreedyStr = ""):
+        """移除本群担当及其生日提醒，多个完整名字用空格分隔。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "减推", str(names)))
+
+    @filter.command("担当")
+    async def tantou_show(self, event: AstrMessageEvent):
+        """用图片展示自己在本群登记的全部担当。"""
+        if self._claim_tantou_event(event):
+            result = await self._tantou_overview(event)
+            if result["card_path"]:
+                await self._send_tantou_cards(event, result)
+            else:
+                yield event.plain_result(result["message"])
+
+    @filter.event_message_type(filter.EventMessageType.ALL)
+    async def tantou_text_fallback(self, event: AstrMessageEvent):
+        """Support the same commands without a slash or a wake prefix."""
+        text = str(getattr(event, "message_str", "") or "").strip()
+        parts = text.split(maxsplit=1)
+        if not parts or parts[0].startswith("/"):
+            return
+        command = parts[0]
+        if command not in {"加推", "加推确认", "减推", "担当"}:
+            return
+        args = parts[1] if len(parts) > 1 else ""
+        if command == "担当" and args:
+            return
+        if not self._claim_tantou_event(event):
+            return
+        if command != "担当":
+            yield event.plain_result(await self._change_tantou(event, command, args))
+            return
+        result = await self._tantou_overview(event)
+        if result["card_path"]:
+            await self._send_tantou_cards(event, result)
+        else:
+            yield event.plain_result(result["message"])
+
+    def _claim_tantou_event(self, event: AstrMessageEvent) -> bool:
+        if event.get_extra("imasbd_tantou_handled", False):
+            return False
+        event.set_extra("imasbd_tantou_handled", True)
+        self._stop_event(event)
+        return True
+
+    def _tantou_identity(self, event: AstrMessageEvent) -> tuple[str, str]:
+        if not event.get_group_id():
+            return "", ""
+        return str(event.unified_msg_origin), str(event.get_sender_id() or "")
+
+    async def _tantou_group(self, umo: str) -> dict[str, list[str]]:
+        await self._load_idol_catalogue()
+        value = await self.get_kv_data(f"tantou_v1:{umo}", {})
+        if not isinstance(value, dict):
+            return {}
+        aliases = self._tantou_alias_index(set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS))
+        normalized = {user_id: list(dict.fromkeys(aliases.get(self._exact_name_key(name), name) for name in names)) for user_id, names in value.items()}
+        if normalized != value:
+            await self.put_kv_data(f"tantou_v1:{umo}", normalized)
+        return normalized
+
+    async def _load_idol_catalogue(self) -> None:
+        async with self._idol_catalogue_lock:
+            if self._idol_catalogue_loaded:
+                return
+            cache = await self.get_kv_data("idol_catalogue_v1", {})
+            records = cache.get("records") if isinstance(cache, dict) else None
+            if isinstance(records, dict) and records:
+                by_code = {record["idol_code"]: name for name, record in self._idol_catalogue.items()}
+                for cached_name, record in records.items():
+                    name = by_code.get(record.get("idol_code"), cached_name)
+                    if name != cached_name:
+                        record = {**record, "aliases": list(dict.fromkeys([*record.get("aliases", []), cached_name]))}
+                    self._idol_catalogue[name] = record
+                self._catalogue_next_refresh = float(cache.get("updated_at", 0)) + 86400
+            else:
+                await self.put_kv_data("idol_catalogue_v1", {"updated_at": 0, "records": self._idol_catalogue})
+            self._idol_catalogue_loaded = True
+
+    async def _sync_idol_catalogue(self) -> None:
+        url = "https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json"
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+                response = await client.get(url)
+                response.raise_for_status()
+                rows = response.json()
+            if not isinstance(rows, list) or len(rows) < max(300, int(len(self._idol_catalogue) * .9)):
+                raise ValueError("Official catalogue is incomplete")
+            by_code = {record["idol_code"]: name for name, record in self._idol_catalogue.items()}
+            aliases = self._tantou_alias_index(self._idol_catalogue)
+            updated = {name: dict(record) for name, record in self._idol_catalogue.items()}
+            seen = set()
+            for row in rows:
+                code, brand = row["idol_code"], row["brand_code"].lower()
+                if not re.fullmatch(r"[a-z0-9_]+", code) or not re.fullmatch(r"[a-z]+", brand) or code in seen or not str(row.get("idol_name", "")).strip():
+                    raise ValueError("Invalid or duplicate official character identity")
+                seen.add(code)
+                name = by_code.get(code) or aliases.get(self._exact_name_key(row["idol_name"])) or row["idol_name"].strip()
+                previous = updated.get(name, {})
+                old_aliases = list(previous.get("aliases", []))
+                if previous.get("idol_name") and previous["idol_name"] != row["idol_name"]:
+                    old_aliases.append(previous["idol_name"])
+                filename = f"{brand}/{code}.png"
+                updated[name] = {**row, "filename": filename, "url": "https://idolmaster-official.jp/assets/img/idol/hexagon/" + filename, "aliases": list(dict.fromkeys(old_aliases))}
+            now = time.time()
+            async with self._idol_catalogue_lock:
+                await self.put_kv_data("idol_catalogue_v1", {"updated_at": now, "records": updated})
+                self._idol_catalogue = updated
+                self._catalogue_next_refresh = now + 86400
+        except Exception as exc:
+            self._catalogue_next_refresh = time.time() + 3600
+            logger.warning(f"官网角色库同步失败，保留已有中日文名字及头像映射：{type(exc).__name__}")
+
+    def _exact_name_key(self, value: str) -> str:
+        return re.sub(r"\s+", "", unicodedata.normalize("NFKC", str(value)))
+
+    def _tantou_aliases(self, name: str) -> list[str]:
+        record = self._idol_catalogue.get(name, {})
+        return [name, record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", [])]
+
+    def _tantou_display_name(self, name: str) -> str:
+        official = self._idol_catalogue.get(name, {}).get("idol_name")
+        if official:
+            return official
+        japanese = self._lookup_character_profile(name).get("name_jp") or ""
+        return self._base_character_name(japanese) or "―"
+
+    def _tantou_producer_name(self, owner: str) -> str:
+        owner = clean_text(owner).strip()
+        return owner if owner.upper().endswith("P") else owner + "P"
+
+    def _tantou_alias_index(self, names: Any) -> dict[str, str]:
+        candidates: dict[str, set[str]] = {}
+        for name in names:
+            for alias in self._tantou_aliases(name):
+                if alias:
+                    candidates.setdefault(self._exact_name_key(alias), set()).add(name)
+        return {key: next(iter(values)) for key, values in candidates.items() if len(values) == 1}
+
+    def _split_tantou_names(self, text: str, aliases: dict[str, str]) -> list[str]:
+        parts, result, index = text.split(), [], 0
+        while index < len(parts):
+            end = next((end for end in range(len(parts), index, -1) if self._exact_name_key(" ".join(parts[index:end])) in aliases), index + 1)
+            result.append(" ".join(parts[index:end]))
+            index = end
+        return list(dict.fromkeys(result))
+
+    async def _tantou_records(self) -> list[str]:
+        await self._load_idol_catalogue()
+        # Use the installed character catalogue, including before the first network sync.
+        names = set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS) | set(CHARACTER_PORTRAIT_ASSETS)
+        cache = await self.get_kv_data("birthday_cache", {})
+        if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
+            names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
+        return sorted({self._base_character_name(name) for name in names if name and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
+
+    async def _change_tantou(self, event: AstrMessageEvent, command: str, args: str) -> str:
+        umo, user_id = self._tantou_identity(event)
+        if not umo or not user_id:
+            return "请在群聊里登记和查看担当。"
+        if not args.split():
+            examples = {"加推": "加推 月村手毬 花海佑芽", "减推": "减推 月村手毬", "加推确认": "加推确认 1（按候选顺序填写序号，0 跳过）"}
+            return f"用法：{examples[command]}"
+        async with self._tantou_lock:
+            try:
+                if command == "加推确认":
+                    return await self._confirm_tantou(umo, user_id, args.split())
+                records = await self._tantou_records()
+                aliases = self._tantou_alias_index(records)
+                tokens = self._split_tantou_names(args, aliases)
+                if len(tokens) > 30:
+                    return "一次最多处理 30 个名字，请分次发送。"
+                resolved = {query: aliases[self._exact_name_key(query)] for query in tokens if self._exact_name_key(query) in aliases}
+                self._tantou_pending.pop((umo, user_id), None)
+                group = await self._tantou_group(umo)
+                current = list(group.get(user_id, []))
+                if command == "减推":
+                    removed = list(dict.fromkeys(name for name in resolved.values() if name in current))
+                    group[user_id] = [name for name in current if name not in removed]
+                    if not group[user_id]:
+                        group.pop(user_id, None)
+                    await self.put_kv_data(f"tantou_v1:{umo}", group)
+                    missing = [query for query in tokens if resolved.get(query) not in removed]
+                    lines = ["已移除：" + "、".join(removed)] if removed else []
+                    if missing:
+                        lines.append("未登记这些完整名字：" + "、".join(missing))
+                    return "\n".join(lines)
+                exact = list(dict.fromkeys(resolved.values()))
+                added = [name for name in exact if name not in current]
+                existing = [name for name in exact if name in current]
+                if added:
+                    group[user_id] = current + added
+                    await self.put_kv_data(f"tantou_v1:{umo}", group)
+                lines = ["添加成功：" + "、".join(added)] if added else []
+                if existing:
+                    lines.append("已经加推：" + "、".join(existing))
+                pending = []
+                for query in tokens:
+                    if query in resolved:
+                        continue
+                    key = self._normalize_character_query(query)
+                    matches = sorted(
+                        ((max(self._character_match_score(key, self._normalize_character_query(alias)) for alias in self._tantou_aliases(name) if alias), name) for name in records),
+                        key=lambda item: (-item[0], item[1]),
+                    )
+                    candidates = [name for score, name in matches if score >= 0.45][:5]
+                    if not candidates:
+                        lines.append(f"没找到「{query}」，请检查名字。")
+                        continue
+                    pending.append({"query": query, "candidates": candidates})
+                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {name}" for index, name in enumerate(candidates, 1)))
+                now = time.monotonic()
+                self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
+                if pending:
+                    self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending}
+                    example = " ".join("1" for _ in pending)
+                    lines.append(f"按上面每个名字的顺序发送：加推确认 {example}\n可改成其他序号，0 表示跳过；5 分钟内有效。")
+                return "\n".join(lines)
+            except Exception:
+                logger.exception("担当登记失败")
+                return "担当登记失败，请稍后重试。"
+
+    async def _confirm_tantou(self, umo: str, user_id: str, choices: list[str]) -> str:
+        pending = self._tantou_pending.get((umo, user_id))
+        if not pending or pending["expires"] <= time.monotonic():
+            self._tantou_pending.pop((umo, user_id), None)
+            return "没有待确认的加推，或确认已过期。请重新发送「加推 名字」。"
+        items = pending["items"]
+        if len(choices) != len(items):
+            return f"请按候选顺序填写 {len(items)} 个序号，用空格分隔；0 表示跳过。"
+        selected = []
+        for item, choice in zip(items, choices):
+            if not choice.isascii() or not choice.isdigit() or int(choice) > len(item["candidates"]):
+                return f"「{item['query']}」的序号应为 0—{len(item['candidates'])}，0 表示跳过。"
+            if int(choice):
+                selected.append(item["candidates"][int(choice) - 1])
+        selected = list(dict.fromkeys(selected))
+        group = await self._tantou_group(umo)
+        current = list(group.get(user_id, []))
+        added = [name for name in selected if name not in current]
+        existing = [name for name in selected if name in current]
+        if added:
+            group[user_id] = current + added
+            await self.put_kv_data(f"tantou_v1:{umo}", group)
+        self._tantou_pending.pop((umo, user_id), None)
+        lines = ["添加成功：" + "、".join(added)] if added else []
+        if existing:
+            lines.append("已经加推：" + "、".join(existing))
+        return "\n".join(lines) or "已跳过，未添加担当。"
+
+    async def _tantou_overview(self, event: AstrMessageEvent) -> dict[str, Any]:
+        umo, user_id = self._tantou_identity(event)
+        if not umo or not user_id:
+            return {"message": "请在群聊里登记和查看担当。", "card_path": ""}
+        async with self._tantou_lock:
+            names = list((await self._tantou_group(umo)).get(user_id, []))
+        if not names:
+            return {"message": "还没有登记担当，发送「加推 月村手毬 花海佑芽」试试。", "card_path": ""}
+        owner = str(event.get_sender_name() or user_id)
+        message = self._tantou_producer_name(owner) + "\n担当アイドル\n" + "、".join(self._tantou_display_name(name) for name in names)
+        try:
+            await self._prepare_tantou_icons(names)
+            paths = await asyncio.to_thread(self._render_tantou_cards, owner, names)
+        except Exception:
+            logger.exception("担当总览图片渲染失败")
+            paths = []
+        return {"message": message, "card_path": paths[0] if paths else "", "card_paths": paths}
+
+    async def _send_tantou_cards(self, event: AstrMessageEvent, result: dict[str, Any]) -> None:
+        for path in result["card_paths"]:
+            if not await self._send_birthday_message(event.unified_msg_origin, "", path):
+                await self._send_event_birthday_message(event, result["message"])
+                break
+
+    async def _tantou_birthday_users(self, umo: str, names: list[str]) -> list[str]:
+        if not self._cfg_bool("tantou_birthday_mentions", True) or ":GroupMessage:" not in umo or not names:
+            return []
+        async with self._tantou_lock:
+            group = await self._tantou_group(umo)
+        aliases = self._tantou_alias_index(self._idol_catalogue)
+        birthday_names = {aliases.get(self._exact_name_key(self._base_character_name(name)), self._base_character_name(name)) for name in names}
+        return sorted(user_id for user_id, follows in group.items() if birthday_names.intersection(follows))
+
+    def _tantou_icon_path(self, name: str) -> Path | None:
+        record = self._idol_catalogue.get(name)
+        if not record:
+            return None
+        for directory in (self.tantou_icons_dir, self.plugin_dir / "assets" / "tantou_icons"):
+            path = directory / record["filename"]
+            if path.is_file():
+                return path
+        return None
+
+    async def _prepare_tantou_icons(self, names: list[str]) -> None:
+        import io
+        from PIL import Image
+
+        async with self._tantou_icons_lock:
+            missing = [name for name in dict.fromkeys(names) if name in self._idol_catalogue and not self._tantou_icon_path(name)]
+            if not missing:
+                return
+            limit = asyncio.Semaphore(4)
+            async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+                async def fetch(name: str) -> None:
+                    async with limit:
+                        try:
+                            record = self._idol_catalogue[name]
+                            response = await client.get(record["url"])
+                            response.raise_for_status()
+                            if len(response.content) > 2_000_000:
+                                raise ValueError("Official avatar exceeds size limit")
+                            with Image.open(io.BytesIO(response.content)) as image:
+                                if image.format != "PNG" or max(image.size) > 2048:
+                                    raise ValueError("Unexpected official avatar")
+                                image.verify()
+                            path = self.tantou_icons_dir / record["filename"]
+                            path.parent.mkdir(parents=True, exist_ok=True)
+                            with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
+                                temporary = Path(output.name)
+                                output.write(response.content)
+                            try:
+                                temporary.replace(path)
+                            finally:
+                                temporary.unlink(missing_ok=True)
+                        except Exception as exc:
+                            logger.warning(f"担当官方头像读取失败，使用本地角色图：{name} ({type(exc).__name__})")
+                await asyncio.gather(*(fetch(name) for name in missing))
 
     @imasbd.command("sid")
     async def imasbd_sid(self, event: AstrMessageEvent):
@@ -920,6 +1277,9 @@ class ImasBirthdayPlugin(Star):
         raw = profile.get("raw")
         if isinstance(raw, dict) and raw:
             payload["raw"] = raw
+        official = self._idol_catalogue.get(name, {})
+        if official:
+            payload.update(official_name_jp=official.get("idol_name", ""), official_kana=official.get("idol_kana", ""), official_code=official.get("idol_code", ""), official_id=official.get("id"), official_profile_url=official.get("idol_idollist_url", ""))
         return payload
 
     def _lookup_character_profile(self, character: str) -> dict[str, Any]:
@@ -1014,6 +1374,7 @@ class ImasBirthdayPlugin(Star):
         if not query:
             return query, [], "请提供要查询的角色名，例如：/imasbd find 天海春香"
 
+        await self._load_idol_catalogue()
         data = await self._get_birthdays()
         records = self._character_birthday_records(data)
         if not records:
@@ -1024,7 +1385,7 @@ class ImasBirthdayPlugin(Star):
         for record in records:
             name_key = self._normalize_character_query(record["name"])
             base_key = self._normalize_character_query(self._base_character_name(record["name"]))
-            keys = [name_key, base_key]
+            keys = [name_key, base_key] + [self._normalize_character_query(alias) for alias in self._tantou_aliases(record["name"]) if alias]
             score = max(self._character_match_score(query_key, key) for key in keys if key)
             if score >= 0.45:
                 matches.append((score, record))
@@ -1152,6 +1513,9 @@ class ImasBirthdayPlugin(Star):
         logger.info("偶像大师生日提醒定时任务循环开始。")
         while True:
             try:
+                await self._load_idol_catalogue()
+                if time.time() >= self._catalogue_next_refresh and (not self._catalogue_task or self._catalogue_task.done()):
+                    self._catalogue_task = asyncio.create_task(self._sync_idol_catalogue())
                 await self._tick()
             except asyncio.CancelledError:
                 raise
@@ -1214,9 +1578,12 @@ class ImasBirthdayPlugin(Star):
             return
 
         logger.info(f"偶像大师生日提醒开始推送：date={today_key}, timezone={now.tzname()}, targets={len(targets)}")
+        birthday_data = await self._get_birthdays()
+        birthday_names = self._visible_characters(birthday_data.get(now.strftime("%m-%d"), {})) if self._cfg_bool("include_characters", True) else []
         failed_umos: list[str] = []
         for umo in targets:
-            if not await self._send_active_message(umo, result["message"], result["card_path"]):
+            mention_ids = await self._tantou_birthday_users(umo, birthday_names)
+            if not await self._send_active_message(umo, result["message"], result["card_path"], mention_ids):
                 failed_umos.append(umo)
         if failed_umos:
             self._pending_retry_date = today_key
@@ -1238,17 +1605,18 @@ class ImasBirthdayPlugin(Star):
             return
         await self._send_event_birthday_message(event, result["message"], result["card_path"])
 
-    async def _send_active_message(self, umo: str, message: str, card_path: str = "") -> bool:
-        return await self._send_birthday_message(umo, message, card_path)
+    async def _send_active_message(self, umo: str, message: str, card_path: str = "", mention_ids: list[str] | None = None) -> bool:
+        return await self._send_birthday_message(umo, message, card_path, mention_ids)
 
     async def _send_event_birthday_message(self, event: AstrMessageEvent, message: str, card_path: str = ""):
         await self._send_birthday_message(event.unified_msg_origin, message, card_path)
 
-    async def _send_birthday_message(self, umo: str, message: str, card_path: str = "") -> bool:
+    async def _send_birthday_message(self, umo: str, message: str, card_path: str = "", mention_ids: list[str] | None = None) -> bool:
         mode = self._birthday_send_mode()
         if mode != "split_file_image" and card_path:
             try:
-                ok = await self.context.send_message(umo, self._build_birthday_message_chain(message, card_path, mode))
+                chain = self._with_tantou_mentions(self._build_birthday_message_chain(message, card_path, mode), mention_ids)
+                ok = await self.context.send_message(umo, chain)
                 if not ok:
                     logger.warning(f"偶像大师生日提醒发送失败，未找到平台：{umo}")
                 return bool(ok)
@@ -1258,7 +1626,7 @@ class ImasBirthdayPlugin(Star):
                     try:
                         ok = await self.context.send_message(
                             umo,
-                            self._build_birthday_message_chain(message, card_path, "combined_component_base64"),
+                            self._with_tantou_mentions(self._build_birthday_message_chain(message, card_path, "combined_component_base64"), mention_ids),
                         )
                         if not ok:
                             logger.warning(f"偶像大师生日提醒 base64 重试发送失败，未找到平台：{umo}")
@@ -1266,14 +1634,15 @@ class ImasBirthdayPlugin(Star):
                     except Exception:
                         logger.exception("偶像大师生日提醒 base64 组合消息重试失败，继续降级为分开发送。")
 
-        try:
-            ok = await self.context.send_message(umo, MessageChain().message(message))
-            if not ok:
-                logger.warning(f"偶像大师生日提醒文字发送失败，未找到平台：{umo}")
+        if message:
+            try:
+                ok = await self.context.send_message(umo, self._with_tantou_mentions(MessageChain().message(message), mention_ids))
+                if not ok:
+                    logger.warning(f"偶像大师生日提醒文字发送失败，未找到平台：{umo}")
+                    return False
+            except Exception:
+                logger.exception(f"偶像大师生日提醒文字发送异常：{umo}")
                 return False
-        except Exception:
-            logger.exception(f"偶像大师生日提醒文字发送异常：{umo}")
-            return False
         if not card_path:
             return True
         try:
@@ -1289,6 +1658,13 @@ class ImasBirthdayPlugin(Star):
         chain.file_image(image_path)
         return chain
 
+    def _with_tantou_mentions(self, chain: MessageChain, user_ids: list[str] | None) -> MessageChain:
+        if user_ids and Comp is not None:
+            chain.chain.append(Comp.Plain("\n今天担当过生日的P："))
+            for user_id in dict.fromkeys(user_ids):
+                chain.chain.extend([Comp.At(qq=str(user_id)), Comp.Plain(" ")])
+        return chain
+
     def _build_birthday_message_chain(self, message: str, card_path: str, mode: str) -> MessageChain:
         image_path = self._image_send_path(card_path)
         logger.info(self._image_send_debug(f"生日卡片组合发送图片 mode={mode}", card_path, image_path))
@@ -1296,15 +1672,17 @@ class ImasBirthdayPlugin(Star):
             if Comp is None:
                 logger.warning("message_components 不可用，改用 combined_file_image。")
             else:
-                return MessageChain(chain=[Comp.Plain(message), Comp.Image.fromFileSystem(image_path)])
+                return MessageChain(chain=([Comp.Plain(message)] if message else []) + [Comp.Image.fromFileSystem(image_path)])
         if mode == "combined_component_base64":
             if Comp is None:
                 logger.warning("message_components 不可用，改用 combined_file_image。")
             else:
                 data = base64.b64encode(Path(image_path).read_bytes()).decode("ascii")
-                return MessageChain(chain=[Comp.Plain(message), Comp.Image.fromBase64(data)])
+                return MessageChain(chain=([Comp.Plain(message)] if message else []) + [Comp.Image.fromBase64(data)])
 
-        chain = MessageChain().message(message)
+        chain = MessageChain()
+        if message:
+            chain.message(message)
         chain.file_image(image_path)
         return chain
 
@@ -1563,6 +1941,15 @@ class ImasBirthdayPlugin(Star):
             return self.plugin_dir.parent.parent / "imas_birthday_assets" / "portraits"
         return self.plugin_dir / "assets" / "portraits"
 
+    def _resolve_tantou_icons_dir(self) -> Path:
+        configured = str(self.config.get("tantou_icons_dir", "") or "").strip()
+        if configured:
+            path = Path(os.path.expandvars(configured)).expanduser()
+            return path if path.is_absolute() else self.plugin_dir / path
+        if self.plugin_dir.parent.name == "plugins":
+            return self.plugin_dir.parent.parent / "imas_birthday_assets" / "tantou_icons"
+        return self.plugin_dir / "assets" / "tantou_icons"
+
     def _parse_imasbd_text(self, message: str) -> list[str] | None:
         text = str(message or "").strip()
         for prefix in ("/imasbd", "／imasbd"):
@@ -1715,6 +2102,136 @@ class ImasBirthdayPlugin(Star):
         shutil.copy2(path, destination)
         logger.info(self._image_send_debug("生日卡片渲染产物已准备", str(card_path), str(destination)))
         return str(destination)
+
+    def _render_tantou_cards(self, owner: str, names: list[str]) -> list[str]:
+        if not names:
+            return []
+        page_count = (len(names) + 17) // 18
+        page_size = (len(names) + page_count - 1) // page_count
+        pages = [names[index:index + page_size] for index in range(0, len(names), page_size)]
+        selected_brands = {self._character_brand(name) for name in names}
+        brands = [brand for brand in BRAND_COLORS if brand in selected_brands]
+        return [self._render_tantou_overview(owner, page, brands=brands) for page in pages]
+
+    def _render_tantou_overview(self, owner: str, names: list[str], *, brands: list[str] | None = None) -> str:
+        from PIL import Image, ImageDraw, ImageFont
+
+        if not names or len(names) > 18:
+            raise ValueError("Each business card must contain 1–18 idols")
+        width, height = 1800, 1080
+        image = Image.new("RGB", (width, height), "#f1f3f7")
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((48, 48, 1752, 214), radius=24, fill="white", outline="#d6dce5", width=2)
+        draw.rounded_rectangle((48, 364, 1752, 1032), radius=24, fill="white", outline="#d6dce5", width=2)
+        producer = self._tantou_producer_name(owner)
+        for font_size in range(62, 35, -2):
+            owner_font = self._pil_font(ImageFont, font_size, bold=True)
+            owner_lines = self._pil_wrap_text(draw, producer, owner_font, 1550)
+            if len(owner_lines) <= 2:
+                break
+        if len(owner_lines) > 2:
+            owner_lines = owner_lines[:2]
+            final_line = owner_lines[-1]
+            while final_line and draw.textbbox((0, 0), final_line + "…P", font=owner_font)[2] > 1550:
+                final_line = final_line[:-1]
+            owner_lines[-1] = final_line + "…P"
+        line_height = font_size + 14
+        for index, line in enumerate(owner_lines):
+            y = 131 + (index - (len(owner_lines) - 1) / 2) * line_height
+            draw.text((900, y), line, fill="#3c4d66", font=owner_font, anchor="mm")
+
+        grid_x, grid_width, grid_top, grid_height, gap = 88, 1624, 394, 608, 24
+        draw.text((grid_x, 256), "担当アイドル", fill="#3c4d66", font=self._pil_font(ImageFont, 44, bold=True))
+        if brands is None:
+            selected_brands = {self._character_brand(name) for name in names}
+            brands = [brand for brand in BRAND_COLORS if brand in selected_brands]
+        bar_gap = 12
+        bar_width = grid_width - bar_gap * (len(brands) - 1)
+        for index, brand in enumerate(brands):
+            left = grid_x + round(index * bar_width / len(brands)) + index * bar_gap
+            right = grid_x + round((index + 1) * bar_width / len(brands)) + index * bar_gap - 1
+            draw.rounded_rectangle((left, 322, right, 331), radius=4, fill=BRAND_COLORS[brand])
+
+        columns = min(6, len(names))
+        rows = (len(names) + columns - 1) // columns
+        cell_width = (grid_width - (columns - 1) * gap) // columns
+        row_height = grid_height // rows
+        labels = []
+        for name in names:
+            for name_size in range(30, 19, -2):
+                name_font = self._pil_font(ImageFont, name_size, bold=True)
+                lines = self._pil_wrap_text(draw, self._tantou_display_name(name), name_font, min(cell_width - 38, 420))
+                if len(lines) <= 2:
+                    break
+            labels.append((lines, name_font, name_size + 8))
+        caption_height = max(len(lines) * line_height for lines, _, line_height in labels)
+        avatar_size = min(320, cell_width - 24, row_height - caption_height - 30)
+        y_start = grid_top + (row_height - avatar_size - caption_height - 14) // 2
+        for index, (name, (primary, name_font, line_height)) in enumerate(zip(names, labels)):
+            x = grid_x + (index % columns) * (cell_width + gap)
+            y = y_start + (index // columns) * row_height
+            self._draw_tantou_avatar(image, name, x + (cell_width - avatar_size) // 2, y, avatar_size)
+            label_y = y + avatar_size + 12
+            brand = self._character_brand(name)
+            logo_path = self._brand_logo_path(brand, "png")
+            logo = None
+            if logo_path:
+                with Image.open(logo_path) as source:
+                    logo = source.convert("RGBA")
+                bounds = logo.getchannel("A").getbbox()
+                if bounds:
+                    logo = logo.crop(bounds)
+                logo.thumbnail((25, 25), Image.Resampling.LANCZOS)
+                tint = Image.new("RGBA", logo.size, BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"]))
+                tint.putalpha(logo.getchannel("A"))
+                logo = tint
+            for line_index, line in enumerate(primary):
+                bbox = draw.textbbox((0, 0), line, font=name_font)
+                icon_width = 32 if line_index == 0 and logo else 0
+                label_x = x + (cell_width - (bbox[2] - bbox[0]) - icon_width) // 2
+                if icon_width:
+                    image.paste(logo, (label_x + (25 - logo.width) // 2, label_y + 6), logo)
+                draw.text((label_x + icon_width, label_y), line, fill="#3c4d66", font=name_font)
+                label_y += line_height
+        destination = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "rendered_cards"
+        destination.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(prefix="tantou_card_", suffix=".png", dir=destination, delete=False) as output:
+            path = Path(output.name)
+        image.save(path, format="PNG", dpi=(508, 508))
+        return str(path)
+
+    def _draw_tantou_avatar(self, canvas: Any, name: str, x: int, y: int, size: int) -> None:
+        from PIL import Image, ImageDraw, ImageOps
+
+        official = self._tantou_icon_path(name)
+        asset = official or self._character_image_path(name) or self._character_portrait_path(name)
+        if asset:
+            try:
+                with Image.open(asset) as source:
+                    avatar = source.convert("RGBA")
+                if official:
+                    # The official PNG already contains its rounded hexagon and crop.
+                    avatar = ImageOps.contain(avatar, (size, size), Image.Resampling.LANCZOS)
+                    canvas.paste(avatar, (x + (size - avatar.width) // 2, y + (size - avatar.height) // 2), avatar)
+                    return
+                avatar = ImageOps.fit(avatar, (size, size), Image.Resampling.LANCZOS, centering=(0.5, 0.2))
+            except Exception:
+                logger.exception(f"读取担当头像失败：{name}")
+                avatar = None
+        else:
+            avatar = None
+        color = self._character_color(name, self._character_brand(name))
+        panel = Image.new("RGBA", (size, size), color)
+        if avatar:
+            panel.alpha_composite(avatar)
+        else:
+            draw = ImageDraw.Draw(panel)
+            from PIL import ImageFont
+            font = self._pil_font(ImageFont, 40, bold=True)
+            draw.text((size // 2, size // 2), self._tantou_display_name(name)[:1], fill="white", font=font, anchor="mm")
+        mask = Image.new("L", (size, size))
+        ImageDraw.Draw(mask).polygon([(size * .25, 0), (size * .75, 0), (size - 1, size * .5), (size * .75, size - 1), (size * .25, size - 1), (0, size * .5)], fill=255)
+        canvas.paste(panel, (x, y), mask)
 
     def _render_card_with_pillow(
         self,
@@ -1929,6 +2446,8 @@ class ImasBirthdayPlugin(Star):
             r"C:\Windows\Fonts\msyhbd.ttc" if bold else r"C:\Windows\Fonts\msyh.ttc",
             r"C:\Windows\Fonts\simhei.ttf" if bold else r"C:\Windows\Fonts\simsun.ttc",
             r"C:\Windows\Fonts\YuGothB.ttc" if bold else r"C:\Windows\Fonts\YuGothR.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc" if bold else "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
         ]
         for candidate in candidates:
             if candidate and Path(candidate).exists():
@@ -2133,7 +2652,8 @@ class ImasBirthdayPlugin(Star):
         if "/" in filename or "\\" in filename:
             prefix = re.split(r"[/\\]", filename, maxsplit=1)[0].lower()
             return BRAND_ALIASES.get(self._normalize_brand_key(prefix), "OTHER")
-        return "OTHER"
+        official = self._idol_catalogue.get(base_character, {})
+        return BRAND_ALIASES.get(self._normalize_brand_key(official.get("brand_code", "")), "OTHER")
 
     def _character_asset_filename(self, character: str) -> str:
         candidates = [
@@ -2664,6 +3184,7 @@ body {{
             f"card_asset_mode_by_brand: {self._card_asset_mode_overrides_text()}",
             f"character_assets_dir: {self.assets_dir}",
             f"character_portraits_dir: {self.portraits_dir}",
+            f"tantou_icons_dir: {self.tantou_icons_dir}",
             f"birthday_send_mode: {self._birthday_send_mode()}",
         ]
         if self._task and self._task.done():

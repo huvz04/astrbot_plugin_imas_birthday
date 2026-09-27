@@ -10,6 +10,12 @@
     "default": [],
     "hint": "在目标群使用 /imasbd sid 查看当前 UMO，或用 /imasbd bind 自动加入。完整格式类似 aiocqhttp:GroupMessage:123456；仅填写纯数字群号时会按 OneBot 群聊兼容。"
   },
+  "tantou_birthday_mentions": {
+    "description": "生日公告中 @ 本群登记了对应担当的群友",
+    "type": "bool",
+    "default": true,
+    "hint": "加推即登记本群担当；仅随已有白名单群每日生日公告发送，同一群友每条公告最多 @ 一次。减推后停止对应角色提醒。"
+  },
   "send_time": {
     "description": "每日推送时间",
     "type": "string",
@@ -99,6 +105,12 @@
     "type": "string",
     "default": "",
     "hint": "留空时，AstrBot 部署中默认使用 AstrBot/data/imas_birthday_assets/portraits。也可以填绝对路径，避免插件更新覆盖图片。"
+  },
+  "tantou_icons_dir": {
+    "description": "担当总览官方头像缓存目录",
+    "type": "string",
+    "default": "",
+    "hint": "留空时使用 AstrBot/data/imas_birthday_assets/tantou_icons。总览优先读取缓存或安装包内的官方六边形头像，缺失时自动下载；生日卡素材配置独立生效。"
   },
   "birthday_send_mode": {
     "description": "生日祝贺图片发送方式",

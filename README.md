@@ -222,6 +222,37 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 ## 指令
 
+第一期担当功能支持以下群聊指令，无需官网账号：
+
+```text
+加推 月村手毬 花海佑芽
+加推 一ノ瀬 志希 月村 手毬 花海佑芽
+担当
+减推 月村手毬
+```
+
+也可以使用 `/加推`、`/担当`、`/减推`。一次最多添加 30 个名字，以空格分隔，可以混用中文全名和官网日文全名。插件会先识别 `一ノ瀬 志希`、`月村 手毬` 这样的带空格全名，再分割多个角色；全名中的空格和全角/半角字符会统一处理。`一之濑志希` 与 `一ノ瀬 志希` 对应同一个角色，重复加推不会重复登记，减推也支持两种名字。角色候选来自官网目录、已安装的资料、图片映射和生日缓存；声优和相关人士不作为担当候选。
+
+简称或错字会列出候选，确认前不会登记。例如 `加推 花海佑芽 手毬 千早` 会先添加完整名字 `花海佑芽`，再分别为 `手毬`、`千早` 列出候选。按这两个待确认名字的顺序发送 `加推确认 1 1`，每个序号从对应名字的候选中选择，`0` 表示跳过。确认仅对原发送者、原群有效，5 分钟后过期；新的加推或减推会取消上次待确认，重载后需要重新发起确认。
+
+`担当` 生成当前群、当前用户的全部担当名片 PNG。名片为 1800×1080 像素，按 90×54 mm 的横向比例设计，PNG 中写入 508 DPI。上方居中显示制作人昵称，昵称末尾已有 P 时不重复添加；下方是「担当アイドル」、企划色条和官网 My Desk 六边形头像列表。色条只包含全部担当涉及的企划，每种颜色等宽，总宽度固定；分页时各张色条一致。每行最多 6 位、每张最多 18 位，担当较多时均匀分配到多张名片，依次发送全部图片，保留加推顺序。头像下只展示企划图标及官网日文名，长名字自动换行。名片不显示人数、页码、中文译名、英文装饰或额外说明。官方 PNG 已带头像裁切和透明边缘，插件直接读取；未收录角色使用本地资料中的日文名，没有日文名时用横线占位，不自行翻译。正常查询只发送图片，渲染或投递失败时返回同样不含人数的日文名字列表。
+
+官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
+
+提供的 0.1.72 ZIP 安装包内附这些官方头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时显示名字占位。
+
+如需预先下载或更新全部官方头像：
+
+```text
+python tools/fetch_tantou_icons.py --icons-dir /path/to/AstrBot/data/imas_birthday_assets/tantou_icons
+```
+
+生日卡的素材设置独立生效。Linux/Docker 应安装 Noto CJK 或文泉驿字体，例如 Debian/Ubuntu 的 `fonts-noto-cjk`。渲染失败时仍返回文字列表。
+
+担当记录按完整群 UMO 和发送者 ID 保存在 AstrBot 插件持久化 KV 中，各群分别登记，重启不会丢失。默认开启 `tantou_birthday_mentions`：当天的角色生日公告使用真正的 @ 消息组件提醒本群已登记对应担当的用户，同一人每条公告最多 @ 一次。它沿用 `white_umos`、`enabled`、`send_time`、`timezone` 和既有发送去重/失败重试机制；加推不会自动把群加入生日推送白名单。`减推` 后停止对应角色提醒。手动 `today`、`date`、`find` 查询不会触发担当 @。
+
+本期只提供担当总览；官网账号关联、官网担当同步和今日小偶像暂不包含。
+
 ```text
 /imasbd sid
 /imasbd status
@@ -262,7 +293,7 @@ from data.plugins.astrbot_plugin_imas_birthday.main import call_imasbd_api
 result = await call_imasbd_api("profile", query="天海真香")
 ```
 
-返回值是 `dict`，常用字段包括 `ok`、`action`、`date_key`、`entry`、`message`、`card_path`、`error`。`render_card=False` 可以只取文本和生日数据，避免 LLM 查询时生成图片；`find` 会额外返回 `best_match` 和最多 5 条 `matches`；`profile` 会返回单个角色的 `profile`，包括 `name`、`birthday`、`brand`、`brand_label`、`color`、`summary`、`introduction`、`cv`、`age`、`height`、`weight`、`birthday_text`、`blood_type`、`hometown`、`hobby`、`specialty`、`agency`、`image_path`、`portrait_path`、`source_url` 和 `raw`。
+返回值是 `dict`，常用字段包括 `ok`、`action`、`date_key`、`entry`、`message`、`card_path`、`error`。`render_card=False` 可以只取文本和生日数据，避免 LLM 查询时生成图片；`find` 会额外返回 `best_match` 和最多 5 条 `matches`；`profile` 会返回单个角色的 `profile`，包括 `name`、`birthday`、`brand`、`brand_label`、`color`、`summary`、`introduction`、`cv`、`age`、`height`、`weight`、`birthday_text`、`blood_type`、`hometown`、`hobby`、`specialty`、`agency`、`image_path`、`portrait_path`、`source_url` 和 `raw`。官网目录中收录的角色还提供 `official_name_jp`、`official_kana`、`official_code`、`official_id` 和 `official_profile_url`；`find` 与 `profile` 都支持官网日文名。
 
 `birthday_send_mode` 可选：
 
@@ -284,3 +315,11 @@ https://zh.moegirl.org.cn/偶像大师系列/相关人士生日信息
 ```
 
 页面中带彩色方块的条目会归为角色，普通文字归为声优，斜体归为相关人士，灰色文字归为事件。
+
+## 本地验证
+
+```text
+python -m unittest discover -s tests -v
+```
+
+担当测试使用 AstrBot 消息适配器替身，验证中日文姓名及批量匹配、候选确认、官网目录同步与旧记录迁移、重启持久化、并发登记、群隔离、生日 @ 去重、名片渲染及分页发送。真实 AstrBot 指令派发与 QQ 投递需在部署环境验证。
