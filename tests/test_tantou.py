@@ -402,6 +402,63 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
             colors = Counter(image.getpixel((x, 326)) for x in range(88, 1712))
             self.assertEqual(colors[ImageColor.getrgb(plugin_module.BRAND_COLORS["CINDERELLA_GIRLS"])], 1624)
 
+    async def test_nickname_keeps_styled_letters_symbols_and_emoji_without_missing_glyphs(self):
+        from PIL import ImageFont
+
+        owner = "ℒℴѵℯ•唯爱 丘比.✧=₂✭"
+        self.assertEqual(self.plugin._tantou_producer_name(owner), owner + "P")
+        primary = self.plugin._pil_font(ImageFont, 62, bold=True)
+        renderer = plugin_module.NicknameText(primary, self.plugin.plugin_dir / "assets" / "fonts", 62)
+        text = owner + " 😀🎉❤️P"
+        runs = renderer.runs(text)
+        self.assertEqual("".join(value for value, _ in runs), text)
+        for cluster in renderer.graphemes(text):
+            if cluster.isspace():
+                continue
+            font = renderer.font_for(cluster)
+            with self.subTest(cluster=cluster):
+                self.assertNotEqual(bytes(font.getmask(cluster)), bytes(font.getmask("\U0010ffff")))
+                required = {ord(char) for char in cluster if char not in "\u200d\ufe0f"}
+                self.assertTrue(required <= renderer.coverage[id(font)])
+        image = renderer.render(text, "#3c4d66")
+        self.assertIsNotNone(image.getchannel("A").getbbox())
+        self.assertLess(image.width, 1550)
+        # A narrow line must not cut a flag, modifier or joined emoji in half.
+        clusters = ["👩🏽‍💻", "🇯🇵", "❤️", "e\u0301"]
+        lines = renderer.wrap("".join(clusters), 1)
+        self.assertEqual(lines, clusters)
+        path = Path(self.plugin._render_tantou_cards(owner, ["高木顺二朗"])[0])
+        self.addCleanup(path.unlink, missing_ok=True)
+
+    async def test_profile_names_remove_ruby_and_separators_and_remain_matchable(self):
+        expected = {"高木顺一朗": "高木 順一朗", "高木顺二朗": "高木 順二朗", "黑井崇男": "黒井 崇男"}
+        for name, japanese in expected.items():
+            with self.subTest(name=name):
+                self.assertEqual(self.plugin._tantou_display_name(name), japanese)
+                self.assertEqual(self.plugin._lookup_character_profile(name)["name_jp"], japanese)
+        old_profile = {"name_jp": "黒井（くろい） 崇男（たかお）、(Kuroi Takao)", "raw": {"日文名": "original"}}
+        with patch.dict(plugin_module.CHARACTER_PROFILES, {"黑井崇男": old_profile}):
+            result = self.plugin._lookup_character_profile("黑井崇男")
+            self.assertEqual(result["name_jp"], "黒井 崇男")
+            self.assertEqual(result["raw"], old_profile["raw"])
+            self.assertIn("、", old_profile["name_jp"])
+        result = await self.plugin._change_tantou(self.event, "加推", "黒井 崇男")
+        self.assertIn("添加成功", result)
+        self.assertEqual(await self.follows(), ["黑井崇男"])
+
+    async def test_logo_and_name_share_visible_vertical_center(self):
+        from PIL import Image as PILImage, ImageDraw, ImageFont
+
+        font = self.plugin._pil_font(ImageFont, 30, bold=True)
+        # Include substantial transparent margins, as the supplied brand assets do.
+        logo = PILImage.new("RGBA", (60, 60))
+        ImageDraw.Draw(logo).rectangle((13, 19, 36, 34), fill="#f05a7e")
+        label = self.plugin._tantou_name_label("高木 順二朗", font, logo)
+        self.assertEqual(label.getchannel("A").getbbox(), (0, 0, label.width, label.height))
+        icon_bounds = label.crop((0, 0, 24, label.height)).getchannel("A").getbbox()
+        text_bounds = label.crop((31, 0, label.width, label.height)).getchannel("A").getbbox()
+        self.assertLessEqual(abs((icon_bounds[1] + icon_bounds[3]) - (text_bounds[1] + text_bounds[3])), 1)
+
     async def test_japanese_spaces_and_mixed_batch_share_identity(self):
         result = await self.plugin._change_tantou(self.event, "加推", "一ノ瀬 志希 月村 手毬 一之濑志希 花海佑芽")
         self.assertIn("添加成功", result)

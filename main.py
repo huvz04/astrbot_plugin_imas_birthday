@@ -16,6 +16,7 @@ import time
 import unicodedata
 import zlib
 from datetime import datetime, timedelta
+from functools import lru_cache
 from html.parser import HTMLParser
 from mimetypes import guess_type
 from pathlib import Path
@@ -23,6 +24,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 import httpx
+import regex
 
 from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import AstrMessageEvent, MessageChain, filter
@@ -76,6 +78,112 @@ CHARACTER_IMAGE_ASSETS: dict[str, str] = {}
 CHARACTER_PORTRAIT_ASSETS: dict[str, str] = {}
 CHARACTER_COLORS: dict[str, str] = {}
 CHARACTER_PROFILES: dict[str, dict[str, Any]] = {}
+
+
+def clean_japanese_name(value: str) -> str:
+    """Keep the Japanese name, without ruby readings or separated romanization."""
+    value = re.sub(r"[（(][^（）()]*[）)]", "", value)
+    return re.split(r"[、,，;；\r\n]", value, maxsplit=1)[0].strip()
+
+
+@lru_cache(maxsize=16)
+def _font_codepoints(path: str, index: int = 0) -> frozenset[int]:
+    from fontTools.ttLib import TTFont
+
+    with TTFont(path, fontNumber=index, lazy=True) as font:
+        return frozenset(font.getBestCmap() or {})
+
+
+@lru_cache(maxsize=128)
+def _fallback_font(path: str, size: int) -> Any:
+    from PIL import ImageFont
+
+    return ImageFont.truetype(path, size)
+
+
+class NicknameText:
+    """Measure and draw the same font runs, keeping Unicode graphemes intact."""
+
+    def __init__(self, primary: Any, fonts_dir: Path, size: int):
+        self.primary = primary
+        self.fonts = [primary]
+        for filename in ("NotoSans.ttf", "NotoSansMath-Regular.ttf", "NotoSansSymbols2-Regular.ttf", "NotoEmoji.ttf"):
+            path = fonts_dir / filename
+            if path.is_file():
+                self.fonts.append(_fallback_font(str(path), size))
+        self.coverage = {
+            id(font): _font_codepoints(os.fsdecode(font.path), getattr(font, "index", 0))
+            for font in self.fonts if isinstance(getattr(font, "path", None), (str, bytes))
+        }
+        self.emoji = next((font for font in self.fonts if str(getattr(font, "path", "")).endswith("NotoEmoji.ttf")), None)
+
+    @staticmethod
+    def graphemes(text: str) -> list[str]:
+        return regex.findall(r"\X", text)
+
+    def font_for(self, cluster: str) -> Any:
+        # Joiners and variation selectors influence shaping but have no visible glyph.
+        required = {ord(char) for char in cluster if not regex.fullmatch(r"\p{Default_Ignorable_Code_Point}", char)}
+        fonts = self.fonts
+        if self.emoji and regex.search(r"\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20e3", cluster):
+            fonts = [self.emoji, *fonts]
+        return next((font for font in fonts if required <= self.coverage.get(id(font), set())), self.primary)
+
+    def runs(self, text: str) -> list[tuple[str, Any]]:
+        runs: list[tuple[str, Any]] = []
+        for cluster in self.graphemes(text):
+            font = self.font_for(cluster)
+            if runs and runs[-1][1] is font:
+                runs[-1] = (runs[-1][0] + cluster, font)
+            else:
+                runs.append((cluster, font))
+        return runs
+
+    def layout(self, text: str) -> tuple[list[tuple[str, Any, float]], tuple[int, int, int, int]]:
+        import math
+
+        runs, x = [], 0.0
+        left = top = right = bottom = 0.0
+        for value, font in self.runs(text):
+            bbox = font.getbbox(value, anchor="ls")
+            left, top = min(left, x + bbox[0]), min(top, bbox[1])
+            right, bottom = max(right, x + bbox[2]), max(bottom, bbox[3])
+            runs.append((value, font, x))
+            x += font.getlength(value)
+        return runs, (math.floor(left), math.floor(top), math.ceil(max(right, x)), math.ceil(bottom))
+
+    def width(self, text: str) -> int:
+        _, bounds = self.layout(text)
+        return bounds[2] - bounds[0]
+
+    def wrap(self, text: str, max_width: int) -> list[str]:
+        lines, current = [], ""
+        for cluster in self.graphemes(text):
+            if current and self.width(current + cluster) > max_width:
+                lines.append(current)
+                current = cluster
+            else:
+                current += cluster
+        if current:
+            lines.append(current)
+        return lines
+
+    def truncate(self, text: str, suffix: str, max_width: int) -> str:
+        clusters = self.graphemes(text)
+        while clusters and self.width("".join(clusters) + suffix) > max_width:
+            clusters.pop()
+        return "".join(clusters) + suffix
+
+    def render(self, text: str, fill: str) -> Any:
+        from PIL import Image, ImageDraw
+
+        runs, (left, top, right, bottom) = self.layout(text)
+        image = Image.new("RGBA", (max(1, right - left), max(1, bottom - top)))
+        draw = ImageDraw.Draw(image)
+        for value, font, x in runs:
+            draw.text((x - left, -top), value, font=font, fill=fill, anchor="ls")
+        bounds = image.getchannel("A").getbbox()
+        return image.crop(bounds) if bounds else image
 
 
 def load_generated_character_assets() -> dict[str, str]:
@@ -619,14 +727,15 @@ class ImasBirthdayPlugin(Star):
 
     def _tantou_aliases(self, name: str) -> list[str]:
         record = self._idol_catalogue.get(name, {})
-        return [name, record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", [])]
+        japanese = self._lookup_character_profile(name).get("name_jp", "")
+        return [name, japanese, record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", [])]
 
     def _tantou_display_name(self, name: str) -> str:
         official = self._idol_catalogue.get(name, {}).get("idol_name")
         if official:
             return official
         japanese = self._lookup_character_profile(name).get("name_jp") or ""
-        return self._base_character_name(japanese) or "―"
+        return clean_japanese_name(japanese) or "―"
 
     def _tantou_producer_name(self, owner: str) -> str:
         owner = clean_text(owner).strip()
@@ -1293,6 +1402,8 @@ class ImasBirthdayPlugin(Star):
         for candidate in dict.fromkeys(candidates):
             profile = CHARACTER_PROFILES.get(candidate)
             if isinstance(profile, dict):
+                if profile.get("name_jp"):
+                    return {**profile, "name_jp": clean_japanese_name(profile["name_jp"])}
                 return profile
         return {}
 
@@ -2126,19 +2237,19 @@ class ImasBirthdayPlugin(Star):
         producer = self._tantou_producer_name(owner)
         for font_size in range(62, 35, -2):
             owner_font = self._pil_font(ImageFont, font_size, bold=True)
-            owner_lines = self._pil_wrap_text(draw, producer, owner_font, 1550)
-            if len(owner_lines) <= 2:
+            nickname = NicknameText(owner_font, self.plugin_dir / "assets" / "fonts", font_size)
+            owner_lines = nickname.wrap(producer, 1550)
+            owner_images = [nickname.render(line, "#3c4d66") for line in owner_lines[:2]]
+            if len(owner_lines) <= 2 and sum(line.height for line in owner_images) + 14 * (len(owner_images) - 1) <= 142:
                 break
         if len(owner_lines) > 2:
             owner_lines = owner_lines[:2]
-            final_line = owner_lines[-1]
-            while final_line and draw.textbbox((0, 0), final_line + "…P", font=owner_font)[2] > 1550:
-                final_line = final_line[:-1]
-            owner_lines[-1] = final_line + "…P"
-        line_height = font_size + 14
-        for index, line in enumerate(owner_lines):
-            y = 131 + (index - (len(owner_lines) - 1) / 2) * line_height
-            draw.text((900, y), line, fill="#3c4d66", font=owner_font, anchor="mm")
+            owner_lines[-1] = nickname.truncate(owner_lines[-1], "…P", 1550)
+            owner_images = [nickname.render(line, "#3c4d66") for line in owner_lines]
+        y = 131 - (sum(line.height for line in owner_images) + 14 * (len(owner_images) - 1)) // 2
+        for line in owner_images:
+            image.paste(line, (900 - line.width // 2, y), line)
+            y += line.height + 14
 
         grid_x, grid_width, grid_top, grid_height, gap = 88, 1624, 394, 608, 24
         draw.text((grid_x, 256), "担当アイドル", fill="#3c4d66", font=self._pil_font(ImageFont, 44, bold=True))
@@ -2186,12 +2297,8 @@ class ImasBirthdayPlugin(Star):
                 tint.putalpha(logo.getchannel("A"))
                 logo = tint
             for line_index, line in enumerate(primary):
-                bbox = draw.textbbox((0, 0), line, font=name_font)
-                icon_width = 32 if line_index == 0 and logo else 0
-                label_x = x + (cell_width - (bbox[2] - bbox[0]) - icon_width) // 2
-                if icon_width:
-                    image.paste(logo, (label_x + (25 - logo.width) // 2, label_y + 6), logo)
-                draw.text((label_x + icon_width, label_y), line, fill="#3c4d66", font=name_font)
+                label = self._tantou_name_label(line, name_font, logo if line_index == 0 else None)
+                image.paste(label, (x + (cell_width - label.width) // 2, label_y), label)
                 label_y += line_height
         destination = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "rendered_cards"
         destination.mkdir(parents=True, exist_ok=True)
@@ -2199,6 +2306,27 @@ class ImasBirthdayPlugin(Star):
             path = Path(output.name)
         image.save(path, format="PNG", dpi=(508, 508))
         return str(path)
+
+    def _tantou_name_label(self, text: str, font: Any, logo: Any = None) -> Any:
+        from PIL import Image, ImageDraw
+
+        bbox = font.getbbox(text)
+        label = Image.new("RGBA", (max(1, bbox[2] - bbox[0]), max(1, bbox[3] - bbox[1])))
+        ImageDraw.Draw(label).text((-bbox[0], -bbox[1]), text, font=font, fill="#3c4d66")
+        bounds = label.getchannel("A").getbbox()
+        if bounds:
+            label = label.crop(bounds)
+        if logo is None:
+            return label
+        bounds = logo.getchannel("A").getbbox()
+        if not bounds:
+            return label
+        logo = logo.crop(bounds)
+        height = max(label.height, logo.height)
+        combined = Image.new("RGBA", (logo.width + 7 + label.width, height))
+        combined.alpha_composite(logo, (0, (height - logo.height) // 2))
+        combined.alpha_composite(label, (logo.width + 7, (height - label.height) // 2))
+        return combined
 
     def _draw_tantou_avatar(self, canvas: Any, name: str, x: int, y: int, size: int) -> None:
         from PIL import Image, ImageDraw, ImageOps
