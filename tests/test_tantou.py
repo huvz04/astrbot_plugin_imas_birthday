@@ -234,7 +234,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
     async def test_producer_aliases_merge_the_same_role_and_keep_other_roles_separate(self):
         result = await self.plugin._change_tantou(self.event, "加推", "闪p 夏目P 夏目响平 武内p 武内骏辅 武内駿輔 米内P U149P 源太P 中村P 百万Chief赤羽根P 间岛P 学p 秋月律子P")
         self.assertIn("添加成功", result)
-        expected = ["闪耀色彩P", "武内P", "米内P", "百万动画P", "百万ChiefP", "间岛P", "学园P", "秋月律子"]
+        expected = ["闪耀色彩P", "武内P", "米内P", "百万动画P", "赤羽根P", "间岛P", "学园P", "秋月律子"]
         self.assertEqual(await self.follows(), expected)
         restored = make_plugin(self.plugin.storage)
         self.assertEqual((await restored._tantou_group(self.event.unified_msg_origin))[self.event.user], expected)
@@ -261,6 +261,52 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         candidates = await self.plugin._tantou_followers(self.event, "プロデューサー")
         self.assertIn("完整名字", candidates)
         self.assertIn("武内P", candidates)
+
+    async def test_producer_display_names_and_actor_candidates_and_char_alias(self):
+        await self.plugin._change_tantou(self.event, "加推", "中村P 武内P 米内P 闪p 夏亚P")
+        names = await self.follows()
+        self.assertEqual([self.plugin._tantou_display_name(name) for name in names], ["中村P", "武内P", "米内P", "夏目P", "学P"])
+        self.assertEqual(names[-1], "学园P")
+        candidates = await self.plugin._tantou_followers(self.event, "灰P")
+        self.assertIn("是否在找", candidates)
+        self.assertIn("武内P（武内駿輔）", candidates)
+        self.assertIn("米内P（米内佑希）", candidates)
+        self.assertNotIn("本群 1人", candidates)
+        result = await self.plugin._change_tantou(Event(user="1002"), "加推", "灰p")
+        self.assertIn("武内P（武内駿輔）", result)
+        self.assertIn("米内P（米内佑希）", result)
+        self.assertEqual(await self.follows(Event(user="1002")), [])
+        from PIL import ImageDraw
+        captured = []
+        original = ImageDraw.ImageDraw.text
+        def record(draw, xy, text, *args, **kwargs):
+            captured.append(text)
+            return original(draw, xy, text, *args, **kwargs)
+        with patch.object(ImageDraw.ImageDraw, "text", autospec=True, side_effect=record):
+            cards = self.plugin._render_tantou_cards("测试", names)
+            rank = self.plugin._render_tantou_ranking([(name, 1) for name in names])
+        for path in [*cards, rank]:
+            self.addCleanup(Path(path).unlink, missing_ok=True)
+        for label in ["中村P", "武内P", "米内P", "夏目P", "学P"]:
+            self.assertGreaterEqual(captured.count(label), 2)
+        self.assertNotIn("プロデューサー", captured)
+        self.assertNotIn("武内駿輔", captured)
+
+    async def test_chief_producer_merges_old_followers_and_keeps_order_and_single_vote(self):
+        umo = self.event.unified_msg_origin
+        self.plugin.storage[f"tantou_v1:{umo}"] = {
+            "1001": ["百万ChiefP", "武内P", "赤羽根P"], "1002": ["赤羽根P"],
+        }
+        self.assertEqual(await self.follows(), ["赤羽根P", "武内P"])
+        records = await self.plugin._tantou_records()
+        self.assertNotIn("百万ChiefP", records)
+        result = await self.plugin._tantou_followers(self.event, "百万Chief赤羽根P")
+        self.assertIn("赤羽根P（赤羽根健治） · 本群 2人", result)
+        self.assertEqual(await self.plugin._tantou_followers(self.event, "赤羽根P"), result)
+        with patch.object(self.plugin, "_render_tantou_ranking", return_value=""), patch.object(self.plugin, "_tantou_ranking_group", new_callable=AsyncMock, return_value={"name": "本群"}):
+            result = await self.plugin._tantou_ranking(self.event)
+        self.assertIn("赤羽根P · 2人", result["message"])
+        self.assertNotIn("Chief", result["message"])
 
     async def test_member_followers_query_by_real_mention_and_qq_share_bound_name(self):
         umo = self.event.unified_msg_origin

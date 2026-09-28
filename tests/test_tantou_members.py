@@ -252,7 +252,7 @@ class MemberTantouTests(unittest.IsolatedAsyncioTestCase):
             paths = self.plugin._render_tantou_cards("登记人", ["美作武史", "武内P", "qq:2002", *added_names], members=cards)
         self.addCleanup(Path(paths[0]).unlink, missing_ok=True)
         self.assertIn("美作 武史", captured)
-        self.assertIn("プロデューサー", captured)
+        self.assertIn("武内P", captured)
         for name in added_names:
             self.assertIn(self.plugin._tantou_display_name(name), captured)
         self.assertIn("ℒℴѵℯ•唯爱 丘比.✧=₂✭😀", "".join(captured))

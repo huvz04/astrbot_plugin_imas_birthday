@@ -1,5 +1,6 @@
 """Exercise persisted edits through the bot's normal lookup and rendering paths."""
 import copy
+import json
 import importlib.util
 import base64
 import sys
@@ -52,6 +53,36 @@ class EditorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(restarted._character_brand("测试角色"), "SIDEM")
         self.assertEqual(restarted._lookup_character_profile("测试角色")["birthday"], "02-29")
         self.assertIn("测试角色", await restarted._tantou_records())
+
+    async def test_chief_editor_merge_preserves_both_crops_and_backup_and_is_idempotent(self):
+        token = self.editor.import_image(self.picture())["source"]
+        crop = lambda x: {"source": token, "x": x, "y": .5, "zoom": 1}
+        original = {"schema": 1, "records": {
+            "百万ChiefP": {"name_jp": "チーフプロデューサー", "images": {"tantou": crop(0)}, "revision": "old"},
+            "赤羽根P": {"name_jp": "プロデューサー", "images": {"birthday": crop(1)}, "revision": "current"},
+        }}
+        self.editor.file.write_text(json.dumps(original, ensure_ascii=False), encoding="utf-8")
+        editor = self.attach(self.plugin)
+        self.assertNotIn("百万ChiefP", editor.records)
+        self.assertEqual(editor.records["赤羽根P"]["revision"], "current")
+        self.assertEqual(self.plugin._tantou_display_name("赤羽根P"), "赤羽根P")
+        self.assertTrue(editor.source_path(token).is_file())
+        for kind, color in (("tantou", (255, 0, 0, 255)), ("birthday", (0, 0, 255, 255))):
+            with Image.open(editor.render_image("赤羽根P", kind, (100, 100))) as image:
+                self.assertEqual(image.getpixel((50, 50)), color)
+        backup = self.root / "characters.before-chief-merge.json"
+        self.assertEqual(json.loads(backup.read_text(encoding="utf-8")), original)
+        saved = editor.file.read_bytes()
+        again = self.attach(self.plugin)
+        self.assertEqual(again.file.read_bytes(), saved)
+        self.assertEqual(json.loads(backup.read_text(encoding="utf-8")), original)
+        rows = (await again.list_records())["characters"]
+        self.assertEqual(sum(row["name"] == "赤羽根P" for row in rows), 1)
+        self.assertFalse(any(row["name"] == "百万ChiefP" for row in rows))
+        self.assertEqual((await again.detail("百万ChiefP"))["name"], "赤羽根P")
+        producer = next(row for row in rows if row["name"] == "百万动画P")
+        self.assertEqual(producer["display_name"], "中村P")
+        self.assertEqual((await again.detail("百万动画P"))["display_name"], "中村P")
 
     async def test_birthday_override_moves_removes_and_restores_without_changing_source(self):
         data = {"06-03": {"characters": ["月村手毬", "花海佑芽"], "seiyuu": ["声优"], "events": [], "related_people": []}}

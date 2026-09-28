@@ -22,7 +22,7 @@ function renderList() {
   for (const row of rows) {
     const button = document.createElement('button'); button.type = 'button';
     button.classList.toggle('active', current?.name === row.name);
-    const title = document.createElement('strong'); title.textContent = row.name;
+    const title = document.createElement('strong'); title.textContent = row.display_name || row.name;
     const sub = document.createElement('small'); sub.textContent = `${row.name_jp} · ${row.birthday || '生日未登记'}${row.custom ? ' · 已编辑' : ''}`;
     button.append(title, sub); button.onclick = () => { if (maySwitch()) run(() => select(row.name)); };
     $('characters').append(button);
@@ -42,11 +42,11 @@ async function select(name) {
 async function fill(data) {
   current = data; dirty = false;
   $('empty').hidden = true; $('form').hidden = false; $('preview_area').hidden = !!data.isNew;
-  $('previews').replaceChildren(); $('title').textContent = data.isNew ? '新增角色' : data.name;
+  $('previews').replaceChildren(); $('title').textContent = data.isNew ? '新增角色' : (data.display_name || data.name);
   $('origin').textContent = data.isNew ? '本地新增' : data.record?.revision ? '手动资料' : '基础资料';
   $('name').value = data.name || ''; $('name').readOnly = !data.isNew;
   $('name_jp').value = data.record?.name_jp || ''; $('name_jp').required = !!data.isNew;
-  $('base_name').textContent = data.isNew ? '担当名片上显示的日文名字' : `当前显示：${data.name_jp}`;
+  $('base_name').textContent = data.isNew ? '担当名片上显示的名字' : `当前显示：${data.name_jp}`;
   $('brand').replaceChildren(new Option(`沿用基础资料${data.brand ? ' · ' + brands[data.brand] : ''}`, ''));
   for (const [key, label] of Object.entries(brands)) $('brand').add(new Option(label, key));
   $('brand').value = data.record?.brand || '';

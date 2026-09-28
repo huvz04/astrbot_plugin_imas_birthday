@@ -69,6 +69,26 @@ class AssetEditor:
             if payload.get("schema") != 1 or not isinstance(payload.get("records"), dict):
                 raise ValueError("角色编辑数据格式无效，请检查 characters.json。")
             self.records = payload["records"]
+            old = self.records.get("百万ChiefP")
+            if isinstance(old, dict):
+                current = self.records.get("赤羽根P", {})
+                merged = {**old, **current, "images": {**old.get("images", {}), **current.get("images", {})}}
+                if "name_jp" not in current and merged.get("name_jp") == "チーフプロデューサー":
+                    merged.pop("name_jp")
+                self.records = {name: record for name, record in self.records.items() if name != "百万ChiefP"}
+                self.records["赤羽根P"] = merged
+                # Keep both original files and the pre-merge JSON recoverable.
+                backup = self.file.with_name("characters.before-chief-merge.json")
+                if not backup.exists():
+                    with backup.open("x", encoding="utf-8") as stream:
+                        json.dump(payload, stream, ensure_ascii=False, indent=2)
+                with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.root, suffix=".json", delete=False) as stream:
+                    json.dump({**payload, "records": self.records}, stream, ensure_ascii=False, indent=2)
+                    temporary = Path(stream.name)
+                try:
+                    temporary.replace(self.file)
+                finally:
+                    temporary.unlink(missing_ok=True)
 
     def register(self, context):
         # Older AstrBot versions can still use the bot commands and saved overrides.
@@ -113,7 +133,7 @@ class AssetEditor:
         name = name.strip()
         if name.lower().startswith("qq:") or any(ord(c) < 32 for c in name) or any(c in name for c in "、,，;；"):
             raise ValueError("角色名字不能使用群友内部标识、控制字符或名字分隔符。")
-        return name
+        return "赤羽根P" if name == "百万ChiefP" else name
 
     def source_path(self, token):
         if not isinstance(token, str) or not re.fullmatch(r"[0-9a-f]{64}", token):
@@ -181,6 +201,7 @@ class AssetEditor:
             profile = self.plugin._lookup_character_profile(name)
             birthday = record.get("birthday", dates.get(name) or profile.get("birthday", ""))
             rows.append({"name": name, "name_jp": self.plugin._tantou_display_name(name),
+                         "display_name": self.plugin._tantou_display_name(name) if profile.get("display_name") else name,
                          "brand": self.plugin._character_brand(name), "birthday": birthday,
                          "custom": bool(record), "aliases": self.plugin._tantou_aliases(name)})
         return {"characters": rows, "brands": self.brands, "storage": str(self.root),
@@ -210,6 +231,7 @@ class AssetEditor:
                             "y": settings.get("y", .5) if settings else .5,
                             "zoom": settings.get("zoom", 1) if settings else 1, "custom": bool(settings)}
         return {"name": name, "record": record, "images": images,
+                "display_name": self.plugin._tantou_display_name(name) if self.base_profiles.get(name, {}).get("display_name") else name,
                 "name_jp": self.plugin._tantou_display_name(name), "brand": self.plugin._character_brand(name),
                 "base_birthday": dates.get(name) or self.base_profiles.get(name, {}).get("birthday", ""),
                 "revision": record.get("revision", "")}

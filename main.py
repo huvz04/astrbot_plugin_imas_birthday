@@ -350,6 +350,7 @@ BRAND_ALIASES = {
 
 CHARACTER_NAME_ALIASES = {
     "ミント": "Mint",
+    "百万ChiefP": "赤羽根P",
 }
 
 CHARACTER_REVERSE_ALIASES = {
@@ -1011,14 +1012,18 @@ class ImasBirthdayPlugin(Star):
     def _tantou_aliases(self, name: str) -> list[str]:
         record = self._idol_catalogue.get(name, {})
         profile = self._lookup_character_profile(name)
-        return [name, profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", []), *profile.get("aliases", [])]
+        return [name, profile.get("display_name", ""), profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", []), *profile.get("aliases", [])]
 
     def _tantou_display_name(self, name: str, members: dict[str, dict[str, Any]] | None = None) -> str:
         if self._tantou_member_id(name):
             return (members or {}).get(name, {}).get("name") or "群友"
+        profile = self._lookup_character_profile(name)
         custom_name = self._editor_record(name).get("name_jp")
-        if custom_name:
+        if custom_name and not (profile.get("display_name") and custom_name == profile.get("name_jp")):
             return custom_name
+        display_name = profile.get("display_name")
+        if display_name:
+            return display_name
         official = self._idol_catalogue.get(name, {}).get("idol_name")
         if official:
             return official
@@ -1031,12 +1036,12 @@ class ImasBirthdayPlugin(Star):
 
     def _tantou_query_label(self, name: str) -> str:
         label = self._tantou_display_name(name)
-        # Several unrelated roles share this official name; identify query results.
-        return f"{label}（{name}）" if label == "プロデューサー" else label
+        profile = self._lookup_character_profile(name)
+        return f"{label}（{profile['cv']}）" if profile.get("display_name") and profile.get("cv") else label
 
     def _tantou_alias_index(self, names: Any) -> dict[str, str]:
         candidates: dict[str, set[str]] = {}
-        for name in names:
+        for name in dict.fromkeys(CHARACTER_NAME_ALIASES.get(name, name) for name in names):
             for alias in self._tantou_aliases(name):
                 if alias:
                     candidates.setdefault(self._exact_name_key(alias), set()).add(name)
@@ -1059,7 +1064,7 @@ class ImasBirthdayPlugin(Star):
         cache = await self.get_kv_data("birthday_cache", {})
         if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
             names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
-        return sorted({self._base_character_name(name) for name in names if name and not name.startswith("qq:") and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
+        return sorted({CHARACTER_NAME_ALIASES.get(name, self._base_character_name(name)) for name in names if name and not name.startswith("qq:") and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
 
     async def _change_tantou(self, event: AstrMessageEvent, command: str, args: str) -> str:
         umo, user_id = self._tantou_identity(event)
@@ -1135,7 +1140,7 @@ class ImasBirthdayPlugin(Star):
                     if not candidates:
                         lines.append(f"没找到「{query}」。")
                         continue
-                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {name}" for index, name in enumerate(candidates, 1)))
+                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {self._tantou_query_label(name) if self._lookup_character_profile(name).get('display_name') else name}" for index, name in enumerate(candidates, 1)))
                 now = time.monotonic()
                 self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
                 if pending:
@@ -1187,7 +1192,7 @@ class ImasBirthdayPlugin(Star):
         if added:
             group[user_id] = current + added
             await self.put_kv_data(f"tantou_v1:{umo}", group)
-        labels = lambda values: "、".join(self._tantou_display_name(name, members) if self._tantou_member_id(name) else name for name in values)
+        labels = lambda values: "、".join(self._tantou_display_name(name, members) if self._tantou_member_id(name) or self._lookup_character_profile(name).get("display_name") else name for name in values)
         lines = ["添加成功：" + labels(added)] if added else []
         if existing:
             lines.append("已经加推：" + labels(existing))
@@ -1250,6 +1255,8 @@ class ImasBirthdayPlugin(Star):
                     ) if not partial else []
                     choices = partial or [item for score, item in matches if score >= .45]
                     labels = [self._tantou_query_label(item) for item in choices[:5]]
+                    if labels and any(self._lookup_character_profile(item).get("display_name") for item in choices[:5]):
+                        return "是否在找：\n" + "\n".join(f"{index}. {label}" for index, label in enumerate(labels, 1)) + "\n请填写完整名字。"
                     return "请填写完整名字：" + "、".join(labels) if labels else f"没找到「{query}」。"
         async with self._tantou_lock:
             group = await self._tantou_group(umo)
