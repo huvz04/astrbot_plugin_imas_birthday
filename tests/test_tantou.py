@@ -178,6 +178,65 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         event = event or self.event
         return (await self.plugin._tantou_group(event.unified_msg_origin)).get(event.user, [])
 
+    async def test_followers_query_scopes_aliases_names_and_saved_batches(self):
+        umo = self.event.unified_msg_origin
+        self.plugin.storage[f"tantou_v1:{umo}"] = {
+            "1001": ["月村手毬", "月村 手毬"], "1002": ["月村手毬"], "1003": ["花海佑芽"],
+        }
+        self.plugin.storage["tantou_v1:bot:GroupMessage:200"] = {"9000": ["月村手毬"]}
+        self.plugin.storage[f"tantou_profiles_v1:{umo}"] = {"1001": {"name": "自己的CN", "nickname": "旧名字"}}
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(return_value=[
+            {"user_id": 1001, "group_id": 100, "card": "新群名片"},
+            {"user_id": 1002, "group_id": 100, "card": "花体ℒℴѵℯ🌸"},
+            {"user_id": 1002, "group_id": 200, "card": "其他群名字"},
+        ]))
+        await self.plugin._change_tantou(Event(user="1004"), "加推", "月村手球")
+        result = await self.plugin._tantou_followers(self.event, "月村 手毬")
+        self.assertIn("本群 2人", result)
+        self.assertIn("自己的CNP（1001）", result)
+        self.assertIn("花体ℒℴѵℯ🌸P（1002）", result)
+        for text in ("其他群名字", "9000", "1003", "1004", "新群名片P"):
+            self.assertNotIn(text, result)
+        self.event.bot.call_action.assert_awaited_once_with("get_group_member_list", group_id=100, self_id="9999")
+
+    async def test_followers_query_empty_unknown_private_and_transport_failure(self):
+        self.assertIn("用法", await self.plugin._tantou_followers(self.event))
+        self.assertIn("还没有人", await self.plugin._tantou_followers(self.event, "月村手毬"))
+        self.assertIn("群聊", await self.plugin._tantou_followers(Event(group=""), "月村手毬"))
+        self.assertIn("完整名字", await self.plugin._tantou_followers(self.event, "月村手球"))
+        self.assertIn("没找到", await self.plugin._tantou_followers(self.event, "完全无关的测试词abcdef"))
+        self.assertIn("用法", await self.plugin._tantou_followers(Event(mentions=["1002"]), "月村手毬"))
+        umo = self.event.unified_msg_origin
+        self.plugin.storage[f"tantou_v1:{umo}"] = {"1002": ["月村手毬"]}
+        self.plugin.storage[f"tantou_profiles_v1:{umo}"] = {"1002": {"nickname": "缓存昵称"}}
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=RuntimeError("offline")))
+        self.assertIn("缓存昵称P", await self.plugin._tantou_followers(self.event, "月村手毬"))
+
+    async def test_followers_native_and_bare_commands_do_not_handle_twice(self):
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬")
+        native = Event(text="担当查询 月村 手毬")
+        result = [reply async for reply in self.plugin.tantou_query(native, "月村 手毬")]
+        self.assertIn("本群 1人", result[0])
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(native)], [])
+        bare = Event(text="担当查询 月村手毬")
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(bare)], result)
+
+    async def test_876_brand_is_independent_of_765_storage_and_catalogue(self):
+        from collections import Counter
+        from PIL import Image as PILImage, ImageColor
+        for name in ("日高爱", "水谷绘理", "石川实", "冈本真奈美", "尾崎玲子", "武田苍一"):
+            self.assertEqual(self.plugin._character_brand(name), "876_PRO")
+            self.assertTrue(self.plugin._card_item(name)["logo_path"].endswith("876_PRO.png"))
+        self.assertTrue(self.plugin._character_asset_filename("日高爱").startswith("the_idolmaster/"))
+        self.assertEqual(self.plugin._character_brand("天海春香"), "THE_IDOLMASTER")
+        self.assertEqual(self.plugin._character_brand("灯里爱夏"), "VA_LIV")
+        path = Path(self.plugin._render_tantou_cards("876", ["日高爱", "水谷绘理"])[0])
+        self.addCleanup(path.unlink, missing_ok=True)
+        with PILImage.open(path) as image:
+            colors = Counter(image.getpixel((x, 326)) for x in range(88, 1712))
+            self.assertEqual(colors[ImageColor.getrgb(plugin_module.BRAND_COLORS["876_PRO"])], 1624)
+            self.assertEqual(colors[ImageColor.getrgb(plugin_module.BRAND_COLORS["THE_IDOLMASTER"])], 0)
+
     async def test_exact_batch_duplicates_and_restart(self):
         result = await self.plugin._change_tantou(self.event, "加推", "月村手毬 花海佑芽 月村手毬")
         self.assertIn("添加成功", result)

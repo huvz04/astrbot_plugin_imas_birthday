@@ -127,7 +127,7 @@ CHARACTER_SUPPLEMENTAL_PROFILES = {
     "石川实": {
         "name_cn": "石川实",
         "name_jp": "石川実",
-        "brand": "dearlystars",
+        "brand": "876_pro",
         "aliases": ["876社长", "876社長"],
         "source_url": "https://w.atwiki.jp/aniwotawiki/pages/30539.html",
         "source_title": "THE IDOLM@STER DearlyStars：その他のキャラクター",
@@ -135,7 +135,7 @@ CHARACTER_SUPPLEMENTAL_PROFILES = {
     "冈本真奈美": {
         "name_cn": "冈本真奈美",
         "name_jp": "岡本まなみ",
-        "brand": "dearlystars",
+        "brand": "876_pro",
         "aliases": ["岡本真奈美"],
         "source_url": "https://w.atwiki.jp/aniwotawiki/pages/30539.html",
         "source_title": "THE IDOLM@STER DearlyStars：その他のキャラクター",
@@ -143,7 +143,7 @@ CHARACTER_SUPPLEMENTAL_PROFILES = {
     "尾崎玲子": {
         "name_cn": "尾崎玲子",
         "name_jp": "尾崎玲子",
-        "brand": "dearlystars",
+        "brand": "876_pro",
         "aliases": ["尾崎P", "尾崎p"],
         "source_url": "https://w.atwiki.jp/aniwotawiki/pages/30539.html",
         "source_title": "THE IDOLM@STER DearlyStars：その他のキャラクター",
@@ -151,7 +151,7 @@ CHARACTER_SUPPLEMENTAL_PROFILES = {
     "武田苍一": {
         "name_cn": "武田苍一",
         "name_jp": "武田蒼一",
-        "brand": "dearlystars",
+        "brand": "876_pro",
         "aliases": ["武田P", "武田p"],
         "source_url": "https://w.atwiki.jp/aniwotawiki/pages/30539.html",
         "source_title": "THE IDOLM@STER DearlyStars：その他のキャラクター",

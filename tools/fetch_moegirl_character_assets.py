@@ -243,6 +243,8 @@ def parse_character_links(page_html: str) -> list[CharacterLink]:
                 continue
 
             name = clean_text(match.group("label"))
+            if name in {"日高爱", "水谷绘理"}:
+                brand = "876_pro"
             page_title = clean_title(attrs.get("title", "")) or page_title_from_href(href) or name
             if not name or name.endswith("系列") or name.startswith("PROJECT IM@S"):
                 continue

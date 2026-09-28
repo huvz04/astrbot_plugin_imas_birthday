@@ -331,10 +331,10 @@ BRAND_ALIASES = {
     "vα_liv": "VA_LIV",
     "vα-liv": "VA_LIV",
     "vαliv": "VA_LIV",
-    "dearlystars": "DEARLY_STARS",
-    "dearly_stars": "DEARLY_STARS",
-    "dearly": "DEARLY_STARS",
-    "ds": "DEARLY_STARS",
+    "dearlystars": "876_PRO",
+    "dearly_stars": "876_PRO",
+    "dearly": "876_PRO",
+    "ds": "876_PRO",
     "876": "876_PRO",
     "876pro": "876_PRO",
     "876_pro": "876_PRO",
@@ -372,6 +372,13 @@ KR_CHARACTER_NAMES = {
 }
 
 CHARACTER_BRAND_OVERRIDES = {
+    # Historical asset directories are storage locations, not brand identities.
+    "日高爱": "876_PRO",
+    "水谷绘理": "876_PRO",
+    "石川实": "876_PRO",
+    "冈本真奈美": "876_PRO",
+    "尾崎玲子": "876_PRO",
+    "武田苍一": "876_PRO",
     "Mint": "KR",
     "寺本来可": "KR",
     "权势玲": "KR",
@@ -665,6 +672,12 @@ class ImasBirthdayPlugin(Star):
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._change_tantou(event, "担当改名", str(name)))
 
+    @filter.command("担当查询")
+    async def tantou_query(self, event: AstrMessageEvent, name: GreedyStr = ""):
+        """按偶像名字查询本群已登记的担当制作人。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._tantou_followers(event, str(name)))
+
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def tantou_text_fallback(self, event: AstrMessageEvent):
         """Support the same commands without a slash or a wake prefix."""
@@ -677,10 +690,13 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推确认", "减推", "担当", "清空担当", "担当改名", "担当排行"}:
+        if command not in {"加推", "加推确认", "减推", "担当", "清空担当", "担当改名", "担当排行", "担当查询"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
+            return
+        if command == "担当查询":
+            yield event.plain_result(await self._tantou_followers(event, args))
             return
         if command not in {"担当", "担当排行"}:
             yield event.plain_result(await self._change_tantou(event, command, args))
@@ -1196,6 +1212,50 @@ class ImasBirthdayPlugin(Star):
             logger.exception("担当总览图片渲染失败")
             paths = []
         return {"message": message, "card_path": paths[0] if paths else "", "card_paths": paths}
+
+    async def _tantou_followers(self, event: AstrMessageEvent, query: str = "") -> str:
+        umo, user_id = self._tantou_identity(event)
+        if not umo or not user_id:
+            return "请在群聊里查询担当。"
+        query = query.strip()
+        if not query or self._tantou_mentions(event):
+            return "用法：担当查询 月村手毬"
+        records = await self._tantou_records()
+        name = self._tantou_alias_index(records).get(self._exact_name_key(query))
+        if not name:
+            matches = sorted(
+                ((max(self._character_match_score(self._normalize_character_query(query), self._normalize_character_query(alias)) for alias in self._tantou_aliases(item) if alias), item) for item in records),
+                reverse=True,
+            )
+            choices = [self._tantou_display_name(item) for score, item in matches if score >= .45][:5]
+            return "请填写完整名字：" + "、".join(choices) if choices else f"没找到「{query}」。"
+        async with self._tantou_lock:
+            group = await self._tantou_group(umo)
+            followers = [uid for uid, names in group.items() if name in names]
+        label = self._tantou_display_name(name)
+        if not followers:
+            return f"本群还没有人登记 {label}。"
+        # Fetch the group once rather than issuing one request per producer.
+        nicknames = {}
+        try:
+            bot = getattr(event, "bot", None)
+            if event.get_platform_name() == "aiocqhttp" and bot is not None:
+                routing = {"self_id": event.get_self_id()} if event.get_self_id() else {}
+                rows = await asyncio.wait_for(bot.call_action("get_group_member_list", group_id=int(event.get_group_id()), **routing), timeout=5)
+                for row in rows if isinstance(rows, list) else []:
+                    if isinstance(row, dict) and str(row.get("group_id")) == str(event.get_group_id()):
+                        nicknames[str(row.get("user_id"))] = clean_text(row.get("card") or row.get("nickname") or "")
+            elif hasattr(event, "get_group"):
+                info = await asyncio.wait_for(event.get_group(), timeout=5)
+                nicknames = {str(member.user_id): str(member.nickname or "") for member in getattr(info, "members", None) or []}
+        except Exception as exc:
+            logger.debug(f"担当查询群昵称读取失败，使用已有昵称：{type(exc).__name__}")
+        nicknames.setdefault(user_id, str(event.get_sender_name() or ""))
+        async with self._tantou_lock:
+            owners = [(uid, await self._tantou_owner(umo, uid, nicknames.get(uid, ""))) for uid in followers]
+        return f"{label} · 本群 {len(owners)}人\n" + "\n".join(
+            f"{index}. {self._tantou_producer_name(owner)}（{uid}）" for index, (uid, owner) in enumerate(owners, 1)
+        )
 
     async def _tantou_ranking(self, event: AstrMessageEvent, args: str = "") -> dict[str, Any]:
         umo, user_id = self._tantou_identity(event)
@@ -3256,6 +3316,8 @@ class ImasBirthdayPlugin(Star):
         return BRAND_COLORS.get(brand, BRAND_COLORS["OTHER"])
 
     def _brand_logo_path(self, brand: str, suffix: str = "svg") -> Path | None:
+        if brand == "DEARLY_STARS":
+            brand = "876_PRO"
         suffix = suffix.strip().lstrip(".") or "svg"
         path = self.plugin_dir / "assets" / "brand_marks" / f"{brand}.{suffix}"
         return path if path.exists() else None
@@ -3263,7 +3325,7 @@ class ImasBirthdayPlugin(Star):
     def _character_brand(self, character: str) -> str:
         custom_brand = self._editor_record(character).get("brand")
         if custom_brand:
-            return custom_brand
+            return BRAND_ALIASES.get(self._normalize_brand_key(custom_brand), custom_brand)
         character = CHARACTER_NAME_ALIASES.get(character, character)
         base_character = self._base_character_name(character)
         if character in CHARACTER_BRAND_OVERRIDES:
