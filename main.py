@@ -4,6 +4,7 @@ import asyncio
 import base64
 import contextlib
 import difflib
+import hashlib
 import importlib.util
 import html
 import json
@@ -734,6 +735,140 @@ class ImasBirthdayPlugin(Star):
                 return str(part.name)
         return ""
 
+    @staticmethod
+    def _tantou_member_id(name: str) -> str:
+        match = re.fullmatch(r"qq:([1-9][0-9]{0,18})", name)
+        return match.group(1) if match and int(match.group(1)) <= 2**63 - 1 else ""
+
+    def _tantou_member_avatar_path(self, umo: str, user_id: str) -> Path:
+        if not self._tantou_member_id("qq:" + user_id):
+            raise ValueError("Invalid QQ identity")
+        scope = hashlib.sha256(umo.encode("utf-8")).hexdigest()[:20]
+        return self.tantou_icons_dir / "group_members" / scope / (user_id + ".png")
+
+    async def _verify_tantou_members(self, event: AstrMessageEvent, user_ids: list[str]) -> dict[str, dict[str, Any]]:
+        bot = getattr(event, "bot", None)
+        group_id = str(event.get_group_id() or "")
+        if (event.get_platform_name() != "aiocqhttp" or bot is None
+                or not self._tantou_member_id("qq:" + group_id)
+                or not all(self._tantou_member_id("qq:" + user_id) for user_id in user_ids)):
+            raise ValueError("无法核验本群成员，未添加。")
+        routing = {"self_id": event.get_self_id()} if event.get_self_id() else {}
+        rows = await asyncio.wait_for(bot.call_action("get_group_member_list", group_id=int(group_id), **routing), timeout=5)
+        listed = {str(row.get("user_id")) for row in rows if isinstance(row, dict) and str(row.get("group_id")) == group_id} if isinstance(rows, list) else set()
+        if not set(user_ids) <= listed:
+            raise ValueError("@ 的人未通过本群成员核验，未添加。")
+        limit = asyncio.Semaphore(4)
+
+        async def verify(user_id: str) -> tuple[str, dict[str, Any]]:
+            async with limit:
+                member = await asyncio.wait_for(bot.call_action(
+                    "get_group_member_info", group_id=int(group_id), user_id=int(user_id), no_cache=True, **routing,
+                ), timeout=5)
+            if not isinstance(member, dict) or str(member.get("user_id")) != user_id or str(member.get("group_id")) != group_id:
+                raise ValueError("@ 的人未通过本群成员核验，未添加。")
+            nickname = clean_text(str(member.get("card") or member.get("nickname") or "群友"))
+            nickname = "".join(NicknameText.graphemes(nickname)[:80]) or "群友"
+            return user_id, {"nickname": nickname, "verified_at": time.time()}
+
+        return dict(await asyncio.gather(*(verify(user_id) for user_id in user_ids)))
+
+    async def _cache_tantou_member_avatars(self, umo: str, user_ids: list[str]) -> None:
+        import io
+        from PIL import Image
+
+        limit = asyncio.Semaphore(4)
+        async with httpx.AsyncClient(follow_redirects=False, timeout=10) as client:
+            async def fetch(user_id: str) -> None:
+                async with limit:
+                    path = self._tantou_member_avatar_path(umo, user_id)
+                    if path.is_file() and time.time() - path.stat().st_mtime < 86400:
+                        return
+                    try:
+                        # Never accept avatar URLs from message components or API metadata.
+                        async with client.stream("GET", "https://q1.qlogo.cn/g", params={"b": "qq", "nk": user_id, "s": "640"}) as response:
+                            response.raise_for_status()
+                            data = bytearray()
+                            async for chunk in response.aiter_bytes():
+                                data.extend(chunk)
+                                if len(data) > 2_000_000:
+                                    raise ValueError("QQ avatar exceeds size limit")
+                        with Image.open(io.BytesIO(data)) as source:
+                            if source.format not in {"PNG", "JPEG", "WEBP", "GIF"} or max(source.size) > 2048:
+                                raise ValueError("Unexpected QQ avatar")
+                            avatar = source.convert("RGBA")
+                            avatar.thumbnail((320, 320), Image.Resampling.LANCZOS)
+                        path.parent.mkdir(parents=True, exist_ok=True)
+                        with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
+                            temporary = Path(output.name)
+                        try:
+                            avatar.save(temporary, format="PNG")
+                            temporary.replace(path)
+                        finally:
+                            temporary.unlink(missing_ok=True)
+                    except Exception as exc:
+                        logger.debug(f"群友头像读取失败，使用空白占位：{type(exc).__name__}")
+            await asyncio.gather(*(fetch(user_id) for user_id in user_ids))
+
+    async def _tantou_member_cards(self, umo: str, names: list[str]) -> dict[str, dict[str, Any]]:
+        ids = [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)]
+        if not ids:
+            return {}
+        members = await self.get_kv_data(f"tantou_members_v1:{umo}", {})
+        profiles = await self.get_kv_data(f"tantou_profiles_v1:{umo}", {})
+        cards = {}
+        for user_id in ids:
+            profile, member = profiles.get(user_id, {}), members.get(user_id, {})
+            path = self._tantou_member_avatar_path(umo, user_id)
+            cards["qq:" + user_id] = {
+                "name": profile.get("name") or member.get("nickname") or "群友",
+                "avatar_path": path if path.is_file() else None,
+            }
+        return cards
+
+    async def _change_tantou_members(self, event: AstrMessageEvent, command: str, user_ids: list[str]) -> str:
+        # Parse the actual chain. message_str contains synthetic @nicknames, and
+        # native command arguments may truncate them; neither proves identity.
+        allowed = tuple(cls for cls in (getattr(Comp, "Plain", None), getattr(Comp, "At", None), getattr(Comp, "Reply", None)) if isinstance(cls, type))
+        parts = event.get_messages()
+        plain = "".join(part.text for part in parts if isinstance(part, Comp.Plain)).strip()
+        if (any(not isinstance(part, allowed) for part in parts) or plain not in {command, "/" + command}
+                or not all(self._tantou_member_id("qq:" + user_id) for user_id in user_ids)):
+            return f"用法：{command} @群友；请单独发送真实 @。"
+        if len(user_ids) > 30:
+            return "一次最多处理 30 位群友。"
+        umo, owner_id = self._tantou_identity(event)
+        try:
+            if command == "加推":
+                verified = await self._verify_tantou_members(event, user_ids)
+                await self._cache_tantou_member_avatars(umo, user_ids)
+            async with self._tantou_lock:
+                await self._tantou_owner(umo, owner_id, str(event.get_sender_name() or ""))
+                keys = ["qq:" + user_id for user_id in user_ids]
+                if command == "加推":
+                    key = f"tantou_members_v1:{umo}"
+                    members = await self.get_kv_data(key, {})
+                    members.update(verified)
+                    await self.put_kv_data(key, members)
+                    result = await self._append_tantou_batch(umo, owner_id, keys)
+                else:
+                    group = await self._tantou_group(umo)
+                    current = group.get(owner_id, [])
+                    removed = [name for name in keys if name in current]
+                    group[owner_id] = [name for name in current if name not in keys]
+                    if not group[owner_id]:
+                        group.pop(owner_id, None)
+                    await self.put_kv_data(f"tantou_v1:{umo}", group)
+                    cards = await self._tantou_member_cards(umo, removed)
+                    result = "已移除：" + "、".join(cards[name]["name"] for name in removed) if removed else "未登记这些群友。"
+                self._tantou_pending.pop((umo, owner_id), None)
+                return result
+        except ValueError as exc:
+            return str(exc)
+        except Exception:
+            logger.exception("群友担当登记失败")
+            return "群友核验或保存失败，未添加，请稍后重试。"
+
     async def _tantou_group(self, umo: str) -> dict[str, list[str]]:
         await self._load_idol_catalogue()
         value = await self.get_kv_data(f"tantou_v1:{umo}", {})
@@ -805,7 +940,9 @@ class ImasBirthdayPlugin(Star):
         profile = self._lookup_character_profile(name)
         return [name, profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", []), *profile.get("aliases", [])]
 
-    def _tantou_display_name(self, name: str) -> str:
+    def _tantou_display_name(self, name: str, members: dict[str, dict[str, Any]] | None = None) -> str:
+        if self._tantou_member_id(name):
+            return (members or {}).get(name, {}).get("name") or "群友"
         official = self._idol_catalogue.get(name, {}).get("idol_name")
         if official:
             return official
@@ -839,12 +976,17 @@ class ImasBirthdayPlugin(Star):
         cache = await self.get_kv_data("birthday_cache", {})
         if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
             names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
-        return sorted({self._base_character_name(name) for name in names if name and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
+        return sorted({self._base_character_name(name) for name in names if name and not name.startswith("qq:") and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
 
     async def _change_tantou(self, event: AstrMessageEvent, command: str, args: str) -> str:
         umo, user_id = self._tantou_identity(event)
         if not umo or not user_id:
             return "请在群聊里登记和查看担当。"
+        mentions = self._tantou_mentions(event)
+        if mentions and command in {"加推", "减推"}:
+            return await self._change_tantou_members(event, command, mentions)
+        if mentions and command in {"加推确认", "担当改名"}:
+            return "这条指令不接受 @ 群友。"
         if command == "清空担当" and (args.strip() or self._tantou_mentions(event)):
             return "用法：清空担当；只清空你在本群的登记。"
         if command != "清空担当" and not args.split():
@@ -955,12 +1097,14 @@ class ImasBirthdayPlugin(Star):
         current = list(group.get(user_id, []))
         added = [name for name in selected if name not in current]
         existing = [name for name in selected if name in current]
+        members = await self._tantou_member_cards(umo, selected)
         if added:
             group[user_id] = current + added
             await self.put_kv_data(f"tantou_v1:{umo}", group)
-        lines = ["添加成功：" + "、".join(added)] if added else []
+        labels = lambda values: "、".join(self._tantou_display_name(name, members) if self._tantou_member_id(name) else name for name in values)
+        lines = ["添加成功：" + labels(added)] if added else []
         if existing:
-            lines.append("已经加推：" + "、".join(existing))
+            lines.append("已经加推：" + labels(existing))
         return "\n".join(lines) or "已跳过，未添加担当。"
 
     async def _tantou_overview(self, event: AstrMessageEvent, args: str = "") -> dict[str, Any]:
@@ -978,10 +1122,11 @@ class ImasBirthdayPlugin(Star):
         nickname = await self._tantou_member_nickname(event, user_id)
         async with self._tantou_lock:
             owner = await self._tantou_owner(umo, user_id, nickname)
-        message = self._tantou_producer_name(owner) + "\n担当アイドル\n" + "、".join(self._tantou_display_name(name) for name in names)
+        members = await self._tantou_member_cards(umo, names)
+        message = self._tantou_producer_name(owner) + "\n担当アイドル\n" + "、".join(self._tantou_display_name(name, members) for name in names)
         try:
             await self._prepare_tantou_icons(names)
-            paths = await asyncio.to_thread(self._render_tantou_cards, owner, names)
+            paths = await asyncio.to_thread(self._render_tantou_cards, owner, names, members=members)
         except Exception:
             logger.exception("担当总览图片渲染失败")
             paths = []
@@ -1000,7 +1145,7 @@ class ImasBirthdayPlugin(Star):
             group = await self._tantou_group(umo)
         aliases = self._tantou_alias_index(self._idol_catalogue)
         birthday_names = {aliases.get(self._exact_name_key(self._base_character_name(name)), self._base_character_name(name)) for name in names}
-        return sorted(user_id for user_id, follows in group.items() if birthday_names.intersection(follows))
+        return sorted(user_id for user_id, follows in group.items() if any(name in birthday_names and not self._tantou_member_id(name) for name in follows))
 
     def _tantou_icon_path(self, name: str) -> Path | None:
         record = self._idol_catalogue.get(name)
@@ -2323,7 +2468,7 @@ class ImasBirthdayPlugin(Star):
         logger.info(self._image_send_debug("生日卡片渲染产物已准备", str(card_path), str(destination)))
         return str(destination)
 
-    def _render_tantou_cards(self, owner: str, names: list[str]) -> list[str]:
+    def _render_tantou_cards(self, owner: str, names: list[str], *, members: dict[str, dict[str, Any]] | None = None) -> list[str]:
         if not names:
             return []
         page_count = (len(names) + 17) // 18
@@ -2334,11 +2479,11 @@ class ImasBirthdayPlugin(Star):
             page_size = remaining if pages_left == 1 else min(18, ((balanced_size + 5) // 6) * 6)
             pages.append(names[offset:offset + page_size])
             offset += page_size
-        selected_brands = {self._character_brand(name) for name in names}
+        selected_brands = {self._character_brand(name) for name in names if not self._tantou_member_id(name)}
         brands = [brand for brand in BRAND_COLORS if brand in selected_brands]
-        return [self._render_tantou_overview(owner, page, brands=brands) for page in pages]
+        return [self._render_tantou_overview(owner, page, brands=brands, members=members) for page in pages]
 
-    def _render_tantou_overview(self, owner: str, names: list[str], *, brands: list[str] | None = None) -> str:
+    def _render_tantou_overview(self, owner: str, names: list[str], *, brands: list[str] | None = None, members: dict[str, dict[str, Any]] | None = None) -> str:
         from PIL import Image, ImageDraw, ImageFont
 
         if not names or len(names) > 18:
@@ -2368,7 +2513,7 @@ class ImasBirthdayPlugin(Star):
         grid_x, grid_width, grid_top, grid_height, gap = 88, 1624, 394, 608, 24
         draw.text((grid_x, 256), "担当アイドル", fill="#3c4d66", font=self._pil_font(ImageFont, 44, bold=True))
         if brands is None:
-            selected_brands = {self._character_brand(name) for name in names}
+            selected_brands = {self._character_brand(name) for name in names if not self._tantou_member_id(name)}
             brands = [brand for brand in BRAND_COLORS if brand in selected_brands]
         bar_gap = 12
         bar_width = grid_width - bar_gap * (len(brands) - 1)
@@ -2385,9 +2530,14 @@ class ImasBirthdayPlugin(Star):
         for name in names:
             for name_size in range(30, 19, -2):
                 name_font = self._pil_font(ImageFont, name_size, bold=True)
-                lines = self._pil_wrap_text(draw, self._tantou_display_name(name), name_font, min(cell_width - 38, 420))
+                caption = NicknameText(name_font, self.plugin_dir / "assets" / "fonts", name_size)
+                max_width = min(cell_width - 38, 420)
+                lines = caption.wrap(self._tantou_display_name(name, members), max_width)
                 if len(lines) <= 2:
                     break
+            if len(lines) > 2:
+                lines = lines[:2]
+                lines[-1] = caption.truncate(lines[-1], "…", max_width)
             labels.append((lines, name_font, name_size + 8))
         caption_height = max(len(lines) * line_height for lines, _, line_height in labels)
         avatar_size = min(320, cell_width - 24, row_height - caption_height - 30)
@@ -2395,10 +2545,11 @@ class ImasBirthdayPlugin(Star):
         for index, (name, (primary, name_font, line_height)) in enumerate(zip(names, labels)):
             x = grid_x + (index % columns) * (cell_width + gap)
             y = y_start + (index // columns) * row_height
-            self._draw_tantou_avatar(image, name, x + (cell_width - avatar_size) // 2, y, avatar_size)
+            member = (members or {}).get(name, {})
+            self._draw_tantou_avatar(image, name, x + (cell_width - avatar_size) // 2, y, avatar_size, avatar_path=member.get("avatar_path"))
             label_y = y + avatar_size + 12
             brand = self._character_brand(name)
-            logo_path = self._brand_logo_path(brand, "png")
+            logo_path = None if self._tantou_member_id(name) else self._brand_logo_path(brand, "png")
             logo = None
             if logo_path:
                 with Image.open(logo_path) as source:
@@ -2422,14 +2573,9 @@ class ImasBirthdayPlugin(Star):
         return str(path)
 
     def _tantou_name_label(self, text: str, font: Any, logo: Any = None) -> Any:
-        from PIL import Image, ImageDraw
+        from PIL import Image
 
-        bbox = font.getbbox(text)
-        label = Image.new("RGBA", (max(1, bbox[2] - bbox[0]), max(1, bbox[3] - bbox[1])))
-        ImageDraw.Draw(label).text((-bbox[0], -bbox[1]), text, font=font, fill="#3c4d66")
-        bounds = label.getchannel("A").getbbox()
-        if bounds:
-            label = label.crop(bounds)
+        label = NicknameText(font, self.plugin_dir / "assets" / "fonts", font.size).render(text, "#3c4d66")
         if logo is None:
             return label
         bounds = logo.getchannel("A").getbbox()
@@ -2442,11 +2588,11 @@ class ImasBirthdayPlugin(Star):
         combined.alpha_composite(label, (logo.width + 7, (height - label.height) // 2))
         return combined
 
-    def _draw_tantou_avatar(self, canvas: Any, name: str, x: int, y: int, size: int) -> None:
+    def _draw_tantou_avatar(self, canvas: Any, name: str, x: int, y: int, size: int, *, avatar_path: Path | None = None) -> None:
         from PIL import Image, ImageDraw, ImageOps
 
         official = self._tantou_icon_path(name)
-        asset = official or self._character_image_path(name) or self._character_portrait_path(name)
+        asset = avatar_path if self._tantou_member_id(name) else official or self._character_image_path(name) or self._character_portrait_path(name)
         if asset:
             try:
                 with Image.open(asset) as source:
@@ -2456,21 +2602,15 @@ class ImasBirthdayPlugin(Star):
                     avatar = ImageOps.contain(avatar, (size, size), Image.Resampling.LANCZOS)
                     canvas.paste(avatar, (x + (size - avatar.width) // 2, y + (size - avatar.height) // 2), avatar)
                     return
-                avatar = ImageOps.fit(avatar, (size, size), Image.Resampling.LANCZOS, centering=(0.5, 0.2))
+                avatar = ImageOps.fit(avatar, (size, size), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))
             except Exception:
                 logger.exception(f"读取担当头像失败：{name}")
                 avatar = None
         else:
             avatar = None
-        color = self._character_color(name, self._character_brand(name))
-        panel = Image.new("RGBA", (size, size), color)
+        panel = Image.new("RGBA", (size, size), "#f3f5f8")
         if avatar:
             panel.alpha_composite(avatar)
-        else:
-            draw = ImageDraw.Draw(panel)
-            from PIL import ImageFont
-            font = self._pil_font(ImageFont, 40, bold=True)
-            draw.text((size // 2, size // 2), self._tantou_display_name(name)[:1], fill="white", font=font, anchor="mm")
         mask = Image.new("L", (size, size))
         ImageDraw.Draw(mask).polygon([(size * .25, 0), (size * .75, 0), (size - 1, size * .5), (size * .75, size - 1), (size * .25, size - 1), (0, size * .5)], fill=255)
         canvas.paste(panel, (x, y), mask)

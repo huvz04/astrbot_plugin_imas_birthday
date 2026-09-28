@@ -15,3 +15,12 @@ Official source paths:
 
 - [QQ adapter](https://github.com/AstrBotDevs/AstrBot/blob/e99432c8766e23b6090b38b0064d843271513855/astrbot/core/platform/sources/aiocqhttp/aiocqhttp_platform_adapter.py)
 - [Command parser](https://github.com/AstrBotDevs/AstrBot/blob/e99432c8766e23b6090b38b0064d843271513855/astrbot/core/star/filter/command.py)
+
+`test_tantou_members.py` replays the same real conversion results for `加推`,
+including truncated native arguments, and exercises authoritative membership
+responses with an offline OneBot API double. It checks both `group_id` and
+`user_id` in member-list and uncached member-info responses. Failing checks must
+not save any follows or trigger avatar downloads. HTTP fixtures also cover fixed
+avatar URLs, redirects, invalid formats, byte limits and image dimensions.
+
+- [OneBot 11 member-list and member-info API definitions](https://github.com/botuniverse/onebot-11/blob/master/api/public.md#get_group_member_info-获取群成员信息)
