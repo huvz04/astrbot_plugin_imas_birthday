@@ -227,6 +227,8 @@ class MemberTantouTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_new_profiles_and_unicode_member_names_render_with_blank_avatars(self):
         names = ["美作武史", "赤羽根P", "武内P", "闪耀色彩P", "石川P", "百万动画P", "今西部长", "训练员", "资深训练员", "新人训练员", "石川实", "冈本真奈美", "尾崎玲子", "武田苍一"]
+        added_names = ["贺阳燐羽", "蓝井抚子", "白草四音", "白草月花", "学园Vo训练员", "学园Da训练员", "学园Vi训练员", "卓帕卡布拉", "ぴにゃこら太", "呆笔太郎"]
+        names.extend(added_names)
         result = await self.plugin._change_tantou(Event(), "加推", " ".join(names))
         self.assertIn("添加成功", result)
         self.assertNotIn("需要确认", result)
@@ -247,11 +249,13 @@ class MemberTantouTests(unittest.IsolatedAsyncioTestCase):
             return render(text, *args, **kwargs)
         cards = {"qq:2002": {"name": "ℒℴѵℯ•唯爱 丘比.✧=₂✭😀", "avatar_path": None}}
         with patch.object(self.plugin, "_tantou_name_label", side_effect=capture):
-            paths = self.plugin._render_tantou_cards("登记人", ["美作武史", "武内P", "qq:2002"], members=cards)
+            paths = self.plugin._render_tantou_cards("登记人", ["美作武史", "武内P", "qq:2002", *added_names], members=cards)
         self.addCleanup(Path(paths[0]).unlink, missing_ok=True)
         self.assertIn("美作 武史", captured)
         self.assertIn("プロデューサー", captured)
-        self.assertIn("ℒℴѵℯ•唯爱 丘比.✧=₂✭😀", captured)
+        for name in added_names:
+            self.assertIn(self.plugin._tantou_display_name(name), captured)
+        self.assertIn("ℒℴѵℯ•唯爱 丘比.✧=₂✭😀", "".join(captured))
         with patch.object(self.plugin, "_render_tantou_overview", return_value="card.png") as render_page:
             self.plugin._render_tantou_cards("登记人", ["qq:2002"], members=cards)
         self.assertEqual(render_page.call_args.kwargs["brands"], [])
