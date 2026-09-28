@@ -221,6 +221,54 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         bare = Event(text="担当查询 月村手毬")
         self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(bare)], result)
 
+    async def test_unique_short_name_queries_directly_but_addition_still_confirms(self):
+        await self.plugin._change_tantou(self.event, "加推", "七尾百合子")
+        full = await self.plugin._tantou_followers(self.event, "七尾百合子")
+        self.assertEqual(await self.plugin._tantou_followers(self.event, "百合子"), full)
+        self.assertIn("本群 1人", full)
+        self.assertIn("需要确认", await self.plugin._change_tantou(Event(user="1002"), "加推", "百合子"))
+        self.assertIn("还没有人", await self.plugin._tantou_followers(self.event, "春香"))
+        self.assertIn("完整名字", await self.plugin._tantou_followers(self.event, "田中"))
+        self.assertEqual(await self.follows(), ["七尾百合子"])
+
+    async def test_member_followers_query_by_real_mention_and_qq_share_bound_name(self):
+        umo = self.event.unified_msg_origin
+        self.plugin.storage[f"tantou_v1:{umo}"] = {"1001": ["qq:3000", "qq:3000"], "1002": ["qq:3000"]}
+        self.plugin.storage[f"tantou_members_v1:{umo}"] = {"3000": {"nickname": "登记时的群名"}}
+        self.plugin.storage[f"tantou_profiles_v1:{umo}"] = {"3000": {"name": "群友CN"}, "1002": {"name": "另一个CN"}}
+        self.plugin.storage["tantou_v1:bot:GroupMessage:200"] = {"9000": ["qq:3000"]}
+        bot = types.SimpleNamespace(call_action=AsyncMock(return_value=[
+            {"group_id": 100, "user_id": 3000, "card": "新群名"},
+            {"group_id": 100, "user_id": 1001, "card": "查看者"},
+        ]))
+        numeric = Event(text="担当查询 3000")
+        numeric.bot = bot
+        result = [reply async for reply in self.plugin.tantou_text_fallback(numeric)]
+        self.assertIn("群友CN · 本群 2人", result[0])
+        self.assertIn("另一个CNP（1002）", result[0])
+        self.assertNotIn("9000", result[0])
+        # AstrBot produces synthetic @ text, while the chain contains Plain + At.
+        mention = Event(text="担当查询 @昵称 有空格(3000)", mentions=["9999", "3000"])
+        mention.messages = [Plain("担当查询"), At("9999"), At("3000", "昵称 有空格")]
+        mention.bot = bot
+        self.assertEqual([reply async for reply in self.plugin.tantou_query(mention, "@昵称")], result)
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(mention)], [])
+
+    async def test_member_followers_queries_reject_invalid_targets_and_return_not_found(self):
+        for ids, args in ((["all"], ""), (["0"], ""), (["1001", "1002"], ""), (["1001"], "1002"), (["1001"], "月村手毬"), ([], "0"), ([], "9999999999999999999999999")):
+            self.assertIn("用法", await self.plugin._tantou_followers(Event(mentions=ids), args))
+        self.plugin.storage["tantou_v1:bot:GroupMessage:200"] = {"9000": ["qq:3000"]}
+        self.assertIn("查不到", await self.plugin._tantou_followers(self.event, "3000"))
+        self.assertIn("查不到", await self.plugin._tantou_followers(Event(mentions=["3000"])))
+        self.assertEqual(self.plugin.sent, [])
+
+    async def test_member_followers_query_falls_back_to_cached_target_name(self):
+        umo = self.event.unified_msg_origin
+        self.plugin.storage[f"tantou_v1:{umo}"] = {"1001": ["qq:3000"]}
+        self.plugin.storage[f"tantou_members_v1:{umo}"] = {"3000": {"nickname": "缓存群友🌸"}}
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=RuntimeError("offline")))
+        self.assertIn("缓存群友🌸 · 本群 1人", await self.plugin._tantou_followers(self.event, "3000"))
+
     async def test_876_brand_is_independent_of_765_storage_and_catalogue(self):
         from collections import Counter
         from PIL import Image as PILImage, ImageColor

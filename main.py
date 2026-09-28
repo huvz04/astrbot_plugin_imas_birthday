@@ -1218,22 +1218,41 @@ class ImasBirthdayPlugin(Star):
         if not umo or not user_id:
             return "请在群聊里查询担当。"
         query = query.strip()
-        if not query or self._tantou_mentions(event):
-            return "用法：担当查询 月村手毬"
-        records = await self._tantou_records()
-        name = self._tantou_alias_index(records).get(self._exact_name_key(query))
-        if not name:
-            matches = sorted(
-                ((max(self._character_match_score(self._normalize_character_query(query), self._normalize_character_query(alias)) for alias in self._tantou_aliases(item) if alias), item) for item in records),
-                reverse=True,
-            )
-            choices = [self._tantou_display_name(item) for score, item in matches if score >= .45][:5]
-            return "请填写完整名字：" + "、".join(choices) if choices else f"没找到「{query}」。"
+        usage = "用法：担当查询 百合子、担当查询 @群友 或 担当查询 QQ号；一次查询一位。"
+        target_id = ""
+        if self._tantou_mentions(event) or re.fullmatch(r"@?[0-9]+", query):
+            if self._tantou_mentions(event) and query and not (query.startswith("@") or query.isdigit()):
+                return usage
+            target_id, error = self._tantou_target(event, query)
+            if error or not self._tantou_member_id("qq:" + target_id):
+                return usage
+            name = "qq:" + target_id
+        else:
+            if not query:
+                return usage
+            records = await self._tantou_records()
+            key = self._exact_name_key(query)
+            name = self._tantou_alias_index(records).get(key)
+            if not name:
+                # Count distinct characters, not the number of matching aliases.
+                partial = [item for item in records if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item) if alias)]
+                if len(partial) == 1:
+                    name = partial[0]
+                else:
+                    matches = sorted(
+                        ((max(self._character_match_score(self._normalize_character_query(query), self._normalize_character_query(alias)) for alias in self._tantou_aliases(item) if alias), item) for item in records),
+                        reverse=True,
+                    ) if not partial else []
+                    choices = partial or [item for score, item in matches if score >= .45]
+                    labels = [self._tantou_display_name(item) for item in choices[:5]]
+                    return "请填写完整名字：" + "、".join(labels) if labels else f"没找到「{query}」。"
         async with self._tantou_lock:
             group = await self._tantou_group(umo)
             followers = [uid for uid, names in group.items() if name in names]
         label = self._tantou_display_name(name)
         if not followers:
+            if target_id:
+                return "查不到本群对这位群友的担当登记。"
             return f"本群还没有人登记 {label}。"
         # Fetch the group once rather than issuing one request per producer.
         nicknames = {}
@@ -1252,6 +1271,10 @@ class ImasBirthdayPlugin(Star):
             logger.debug(f"担当查询群昵称读取失败，使用已有昵称：{type(exc).__name__}")
         nicknames.setdefault(user_id, str(event.get_sender_name() or ""))
         async with self._tantou_lock:
+            if target_id:
+                members = await self.get_kv_data(f"tantou_members_v1:{umo}", {})
+                nickname = nicknames.get(target_id) or members.get(target_id, {}).get("nickname", "")
+                label = await self._tantou_owner(umo, target_id, nickname)
             owners = [(uid, await self._tantou_owner(umo, uid, nicknames.get(uid, ""))) for uid in followers]
         return f"{label} · 本群 {len(owners)}人\n" + "\n".join(
             f"{index}. {self._tantou_producer_name(owner)}（{uid}）" for index, (uid, owner) in enumerate(owners, 1)
