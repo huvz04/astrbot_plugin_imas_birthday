@@ -16,6 +16,7 @@ import tempfile
 import time
 import unicodedata
 import zlib
+from collections import Counter
 from datetime import datetime, timedelta
 from functools import lru_cache
 from html.parser import HTMLParser
@@ -648,6 +649,16 @@ class ImasBirthdayPlugin(Star):
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._change_tantou(event, "清空担当", str(args)))
 
+    @filter.command("担当排行")
+    async def tantou_rank(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        """查看本群被担当最多的前十位。"""
+        if self._claim_tantou_event(event):
+            result = await self._tantou_ranking(event, str(args))
+            if result["card_path"]:
+                await self._send_tantou_cards(event, result)
+            else:
+                yield event.plain_result(result["message"])
+
     @filter.command("担当改名")
     async def tantou_rename(self, event: AstrMessageEvent, name: GreedyStr = ""):
         """设置本群名片的 P 名，填写“重置”恢复群昵称。"""
@@ -662,15 +673,15 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推确认", "减推", "担当", "清空担当", "担当改名"}:
+        if command not in {"加推", "加推确认", "减推", "担当", "清空担当", "担当改名", "担当排行"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
             return
-        if command != "担当":
+        if command not in {"担当", "担当排行"}:
             yield event.plain_result(await self._change_tantou(event, command, args))
             return
-        result = await self._tantou_overview(event, args)
+        result = await (self._tantou_ranking(event, args) if command == "担当排行" else self._tantou_overview(event, args))
         if result["card_path"]:
             await self._send_tantou_cards(event, result)
         else:
@@ -1151,6 +1162,31 @@ class ImasBirthdayPlugin(Star):
             logger.exception("担当总览图片渲染失败")
             paths = []
         return {"message": message, "card_path": paths[0] if paths else "", "card_paths": paths}
+
+    async def _tantou_ranking(self, event: AstrMessageEvent, args: str = "") -> dict[str, Any]:
+        umo, user_id = self._tantou_identity(event)
+        if not umo or not user_id:
+            return {"message": "请在群聊里查看担当排行。", "card_path": ""}
+        if args.strip() or self._tantou_mentions(event):
+            return {"message": "发送「担当排行」查看本群前十位。", "card_path": ""}
+        async with self._tantou_lock:
+            group = await self._tantou_group(umo)
+        counts = Counter(name for names in group.values() for name in set(names))
+        if not counts:
+            return {"message": "本群还没有登记担当，发送「加推 月村手毬」试试。", "card_path": ""}
+        members = await self._tantou_member_cards(umo, list(counts))
+        rows = sorted(counts.items(), key=lambda row: (-row[1], self._tantou_display_name(row[0], members), row[0]))[:10]
+        message = "本群担当排行\n" + "\n".join(
+            f"{index}. {self._tantou_display_name(name, members)} · {count}人"
+            for index, (name, count) in enumerate(rows, 1)
+        )
+        try:
+            await self._prepare_tantou_icons([name for name, _ in rows])
+            path = await asyncio.to_thread(self._render_tantou_ranking, rows, members=members)
+        except Exception:
+            logger.exception("担当排行图片渲染失败")
+            path = ""
+        return {"message": message, "card_path": path, "card_paths": [path] if path else []}
 
     async def _send_tantou_cards(self, event: AstrMessageEvent, result: dict[str, Any]) -> None:
         for path in result["card_paths"]:
@@ -2610,6 +2646,44 @@ class ImasBirthdayPlugin(Star):
         with tempfile.NamedTemporaryFile(prefix="tantou_card_", suffix=".png", dir=destination, delete=False) as output:
             path = Path(output.name)
         image.save(path, format="PNG", dpi=(508, 508))
+        return str(path)
+
+    def _render_tantou_ranking(self, rows: list[tuple[str, int]], *, members: dict[str, dict[str, Any]] | None = None) -> str:
+        from PIL import Image, ImageDraw, ImageFont
+
+        if not rows or len(rows) > 10 or any(count <= 0 for _, count in rows):
+            raise ValueError("A ranking must contain 1–10 positive vote counts")
+        width, row_height = 1200, 112
+        height = 176 + row_height * len(rows)
+        image = Image.new("RGB", (width, height), "#f1f3f7")
+        draw = ImageDraw.Draw(image)
+        draw.text((48, 44), "本群担当排行", fill="#3c4d66", font=self._pil_font(ImageFont, 46, bold=True))
+        draw.rounded_rectangle((32, 128, 1168, height - 28), radius=24, fill="white", outline="#d6dce5", width=2)
+        number_font = self._pil_font(ImageFont, 28, bold=True)
+        label_font = self._pil_font(ImageFont, 32, bold=True)
+        caption = NicknameText(label_font, self.plugin_dir / "assets" / "fonts", 32)
+        maximum = max(count for _, count in rows)
+        for index, (name, count) in enumerate(rows):
+            top = 144 + index * row_height
+            rank_color = ("#c89432", "#8b9aae", "#b78362")[index] if index < 3 else "#8b96a8"
+            draw.text((72, top + 43), str(index + 1), font=number_font, fill=rank_color, anchor="mm")
+            member = (members or {}).get(name, {})
+            self._draw_tantou_avatar(image, name, 106, top + 4, 88, avatar_path=member.get("avatar_path"))
+            text = self._tantou_display_name(name, members)
+            if caption.width(text) > 818:
+                text = caption.truncate(text, "…", 818)
+            label = caption.render(text, "#3c4d66")
+            image.paste(label, (220, top + 10), label)
+            draw.rounded_rectangle((220, top + 64, 1040, top + 84), radius=10, fill="#edf1f7")
+            right = 220 + max(1, round(820 * count / maximum))
+            color = BRAND_COLORS.get(self._character_brand(name), BRAND_COLORS["OTHER"]) if not self._tantou_member_id(name) else "#8195b5"
+            draw.rounded_rectangle((220, top + 64, right, top + 84), radius=10, fill=color)
+            draw.text((1138, top + 74), f"{count}人", font=number_font, fill="#3c4d66", anchor="rm")
+        destination = Path(tempfile.gettempdir()) / "astrbot_plugin_imas_birthday" / "rendered_cards"
+        destination.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(prefix="tantou_ranking_", suffix=".png", dir=destination, delete=False) as output:
+            path = Path(output.name)
+        image.save(path, format="PNG")
         return str(path)
 
     def _tantou_name_label(self, text: str, font: Any, logo: Any = None) -> Any:
