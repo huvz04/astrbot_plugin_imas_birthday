@@ -668,6 +668,10 @@ class ImasBirthdayPlugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def tantou_text_fallback(self, event: AstrMessageEvent):
         """Support the same commands without a slash or a wake prefix."""
+        confirmation = await self._tantou_numeric_reply(event)
+        if confirmation is not None:
+            yield event.plain_result(confirmation)
+            return
         text = str(getattr(event, "message_str", "") or "").strip()
         parts = text.split(maxsplit=1)
         if not parts or parts[0].startswith("/"):
@@ -698,6 +702,33 @@ class ImasBirthdayPlugin(Star):
         if not event.get_group_id():
             return "", ""
         return str(event.unified_msg_origin), str(event.get_sender_id() or "")
+
+    async def _tantou_numeric_reply(self, event: AstrMessageEvent) -> str | None:
+        messages = event.get_messages()
+        allowed = tuple(cls for cls in (getattr(Comp, "Plain", None), getattr(Comp, "At", None), getattr(Comp, "Reply", None)) if isinstance(cls, type))
+        if any(not isinstance(part, allowed) for part in messages) or self._tantou_mentions(event):
+            return None
+        text = "".join(part.text for part in messages if isinstance(part, Comp.Plain)).strip()
+        if not re.fullmatch(r"[0-9]+(?:\s+[0-9]+)*", text):
+            return None
+        umo, user_id = self._tantou_identity(event)
+        if not umo or not user_id:
+            return None
+        async with self._tantou_lock:
+            key = (umo, user_id)
+            pending = self._tantou_pending.get(key)
+            if not pending:
+                return None
+            if pending["expires"] <= time.monotonic():
+                self._tantou_pending.pop(key, None)
+                return None
+            if not self._claim_tantou_event(event):
+                return None
+            try:
+                return await self._confirm_tantou(umo, user_id, text)
+            except Exception:
+                logger.exception("担当序号确认失败")
+                return "确认失败，请稍后重试。"
 
     def _tantou_mentions(self, event: AstrMessageEvent) -> list[str]:
         messages = event.get_messages() if hasattr(event, "get_messages") else []
@@ -1089,7 +1120,10 @@ class ImasBirthdayPlugin(Star):
                 if pending:
                     self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending, "batch": batch}
                     example = " ".join("1" if item["candidates"] else "完整名字" for item in pending)
-                    lines.append(f"加推确认 {example}（0 跳过）")
+                    if all(item["candidates"] for item in pending):
+                        lines.append(f"直接回 {example}（0 跳过）；改名字用「加推确认 完整名字」")
+                    else:
+                        lines.append(f"加推确认 {example}（序号可直接回，0 跳过）")
                     return "\n".join(lines)
                 return await self._append_tantou_batch(umo, user_id, batch)
             except Exception:

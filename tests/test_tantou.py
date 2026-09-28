@@ -197,6 +197,61 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("添加成功", result)
         self.assertEqual(await self.follows(), ["月村手毬"])
 
+    async def test_numeric_single_and_repeated_choices_keep_original_batch_order(self):
+        await self.plugin._change_tantou(self.event, "加推", "手毬")
+        reply = Event(text="1")
+        self.assertIn("添加成功", ([text async for text in self.plugin.tantou_text_fallback(reply)])[0])
+        self.assertEqual(await self.follows(), ["月村手毬"])
+        self.assertEqual([text async for text in self.plugin.tantou_text_fallback(reply)], [])
+        await self.plugin._change_tantou(self.event, "清空担当", "")
+        result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 千早 一ノ瀬 高木顺二朗")
+        self.assertIn("直接回 1 1 1", result)
+        self.assertEqual(await self.follows(), [])
+        reply = Event(text="1 1 1")
+        self.assertIn("添加成功", ([text async for text in self.plugin.tantou_text_fallback(reply)])[0])
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬", "如月千早", "一之濑志希", "高木顺二朗"])
+
+    async def test_numeric_skip_and_validation_do_not_partially_save(self):
+        await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 qzxv987 如月千早")
+        for value, hint in (("1", "2 个"), ("9 0", "请填")):
+            replies = [text async for text in self.plugin.tantou_text_fallback(Event(text=value))]
+            self.assertIn(hint, replies[0])
+            self.assertEqual(await self.follows(), [])
+        replies = [text async for text in self.plugin.tantou_text_fallback(Event(text="1 0"))]
+        self.assertIn("添加成功", replies[0])
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬", "如月千早"])
+        await self.plugin._change_tantou(self.event, "加推", "qzxv987")
+        replies = [text async for text in self.plugin.tantou_text_fallback(Event(text="0"))]
+        self.assertIn("已跳过", replies[0])
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬", "如月千早"])
+
+    async def test_numeric_reply_only_claims_current_owner_group_and_active_draft(self):
+        await self.plugin._change_tantou(self.event, "加推", "手毬")
+        for event in (Event(user="2002", text="1"), Event(group="200", text="1"), Event(group="", text="1"), Event(text="1次"), Event(text="1", mentions=["2002"])):
+            self.assertEqual([text async for text in self.plugin.tantou_text_fallback(event)], [])
+            self.assertFalse(event.get_extra("imasbd_tantou_handled", False))
+        image_reply = Event(text="1"); image_reply.messages.append(Image())
+        self.assertEqual([text async for text in self.plugin.tantou_text_fallback(image_reply)], [])
+        self.assertFalse(image_reply.get_extra("imasbd_tantou_handled", False))
+        key = (self.event.unified_msg_origin, self.event.user)
+        self.plugin._tantou_pending[key]["expires"] = 0
+        expired = Event(text="1")
+        self.assertEqual([text async for text in self.plugin.tantou_text_fallback(expired)], [])
+        self.assertFalse(expired.get_extra("imasbd_tantou_handled", False))
+        self.assertNotIn(key, self.plugin._tantou_pending)
+        fresh = Event(text="1 1 1")
+        self.assertEqual([text async for text in self.plugin.tantou_text_fallback(fresh)], [])
+        self.assertFalse(fresh.get_extra("imasbd_tantou_handled", False))
+        self.assertEqual(await self.follows(), [])
+
+    async def test_numeric_confirmation_reads_plain_chain_when_bot_is_mentioned(self):
+        await self.plugin._change_tantou(self.event, "加推", "手毬")
+        reply = Event(text="@测试机器人(9999) 1", mentions=["9999"])
+        reply.messages[0].text = "1"
+        replies = [text async for text in self.plugin.tantou_text_fallback(reply)]
+        self.assertIn("添加成功", replies[0])
+        self.assertEqual(await self.follows(), ["月村手毬"])
+
     async def test_mixed_batch_and_individual_choices(self):
         result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 千早 qzxv987")
         self.assertIn("没找到「qzxv987」", result)
@@ -352,7 +407,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unknown_name_prompt_is_short_but_waits_for_whole_ordered_batch(self):
         result = await self.plugin._change_tantou(self.event, "加推", "月村手毬 qzxv987 花海佑芽")
-        self.assertEqual(result, "没找到「qzxv987」。\n加推确认 完整名字（0 跳过）")
+        self.assertEqual(result, "没找到「qzxv987」。\n加推确认 完整名字（序号可直接回，0 跳过）")
         self.assertEqual(await self.follows(), [])
         await self.plugin._change_tantou(self.event, "加推确认", "齋藤孝司")
         self.assertEqual(await self.follows(), ["月村手毬", "斋藤孝司", "花海佑芽"])
