@@ -19,6 +19,7 @@ import zlib
 from datetime import datetime, timedelta
 from functools import lru_cache
 from html.parser import HTMLParser
+from io import BytesIO
 from mimetypes import guess_type
 from pathlib import Path
 from typing import Any
@@ -99,7 +100,8 @@ def _font_codepoints(path: str, index: int = 0) -> frozenset[int]:
 def _fallback_font(path: str, size: int) -> Any:
     from PIL import ImageFont
 
-    return ImageFont.truetype(path, size)
+    # FreeType keeps path-loaded fonts open on Windows, blocking plugin updates.
+    return ImageFont.truetype(BytesIO(Path(path).read_bytes()), size)
 
 
 class NicknameText:
@@ -108,15 +110,18 @@ class NicknameText:
     def __init__(self, primary: Any, fonts_dir: Path, size: int):
         self.primary = primary
         self.fonts = [primary]
+        self.coverage = {}
+        if isinstance(getattr(primary, "path", None), (str, bytes)):
+            self.coverage[id(primary)] = _font_codepoints(os.fsdecode(primary.path), getattr(primary, "index", 0))
+        self.emoji = None
         for filename in ("NotoSans.ttf", "NotoSansMath-Regular.ttf", "NotoSansSymbols2-Regular.ttf", "NotoEmoji.ttf"):
             path = fonts_dir / filename
             if path.is_file():
-                self.fonts.append(_fallback_font(str(path), size))
-        self.coverage = {
-            id(font): _font_codepoints(os.fsdecode(font.path), getattr(font, "index", 0))
-            for font in self.fonts if isinstance(getattr(font, "path", None), (str, bytes))
-        }
-        self.emoji = next((font for font in self.fonts if str(getattr(font, "path", "")).endswith("NotoEmoji.ttf")), None)
+                font = _fallback_font(str(path), size)
+                self.fonts.append(font)
+                self.coverage[id(font)] = _font_codepoints(str(path))
+                if filename == "NotoEmoji.ttf":
+                    self.emoji = font
 
     @staticmethod
     def graphemes(text: str) -> list[str]:
@@ -586,6 +591,8 @@ class ImasBirthdayPlugin(Star):
             self._task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._task
+        _fallback_font.cache_clear()
+        _font_codepoints.cache_clear()
 
     def _ensure_scheduler(self, reason: str):
         if self._task and not self._task.done():

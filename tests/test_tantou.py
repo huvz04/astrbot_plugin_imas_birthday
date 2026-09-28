@@ -4,6 +4,7 @@ import copy
 import importlib.util
 import json
 import logging
+import shutil
 import sys
 import tempfile
 import time
@@ -657,6 +658,60 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(lines, clusters)
         path = Path(self.plugin._render_tantou_cards(owner, ["高木顺二朗"])[0])
         self.addCleanup(path.unlink, missing_ok=True)
+
+    async def test_live_fonts_allow_windows_update_without_changing_unicode_rendering(self):
+        from PIL import ImageFont
+
+        source = self.plugin.plugin_dir / "assets" / "fonts"
+        primary = self.plugin._pil_font(ImageFont, 62, bold=True)
+        # The default Windows temp path is ASCII, like the reported deployment.
+        # FreeType may load non-ASCII paths into memory itself, hiding the bug.
+        with tempfile.TemporaryDirectory(prefix="imasbd-font-update-") as folder:
+            fonts_dir = Path(folder) / "fonts"
+            fonts_dir.mkdir()
+            for path in source.glob("*.ttf"):
+                shutil.copyfile(path, fonts_dir / path.name)
+            renderer = plugin_module.NicknameText(primary, fonts_dir, 62)
+            try:
+                text = "ℒℴѵℯ•唯爱 丘比.✧=₂✭ 😀🎉❤️P"
+                before = renderer.render(text, "#3c4d66")
+                self.assertIs(renderer.font_for("🎉"), renderer.emoji)
+                self.assertEqual(len(renderer.fonts), 5)
+                # Keep the renderer and its cached fonts live while replacing
+                # the entire bundled font directory, as the updater does.
+                for path in fonts_dir.iterdir():
+                    path.unlink()
+                fonts_dir.rmdir()
+                after = renderer.render(text, "#3c4d66")
+                self.assertEqual(after.size, before.size)
+                self.assertEqual(after.tobytes(), before.tobytes())
+                fonts_dir.mkdir()
+                for path in source.glob("*.ttf"):
+                    shutil.copyfile(path, fonts_dir / path.name)
+                refreshed = plugin_module.NicknameText(primary, fonts_dir, 62)
+                self.assertEqual(refreshed.render(text, "#3c4d66").tobytes(), before.tobytes())
+            finally:
+                del renderer
+                plugin_module._fallback_font.cache_clear()
+                plugin_module._font_codepoints.cache_clear()
+
+    async def test_terminate_releases_font_caches_and_cancels_background_tasks(self):
+        from PIL import ImageFont
+
+        primary = self.plugin._pil_font(ImageFont, 62, bold=True)
+        renderer = plugin_module.NicknameText(primary, self.plugin.plugin_dir / "assets" / "fonts", 62)
+        self.assertGreater(plugin_module._fallback_font.cache_info().currsize, 0)
+        self.assertGreater(plugin_module._font_codepoints.cache_info().currsize, 0)
+        self.plugin._catalogue_task = asyncio.create_task(asyncio.sleep(3600))
+        self.plugin._task = asyncio.create_task(asyncio.sleep(3600))
+        await asyncio.sleep(0)
+        await self.plugin.terminate()
+        self.assertTrue(self.plugin._catalogue_task.cancelled())
+        self.assertTrue(self.plugin._task.cancelled())
+        self.assertEqual(plugin_module._fallback_font.cache_info().currsize, 0)
+        self.assertEqual(plugin_module._font_codepoints.cache_info().currsize, 0)
+        # A render already in progress retains its in-memory font objects.
+        self.assertIsNotNone(renderer.render("🎉 ℒℴѵℯ", "#3c4d66").getchannel("A").getbbox())
 
     async def test_profile_names_remove_ruby_and_separators_and_remain_matchable(self):
         expected = {"高木顺一朗": "高木 順一朗", "高木顺二朗": "高木 順二朗", "黑井崇男": "黒井 崇男"}
