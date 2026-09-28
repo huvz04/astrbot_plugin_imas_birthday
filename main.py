@@ -682,7 +682,9 @@ class ImasBirthdayPlugin(Star):
         if mentions:
             if len(mentions) != 1 or mentions[0] in {"all", "0"}:
                 return "", usage
-            if args.strip() and (not explicit or explicit.group(1) != mentions[0]):
+            # QQ adds @nickname(qq) to message_str; command parsing may also
+            # truncate a nickname containing spaces. The At component owns the ID.
+            if explicit and explicit.group(1) != mentions[0]:
                 return "", usage
             return mentions[0], ""
         if not args.strip():

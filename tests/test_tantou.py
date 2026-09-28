@@ -2,6 +2,7 @@
 import asyncio
 import copy
 import importlib.util
+import json
 import logging
 import sys
 import tempfile
@@ -20,8 +21,9 @@ class Plain:
 
 
 class At:
-    def __init__(self, qq):
+    def __init__(self, qq, name=""):
         self.qq = qq
+        self.name = name
 
 
 class Image:
@@ -310,6 +312,32 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         clear = Event(text="清空担当")
         self.assertIn("已清空", ([reply async for reply in self.plugin.tantou_text_fallback(clear)])[0])
         self.assertEqual([reply async for reply in self.plugin.tantou_clear(clear)], [])
+
+    async def test_qq_mentions_from_real_astrbot_conversion_and_command_parsing(self):
+        fixtures = json.loads((Path(__file__).parent / "fixtures" / "astrbot_qq_mentions.json").read_text(encoding="utf-8"))
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬")
+        await self.plugin._change_tantou(self.event, "担当改名", "花海")
+        await self.plugin._change_tantou(Event(user="1002"), "加推", "一之濑志希")
+
+        def from_fixture(record):
+            event = Event(user="1002", text=record["message_str"])
+            event.messages = [Plain(part["text"]) if part["type"] == "plain" else At(part["qq"], part["name"]) for part in record["messages"]]
+            return event
+
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=["card.png"]) as render, patch.object(self.plugin, "_send_tantou_cards", new_callable=AsyncMock) as send:
+            for record in fixtures["records"]:
+                with self.subTest(version=record["version"], case=record["case"]):
+                    native = from_fixture(record)
+                    target, error = self.plugin._tantou_target(native, record["native_args"])
+                    self.assertEqual((target, error), (record["expected_target"], ""))
+                    self.assertEqual([reply async for reply in self.plugin.tantou_show(native, record["native_args"])], [])
+                    self.assertTrue(send.call_args.args[1]["message"].startswith("花海P\n"))
+                    self.assertEqual(render.call_args.args[1], ["月村手毬"])
+                    bare = from_fixture(record)
+                    self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(bare)], [])
+                    self.assertTrue(send.call_args.args[1]["message"].startswith("花海P\n"))
+                    self.assertEqual(render.call_args.args[1], ["月村手毬"])
+            self.assertEqual(send.await_count, 2 * len(fixtures["records"]))
 
     async def test_confirmation_scoped_expiry_and_invalid_choices(self):
         await self.plugin._change_tantou(self.event, "加推", "手毬")

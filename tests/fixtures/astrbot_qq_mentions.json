@@ -1,0 +1,191 @@
+{
+  "source": "AstrBotDevs/AstrBot: aiocqhttp conversion + command filter, executed with an offline bot double",
+  "records": [
+    {
+      "version": "v4.16.0",
+      "source_ref": "v4.16.0",
+      "case": "normal",
+      "message_str": "担当 @群友(1001) ",
+      "native_args": "@群友(1001)",
+      "messages": [
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "群友"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "v4.16.0",
+      "source_ref": "v4.16.0",
+      "case": "spaces",
+      "message_str": "担当 @昵称 有空格(1001) ",
+      "native_args": "@昵称",
+      "messages": [
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "昵称 有空格"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "v4.16.0",
+      "source_ref": "v4.16.0",
+      "case": "wake",
+      "message_str": "担当 @昵称 (担当) ✭(1001) ",
+      "native_args": "@昵称",
+      "messages": [
+        {
+          "type": "at",
+          "qq": "9999",
+          "name": "机器人"
+        },
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "昵称 (担当) ✭"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "v4.27.2",
+      "source_ref": "v4.27.2",
+      "case": "normal",
+      "message_str": "担当 @群友(1001) ",
+      "native_args": "@群友(1001)",
+      "messages": [
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "群友"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "v4.27.2",
+      "source_ref": "v4.27.2",
+      "case": "spaces",
+      "message_str": "担当 @昵称 有空格(1001) ",
+      "native_args": "@昵称",
+      "messages": [
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "昵称 有空格"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "v4.27.2",
+      "source_ref": "v4.27.2",
+      "case": "wake",
+      "message_str": "担当 @昵称 (担当) ✭(1001) ",
+      "native_args": "@昵称",
+      "messages": [
+        {
+          "type": "at",
+          "qq": "9999",
+          "name": "机器人"
+        },
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "昵称 (担当) ✭"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "master",
+      "source_ref": "e99432c8766e23b6090b38b0064d843271513855",
+      "case": "normal",
+      "message_str": "担当 @群友(1001) ",
+      "native_args": "@群友(1001)",
+      "messages": [
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "群友"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "master",
+      "source_ref": "e99432c8766e23b6090b38b0064d843271513855",
+      "case": "spaces",
+      "message_str": "担当 @昵称 有空格(1001) ",
+      "native_args": "@昵称",
+      "messages": [
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "昵称 有空格"
+        }
+      ],
+      "expected_target": "1001"
+    },
+    {
+      "version": "master",
+      "source_ref": "e99432c8766e23b6090b38b0064d843271513855",
+      "case": "wake",
+      "message_str": "担当 @昵称 (担当) ✭(1001) ",
+      "native_args": "@昵称",
+      "messages": [
+        {
+          "type": "at",
+          "qq": "9999",
+          "name": "机器人"
+        },
+        {
+          "type": "plain",
+          "text": "担当"
+        },
+        {
+          "type": "at",
+          "qq": "1001",
+          "name": "昵称 (担当) ✭"
+        }
+      ],
+      "expected_target": "1001"
+    }
+  ]
+}
