@@ -43,6 +43,31 @@ class EditorTests(unittest.IsolatedAsyncioTestCase):
         image.save(data, format="PNG")
         return data.getvalue()
 
+    async def test_original_names_and_missing_images_follow_local_files(self):
+        for name, expected in (("呆笔太郎", "デビ太郎"), ("卓帕卡布拉", "チュパカブラ"), ("武内P", "武内P")):
+            self.assertEqual((await self.editor.detail(name))["display_name"], expected)
+            self.assertEqual(self.plugin._card_item(name)["name"], expected)
+        name = "呆笔太郎"
+        with patch.object(self.editor, "current_image", return_value=self.root / "missing.png"):
+            self.assertFalse(self.editor.has_image(name, "tantou"))
+            token = self.editor.import_image(self.picture())["source"]
+            await self.save(name, images={"tantou": {"source": token, "x": .5, "y": .5, "zoom": 1}})
+            row = next(row for row in (await self.editor.list_records())["characters"] if row["name"] == name)
+            self.assertEqual(row["display_name"], "デビ太郎")
+            self.assertTrue(row["has_tantou_image"])
+            self.assertFalse(row["has_birthday_image"])
+            self.editor.source_path(token).unlink()
+            self.assertFalse(self.editor.has_image(name, "tantou"))
+
+    async def test_supplemented_profiles_match_aliases_without_inventing_birthdays(self):
+        records = await self.plugin._tantou_records()
+        index = self.plugin._tantou_alias_index(records)
+        for alias, name in (("WWGP", "内匠P"), ("日高 舞", "日高舞"), ("エミリー スチュアート", "艾米莉·斯图亚特")):
+            self.assertEqual(index[self.plugin._exact_name_key(alias)], name)
+        self.assertEqual(self.plugin._tantou_display_name("艾米莉·斯图亚特"), "エミリー スチュアート")
+        for name in ("内匠P", "日高舞"):
+            self.assertFalse(self.plugin._lookup_character_profile(name).get("birthday"))
+
     async def test_new_character_survives_restart_and_can_be_registered_by_alias(self):
         await self.save("测试角色", name_jp="テスト キャラ", aliases=["测试推"], brand="SIDEM", birthday="02-29")
         restarted = make_plugin()

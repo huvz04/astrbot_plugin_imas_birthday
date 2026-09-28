@@ -1024,7 +1024,7 @@ class ImasBirthdayPlugin(Star):
         display_name = profile.get("display_name")
         if display_name:
             return display_name
-        official = self._idol_catalogue.get(name, {}).get("idol_name")
+        official = profile.get("official_name_jp") or self._idol_catalogue.get(name, {}).get("idol_name")
         if official:
             return official
         japanese = self._lookup_character_profile(name).get("name_jp") or ""
@@ -3236,7 +3236,7 @@ class ImasBirthdayPlugin(Star):
         if custom:
             selected_path, asset_kind = custom, "image"
         return {
-            "name": character,
+            "name": self._tantou_display_name(character) if self._tantou_display_name(character) != "―" else character,
             "brand": brand,
             "label": BRAND_LABELS.get(brand, BRAND_LABELS["OTHER"]),
             "color": self._character_color(character, brand),

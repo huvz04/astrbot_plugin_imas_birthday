@@ -191,6 +191,16 @@ class AssetEditor:
             return self.plugin._character_image_path(name) or self.plugin._character_portrait_path(name)
         return self.plugin._tantou_icon_path(name) or self.plugin._character_image_path(name) or self.plugin._character_portrait_path(name)
 
+    def has_image(self, name, kind):
+        settings = self.records.get(name, {}).get("images", {}).get(kind)
+        try:
+            if settings:
+                return self.source_path(settings["source"]).is_file()
+            path = self.current_image(name, kind)
+            return bool(path and path.is_file())
+        except (OSError, ValueError, KeyError):
+            return False
+
     async def list_records(self):
         names = await self.plugin._tantou_records()
         cache = await self.plugin.get_kv_data("birthday_cache", {})
@@ -201,8 +211,10 @@ class AssetEditor:
             profile = self.plugin._lookup_character_profile(name)
             birthday = record.get("birthday", dates.get(name) or profile.get("birthday", ""))
             rows.append({"name": name, "name_jp": self.plugin._tantou_display_name(name),
-                         "display_name": self.plugin._tantou_display_name(name) if profile.get("display_name") else name,
+                         "display_name": self.plugin._tantou_display_name(name),
                          "brand": self.plugin._character_brand(name), "birthday": birthday,
+                         "has_birthday_image": self.has_image(name, "birthday"),
+                         "has_tantou_image": self.has_image(name, "tantou"),
                          "custom": bool(record), "aliases": self.plugin._tantou_aliases(name)})
         return {"characters": rows, "brands": self.brands, "storage": str(self.root),
                 "birthday_layouts": {str(n): self.plugin._card_layout(n) for n in (1, 2, 3)},
@@ -231,7 +243,7 @@ class AssetEditor:
                             "y": settings.get("y", .5) if settings else .5,
                             "zoom": settings.get("zoom", 1) if settings else 1, "custom": bool(settings)}
         return {"name": name, "record": record, "images": images,
-                "display_name": self.plugin._tantou_display_name(name) if self.base_profiles.get(name, {}).get("display_name") else name,
+                "display_name": self.plugin._tantou_display_name(name),
                 "name_jp": self.plugin._tantou_display_name(name), "brand": self.plugin._character_brand(name),
                 "base_birthday": dates.get(name) or self.base_profiles.get(name, {}).get("birthday", ""),
                 "revision": record.get("revision", "")}

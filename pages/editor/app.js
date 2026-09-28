@@ -16,7 +16,9 @@ function maySwitch() {
 }
 function renderList() {
   const query = $('search').value.trim().toLocaleLowerCase().replace(/\s/g, '');
-  const rows = catalogue.filter(row => [row.name, row.name_jp, ...(row.aliases || [])].some(s => String(s).toLocaleLowerCase().replace(/\s/g, '').includes(query)));
+  const missing = $('missing-images').getAttribute('aria-pressed') === 'true';
+  const scope = $('missing-kind').value;
+  const rows = catalogue.filter(row => (!missing || (scope === 'tantou' ? !row.has_tantou_image : scope === 'birthday' ? !row.has_birthday_image : scope === 'both' ? !row.has_tantou_image && !row.has_birthday_image : !row.has_tantou_image || !row.has_birthday_image)) && [row.name, row.name_jp, ...(row.aliases || [])].some(s => String(s).toLocaleLowerCase().replace(/\s/g, '').includes(query)));
   $('count').textContent = `${rows.length} 位角色`;
   $('characters').replaceChildren();
   for (const row of rows) {
@@ -139,6 +141,12 @@ async function makeImageEditor(kind, initial) {
   draw();
 }
 $('search').oninput=renderList;
+$('missing-images').onclick=()=>{
+  const active=$('missing-images').getAttribute('aria-pressed')!=='true';
+  $('missing-images').setAttribute('aria-pressed',String(active));
+  $('missing-kind').hidden=!active;renderList();
+};
+$('missing-kind').onchange=renderList;
 $('form').addEventListener('input',event=>{if(event.target.type!=='file' && !event.target.dataset.previewOnly)changed();});
 $('birthday_mode').onchange=()=>{$('birthday').disabled=$('birthday_mode').value!=='custom';changed();};
 $('new').onclick=()=>{if(maySwitch())run(()=>fill({isNew:true,name:'',record:{},images:{}}));};

@@ -291,4 +291,30 @@ CHARACTER_SUPPLEMENTAL_PROFILES = {
         "source_url": "https://idolmaster-official.jp/news/01_2154.html",
         "source_title": "シャニマス公式：283フェス2021 初出時デビ太郎映像を公開",
     },
+    "日高舞": {
+        "name_cn": "日高舞", "name_jp": "日高 舞", "brand": "876_pro",
+        "aliases": ["日高 舞", "ひだか まい", "爱妈妈", "愛ママ"],
+        "summary": "Dearly Stars 中登场的日高爱的母亲。生日未核实，暂不登记。",
+        "source_url": "https://www.animatetimes.com/news/details.php?id=1251734073",
+        "source_title": "C3×HOBBY：开发者ブンケイP介绍日高舞",
+    },
+    "寺本来可": {
+        "name_jp": "ユキカ", "aliases": ["寺本來可", "ユキカ", "YUKIKA"],
+        "source_url": "https://www.famitsu.com/news/201703/31130108.html",
+        "source_title": "アイドルマスター.KR：ユキカ本人采访",
+    },
+    "艾米莉·斯图亚特": {
+        "name_jp": "エミリー スチュアート", "official_name_jp": "エミリー スチュアート",
+        "aliases": ["エミリー", "Emily Stewart", "艾蜜莉·司徒亚特"],
+        "source_url": "https://idollist.idolmaster-official.jp/",
+        "source_title": "官方偶像名鉴：完整日文名字",
+    },
+    "内匠P": {
+        "name_cn": "内匠P", "name_jp": "プロデューサー", "display_name": "内匠P",
+        "brand": "cinderellagirls", "cv": "内匠靖明",
+        "aliases": ["内匠p", "内匠靖明", "WWG P", "WWGP", "WWG制作人", "WWGプロデューサー"],
+        "summary": "WILD WIND GIRL 的制作人。生日未公布。",
+        "source_url": "https://prtimes.jp/a/?c=14827&f=d14827-1008-pdf-0.pdf&r=1008",
+        "source_title": "株式会社響：WWGプロデューサー役・内匠靖明出演公告",
+    },
 }
