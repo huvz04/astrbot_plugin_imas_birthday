@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>角色图片与资料</title><link rel="stylesheet" href="./style.css"></head>
+<body>
+<header><div><span class="eyebrow">IDOLM@STER · 素材工作室</span><h1>角色图片与资料</h1><p>选一位角色，整理生日，调好属于他的画面。</p></div><button id="new" class="primary">＋ 新增角色</button></header>
+<div id="status" role="status" aria-live="polite">正在连接 AstrBot…</div>
+<div class="workspace">
+<aside><label for="search">角色目录</label><input id="search" type="search" placeholder="搜索中文、日文或别名"><div id="count" class="muted"></div><nav id="characters" aria-label="角色列表"></nav></aside>
+<main><div id="empty" class="empty">从左侧选择角色，或新增一位角色。</div>
+<form id="form" hidden><fieldset id="fields">
+<div class="section-head"><div><span class="eyebrow">PROFILE</span><h2 id="title"></h2></div><span id="origin" class="badge"></span></div>
+<section class="profile-grid">
+<label>登记名字<input id="name" maxlength="80" required placeholder="用于搜索和加推，例如 美作武史"><small>已有角色的登记名字保持固定。</small></label>
+<label>日文显示名<input id="name_jp" maxlength="80" placeholder="留空沿用原资料"><small id="base_name"></small></label>
+<label>所属企划<select id="brand"></select></label>
+<label>补充别名<input id="aliases" placeholder="每个别名用逗号分隔"><small>例如 武内p, 灰姑娘P</small></label>
+<label>生日来源<select id="birthday_mode"><option value="inherit">沿用基础数据</option><option value="custom">手动设置</option><option value="none">没有生日／不参与生日提醒</option></select></label>
+<label>生日<input id="birthday" placeholder="MM-DD，例如 04-16" maxlength="5"><small id="base_birthday"></small></label>
+<label class="wide">资料来源或备注<input id="source_note" maxlength="500" placeholder="可记录官网链接或修改原因"></label>
+</section>
+<div class="section-head image-heading"><div><span class="eyebrow">ARTWORK</span><h2>两种用途，分别调整</h2></div><p class="muted">拖动画面调整位置，也可以使用下方滑块。</p></div>
+<div class="image-grid" id="image_editors"></div>
+<div class="actions"><span id="dirty" class="muted">修改后点击保存生效</span><button id="discard" type="button">撤销未保存修改</button><button type="submit" class="primary">保存修改</button></div>
+</fieldset></form>
+<section id="preview_area" hidden><div class="section-head"><h2>实际效果</h2><button id="preview" type="button">预览已保存的名片</button></div><p class="muted">裁切框实时预览；这里使用插件实际渲染器生成已保存的生日卡和担当名片。</p><div id="previews"></div></section>
+</main></div>
+<footer><details><summary>数据来源与保存位置</summary><p id="sources"></p><p>手动资料优先于自动同步，图片以副本保存。原来的本地图不会被覆盖。生日设为“沿用基础数据”、图片选择“恢复原图”后保存，即可恢复原有来源。</p><p id="storage"></p></details></footer>
+<script type="module" src="./app.js"></script>
+</body></html>

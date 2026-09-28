@@ -571,6 +571,14 @@ class ImasBirthdayPlugin(Star):
         self._delivery_state_loaded = False
         self._delivery_state_exists = False
         self._scheduler_started_at = ""
+        editor_module_name = f"{__package__}.asset_editor" if __package__ else "imasbd_asset_editor"
+        editor_spec = importlib.util.spec_from_file_location(editor_module_name, self.plugin_dir / "asset_editor.py")
+        editor_module = importlib.util.module_from_spec(editor_spec)
+        editor_spec.loader.exec_module(editor_module)
+        editor_root = (self.plugin_dir.parent.parent if self.plugin_dir.parent.name == "plugins" else self.plugin_dir.parent) / "imas_birthday_assets" / "editor"
+        self.editor = editor_module.AssetEditor(self, editor_root, BRAND_LABELS, CHARACTER_PROFILES)
+        if not self.editor.register(context):
+            logger.info("当前 AstrBot 不支持插件页面；角色编辑页面需要 AstrBot 4.27.3 或更新版本。")
         with contextlib.suppress(RuntimeError):
             asyncio.get_running_loop()
             self._ensure_scheduler("init")
@@ -950,6 +958,9 @@ class ImasBirthdayPlugin(Star):
     def _tantou_display_name(self, name: str, members: dict[str, dict[str, Any]] | None = None) -> str:
         if self._tantou_member_id(name):
             return (members or {}).get(name, {}).get("name") or "群友"
+        custom_name = self._editor_record(name).get("name_jp")
+        if custom_name:
+            return custom_name
         official = self._idol_catalogue.get(name, {}).get("idol_name")
         if official:
             return official
@@ -980,6 +991,8 @@ class ImasBirthdayPlugin(Star):
         await self._load_idol_catalogue()
         # Use the installed character catalogue, including before the first network sync.
         names = set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS) | set(CHARACTER_PORTRAIT_ASSETS)
+        if getattr(self, "editor", None):
+            names.update(self.editor.records)
         cache = await self.get_kv_data("birthday_cache", {})
         if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
             names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
@@ -1660,13 +1673,33 @@ class ImasBirthdayPlugin(Star):
             self._base_character_name(character),
             CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
         ]
+        custom = self._editor_record(character)
+        overrides = {key: custom[key] for key in ("name_jp", "brand", "birthday") if key in custom}
+        if "birthday" in custom:
+            overrides["birthday_text"] = custom["birthday"]
+            overrides["zodiac"] = ""
         for candidate in dict.fromkeys(candidates):
             profile = CHARACTER_PROFILES.get(candidate)
             if isinstance(profile, dict):
+                profile = {**profile, **overrides, "aliases": list(dict.fromkeys([*profile.get("aliases", []), *custom.get("aliases", [])]))}
                 if profile.get("name_jp"):
                     return {**profile, "name_jp": clean_japanese_name(profile["name_jp"])}
                 return profile
-        return {}
+        return {**overrides, "aliases": custom.get("aliases", [])} if custom else {}
+
+    def _editor_record(self, character: str) -> dict[str, Any]:
+        editor = getattr(self, "editor", None)
+        if not editor:
+            return {}
+        name = CHARACTER_NAME_ALIASES.get(character, self._base_character_name(character))
+        return editor.records.get(name, {})
+
+    def _editor_image(self, character: str, kind: str, size=None) -> Path | None:
+        editor = getattr(self, "editor", None)
+        if not editor:
+            return None
+        name = CHARACTER_NAME_ALIASES.get(character, self._base_character_name(character))
+        return editor.render_image(name, kind, size)
 
     async def _build_find_character_result(
         self,
@@ -2409,7 +2442,8 @@ class ImasBirthdayPlugin(Star):
         related_people = self._split_people(entry.get("related_people", []))
         events = entry.get("events", [])
 
-        items = [self._card_item(name) for name in characters]
+        layout = self._card_layout(len(characters))
+        items = [self._card_item(name, image_size=(layout["item_width"], layout["portrait_height"])) for name in characters]
         if not items and not self._cfg_bool("render_card_without_character_image", True):
             return ""
 
@@ -2598,8 +2632,9 @@ class ImasBirthdayPlugin(Star):
     def _draw_tantou_avatar(self, canvas: Any, name: str, x: int, y: int, size: int, *, avatar_path: Path | None = None) -> None:
         from PIL import Image, ImageDraw, ImageOps
 
-        official = self._tantou_icon_path(name)
-        asset = avatar_path if self._tantou_member_id(name) else official or self._character_image_path(name) or self._character_portrait_path(name)
+        custom = self._editor_image(name, "tantou")
+        official = None if custom else self._tantou_icon_path(name)
+        asset = avatar_path if self._tantou_member_id(name) else custom or official or self._character_image_path(name) or self._character_portrait_path(name)
         if asset:
             try:
                 with Image.open(asset) as source:
@@ -2900,7 +2935,7 @@ class ImasBirthdayPlugin(Star):
             return "pillow"
         return mode
 
-    def _card_item(self, character: str) -> dict[str, str]:
+    def _card_item(self, character: str, *, image_size=None) -> dict[str, str]:
         brand = self._character_brand(character)
         portrait_path = self._character_portrait_path(character)
         image_path = self._character_image_path(character)
@@ -2913,6 +2948,9 @@ class ImasBirthdayPlugin(Star):
         elif asset_mode in {"auto", "image"} and image_path:
             selected_path = image_path
             asset_kind = "image"
+        custom = self._editor_image(character, "birthday", image_size)
+        if custom:
+            selected_path, asset_kind = custom, "image"
         return {
             "name": character,
             "brand": brand,
@@ -2994,6 +3032,9 @@ class ImasBirthdayPlugin(Star):
             return ""
 
     def _character_image_path(self, character: str) -> Path | None:
+        custom = self._editor_image(character, "birthday")
+        if custom:
+            return custom
         filename = self._character_asset_filename(character)
         if not filename:
             return None
@@ -3031,6 +3072,9 @@ class ImasBirthdayPlugin(Star):
         return path if path.exists() else None
 
     def _character_brand(self, character: str) -> str:
+        custom_brand = self._editor_record(character).get("brand")
+        if custom_brand:
+            return custom_brand
         character = CHARACTER_NAME_ALIASES.get(character, character)
         base_character = self._base_character_name(character)
         if character in CHARACTER_BRAND_OVERRIDES:
@@ -3443,6 +3487,19 @@ body {{
 </div>"""
 
     async def _get_birthdays(self) -> dict[str, dict[str, list[str]]]:
+        editor = getattr(self, "editor", None)
+        try:
+            data = await self._get_source_birthdays()
+        except Exception:
+            if not editor or not any(row.get("birthday") for row in editor.records.values()):
+                raise
+            logger.warning("基础生日源暂不可用，本次仅使用手动登记的生日。")
+            data = {}
+        if editor:
+            data = editor.apply_birthdays(data)
+        return self._clean_birthdays_data(data)
+
+    async def _get_source_birthdays(self) -> dict[str, dict[str, list[str]]]:
         cache = await self.get_kv_data("birthday_cache", None)
         if self._is_cache_fresh(cache):
             data = self._clean_birthdays_data(cache["data"])
