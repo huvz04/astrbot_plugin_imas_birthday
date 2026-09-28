@@ -93,7 +93,7 @@ class AssetEditor:
                     elif action == "save":
                         result = await self.save(await request.json(default={}))
                     else:
-                        result = await self.preview(request.query.get("name", ""))
+                        result = await self.preview(request.query.get("name", ""), request.query.get("columns", "1"))
                     return json_response(result)
                 except (ValueError, TypeError) as exc:
                     return error_response(str(exc), status_code=400)
@@ -144,7 +144,8 @@ class AssetEditor:
         settings = self.records.get(name, {}).get("images", {}).get(kind)
         if not settings:
             return None
-        size = size or ((300, 360) if kind == "birthday" else (600, 600))
+        layout = self.plugin._card_layout(1)
+        size = size or ((layout["item_width"], layout["portrait_height"]) if kind == "birthday" else (600, 540))
         key = hashlib.sha256(json.dumps([settings, size], sort_keys=True).encode()).hexdigest()
         path = self.root / "renders" / (key + ".png")
         if not path.is_file():
@@ -183,6 +184,7 @@ class AssetEditor:
                          "brand": self.plugin._character_brand(name), "birthday": birthday,
                          "custom": bool(record), "aliases": self.plugin._tantou_aliases(name)})
         return {"characters": rows, "brands": self.brands, "storage": str(self.root),
+                "birthday_layouts": {str(n): self.plugin._card_layout(n) for n in (1, 2, 3)},
                 "birthday_source": self.plugin.config.get("source_url") or "萌娘百科 · 偶像大师系列/相关人士生日信息",
                 "idol_source": "偶像大师官网公共偶像目录"}
 
@@ -304,8 +306,11 @@ class AssetEditor:
                 entry.setdefault("characters", []).append(name)
         return result
 
-    async def preview(self, name):
+    async def preview(self, name, columns=1):
         name = self.validate_name(name)
+        if str(columns) not in {"1", "2", "3"}:
+            raise ValueError("预览列数需为 1、2 或 3。")
+        columns = int(columns)
         if name not in await self.plugin._tantou_records():
             raise ValueError("请先保存角色。")
         def render():
@@ -317,7 +322,9 @@ class AssetEditor:
                 month, day = 1, 1
             paths = []
             try:
-                paths.append(Path(plugin._render_card_with_pillow(month, day, [plugin._card_item(name)], [], [], [], plugin._card_layout(1))))
+                layout = plugin._card_layout(columns)
+                item = plugin._card_item(name, image_size=(layout["item_width"], layout["portrait_height"]))
+                paths.append(Path(plugin._render_card_with_pillow(month, day, [item] * columns, [], [], [], layout)))
                 paths.append(Path(plugin._render_tantou_cards("预览", [name])[0]))
                 return {"birthday": plugin._image_data_uri(paths[0]), "tantou": plugin._image_data_uri(paths[1]),
                         "date_note": "生日未设置时，预览日期使用 01-01，不会登记为生日。"}

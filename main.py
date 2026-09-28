@@ -2447,7 +2447,6 @@ class ImasBirthdayPlugin(Star):
         if not items and not self._cfg_bool("render_card_without_character_image", True):
             return ""
 
-        layout = self._card_layout(len(items))
         card_related_people = related_people if self._cfg_bool("include_related_people", False) else []
         card_events = events if self._cfg_bool("include_events", False) else []
         render_mode = self._card_render_mode()
@@ -2630,8 +2629,9 @@ class ImasBirthdayPlugin(Star):
         return combined
 
     def _draw_tantou_avatar(self, canvas: Any, name: str, x: int, y: int, size: int, *, avatar_path: Path | None = None) -> None:
-        from PIL import Image, ImageDraw, ImageOps
+        from PIL import Image, ImageOps
 
+        avatar_height = round(size * 153 / 170)
         custom = self._editor_image(name, "tantou")
         official = None if custom else self._tantou_icon_path(name)
         asset = avatar_path if self._tantou_member_id(name) else custom or official or self._character_image_path(name) or self._character_portrait_path(name)
@@ -2644,18 +2644,18 @@ class ImasBirthdayPlugin(Star):
                     avatar = ImageOps.contain(avatar, (size, size), Image.Resampling.LANCZOS)
                     canvas.paste(avatar, (x + (size - avatar.width) // 2, y + (size - avatar.height) // 2), avatar)
                     return
-                avatar = ImageOps.fit(avatar, (size, size), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))
+                avatar = ImageOps.fit(avatar, (size, avatar_height), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))
             except Exception:
                 logger.exception(f"读取担当头像失败：{name}")
                 avatar = None
         else:
             avatar = None
-        panel = Image.new("RGBA", (size, size), "#f3f5f8")
+        panel = Image.new("RGBA", (size, avatar_height), "#f3f5f8")
         if avatar:
             panel.alpha_composite(avatar)
-        mask = Image.new("L", (size, size))
-        ImageDraw.Draw(mask).polygon([(size * .25, 0), (size * .75, 0), (size - 1, size * .5), (size * .75, size - 1), (size * .25, size - 1), (0, size * .5)], fill=255)
-        canvas.paste(panel, (x, y), mask)
+        with Image.open(self.plugin_dir / "pages" / "editor" / "assets" / "tantou-mask.png") as source_mask:
+            mask = source_mask.getchannel("A").resize((size, avatar_height), Image.Resampling.LANCZOS)
+        canvas.paste(panel, (x, y + (size - avatar_height) // 2), mask)
 
     def _render_card_with_pillow(
         self,

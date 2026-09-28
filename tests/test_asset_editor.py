@@ -1,7 +1,7 @@
 """Exercise persisted edits through the bot's normal lookup and rendering paths."""
 import copy
 import importlib.util
-import json
+import base64
 import sys
 import tempfile
 import types
@@ -115,6 +115,26 @@ class EditorTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.plugin._character_image_path("美作武史"), original)
             self.assertEqual(original.read_bytes(), self.picture())
 
+    async def test_custom_member_and_blank_avatars_share_official_rounded_outline(self):
+        opaque = self.root / "opaque.png"
+        Image.new("RGB", (400, 400), "red").save(opaque)
+        token = self.editor.import_image(opaque.read_bytes())["source"]
+        await self.save(images={"tantou": {"source": token, "x": .5, "y": .5, "zoom": 1}})
+        with Image.open(self.editor.render_image("月村手毬", "tantou")) as custom:
+            self.assertEqual(custom.size, (600, 540))
+        outlines = []
+        for name, path in (("月村手毬", None), ("qq:2002", opaque), ("未收录占位", None)):
+            canvas = Image.new("RGBA", (170, 170))
+            self.plugin._draw_tantou_avatar(canvas, name, 0, 0, 170, avatar_path=path)
+            alpha = canvas.getchannel("A")
+            self.assertEqual(alpha.getbbox(), (0, 8, 170, 161))
+            self.assertEqual(alpha.getpixel((43, 8)), 0)  # Rounded top corner, unlike the old polygon.
+            self.assertGreater(alpha.getpixel((85, 8)), 200)
+            self.assertTrue(any(0 < value < 255 for value in alpha.tobytes()))
+            outlines.append(alpha.tobytes())
+        self.assertEqual(outlines[0], outlines[1])
+        self.assertEqual(outlines[1], outlines[2])
+
     async def test_invalid_input_never_changes_saved_data(self):
         await self.save(birthday="06-03")
         original = self.editor.file.read_bytes()
@@ -155,6 +175,24 @@ class EditorTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(result["birthday"].startswith("data:image/png;base64,"))
         self.assertTrue(result["tantou"].startswith("data:image/png;base64,"))
         self.assertEqual(self.plugin.sent, [])
+
+    async def test_all_birthday_preview_layouts_match_saved_crop(self):
+        token = self.editor.import_image(self.picture())["source"]
+        await self.save(images={"birthday": {"source": token, "x": .8, "y": .2, "zoom": 1.4}})
+        layouts = (await self.editor.list_records())["birthday_layouts"]
+        for columns in (1, 2, 3):
+            layout = layouts[str(columns)]
+            width, height = layout["item_width"], layout["portrait_height"]
+            result = await self.editor.preview("月村手毬", str(columns))
+            with Image.open(BytesIO(base64.b64decode(result["birthday"].split(",", 1)[1]))) as card:
+                left = (card.width - (width * columns + layout["grid_gap"] * (columns - 1))) // 2
+                top = layout["card_padding"] + 108
+                with Image.open(self.editor.render_image("月村手毬", "birthday", (width, height))) as crop:
+                    # Ignore the card's rounded border, compare its actual image content.
+                    self.assertEqual(card.convert("RGB").crop((left+20, top+20, left+width-20, top+height-20)).tobytes(),
+                                     crop.convert("RGB").crop((20, 20, width-20, height-20)).tobytes())
+        with self.assertRaises(ValueError):
+            await self.editor.preview("月村手毬", "999")
 
     async def test_web_handlers_use_plugin_prefix_and_reject_bad_payload(self):
         routes = []

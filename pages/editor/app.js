@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const bridge = window.AstrBotPluginPage;
 let catalogue = [], brands = {}, current = null, images = {}, dirty = false, busy = false;
+let birthdayLayouts = {}, birthdayColumns = '1';
 function status(text, error = false) { $('status').textContent = text; $('status').classList.toggle('error', error); }
 function changed() { dirty = true; $('dirty').textContent = '有未保存的修改'; }
 async function run(action) {
@@ -29,6 +30,7 @@ function renderList() {
 }
 async function refreshList() {
   const result = await bridge.apiGet('editor/list'); catalogue = result.characters; brands = result.brands;
+  birthdayLayouts = result.birthday_layouts;
   $('storage').textContent = `手动资料和图片保存于：${result.storage}`;
   $('sources').textContent = `生日基础数据：${result.birthday_source}；角色头像基础数据：${result.idol_source}。`;
   renderList();
@@ -74,20 +76,40 @@ async function makeImageEditor(kind, initial) {
   card.innerHTML = `<h3>${kind === 'birthday' ? '生日卡图片' : '担当头像'}</h3><div class="stage"><canvas aria-label="拖动调整图片位置"></canvas></div><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" aria-label="上传${kind === 'birthday' ? '生日卡图片' : '担当头像'}"><small>支持 PNG / JPEG / WebP / GIF，最大 10 MB。GIF 使用第一帧。</small><label class="row">缩放<input type="range" data-key="zoom" min="1" max="4" step="0.01"></label><label class="row">水平位置<input type="range" data-key="x" min="0" max="1" step="0.001"></label><label class="row">垂直位置<input type="range" data-key="y" min="0" max="1" step="0.001"></label><div class="reset"><button type="button" data-action="center">居中 / 原始缩放</button><button type="button" data-action="restore">恢复原有来源</button></div><small class="image-note"></small>`;
   $('image_editors').append(card);
   const canvas = card.querySelector('canvas'), ctx = canvas.getContext('2d');
-  canvas.width = 500; canvas.height = kind === 'birthday' ? 600 : 500;
+  let layoutSelect;
+  const dimensions = document.createElement('small');
+  card.querySelector('.stage').after(dimensions);
+  if (kind === 'birthday') {
+    const label = document.createElement('label'); label.textContent = '生日卡布局';
+    layoutSelect = document.createElement('select'); layoutSelect.dataset.previewOnly = 'true';
+    for (const [columns, layout] of Object.entries(birthdayLayouts)) {
+      layoutSelect.add(new Option(`${columns} 列 · ${layout.item_width} × ${layout.portrait_height}`, columns));
+    }
+    layoutSelect.value = birthdayColumns;
+    label.append(layoutSelect); card.querySelector('.stage').before(label);
+    layoutSelect.onchange = () => {birthdayColumns = layoutSelect.value; $('previews').replaceChildren(); draw();};
+  }
   const note = card.querySelector('.image-note');
   function draw() {
+    const layout = birthdayLayouts[birthdayColumns];
+    canvas.width = kind === 'birthday' ? layout.item_width : 500;
+    canvas.height = kind === 'birthday' ? layout.portrait_height : 450;
+    // Set both CSS dimensions together so narrow screens cannot distort the crop.
+    const displayWidth = Math.min(canvas.width, 265 * canvas.width / canvas.height);
+    canvas.style.width = `${displayWidth}px`; canvas.style.height = 'auto';
+    dimensions.textContent = kind === 'birthday' ? '按实际图片框比例缩小显示；多人布局预览会重复当前角色。' : '与实际担当头像共用官网圆角轮廓。';
     const w = canvas.width, h = canvas.height;
     ctx.clearRect(0, 0, w, h); ctx.save();
-    if (kind === 'tantou') {
-      ctx.beginPath(); [[.25,0],[.75,0],[1,.5],[.75,1],[.25,1],[0,.5]].forEach(([x,y],i) => i ? ctx.lineTo(x*w,y*h) : ctx.moveTo(x*w,y*h)); ctx.closePath(); ctx.clip();
-    }
     ctx.fillStyle = kind === 'birthday' ? '#ffffff' : '#f3f5f8'; ctx.fillRect(0,0,w,h);
     if (state.image) {
       const iw=state.image.naturalWidth, ih=state.image.naturalHeight;
       const sw=Math.min(iw, ih*w/h)/state.zoom, sh=sw*h/w;
       ctx.drawImage(state.image,(iw-sw)*state.x,(ih-sh)*state.y,sw,sh,0,0,w,h);
     } else { ctx.fillStyle='#788599'; ctx.font='22px system-ui'; ctx.textAlign='center'; ctx.fillText('上传一张图片',w/2,h/2); }
+    if (kind === 'tantou') {
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage($('tantou-mask'), 0, 0, w, h);
+    }
     ctx.restore();
     for (const slider of card.querySelectorAll('[data-key]')) slider.value=state[slider.dataset.key];
     note.textContent = state.action === 'restore' ? '保存后恢复原有图片来源。' : state.action === 'change' ? '裁切已调整，保存后生效。' : initial.custom ? '已使用手动图片。' : '当前为原有来源；未调整时保留原样。';
@@ -117,7 +139,7 @@ async function makeImageEditor(kind, initial) {
   draw();
 }
 $('search').oninput=renderList;
-$('form').addEventListener('input',event=>{if(event.target.type!=='file')changed();});
+$('form').addEventListener('input',event=>{if(event.target.type!=='file' && !event.target.dataset.previewOnly)changed();});
 $('birthday_mode').onchange=()=>{$('birthday').disabled=$('birthday_mode').value!=='custom';changed();};
 $('new').onclick=()=>{if(maySwitch())run(()=>fill({isNew:true,name:'',record:{},images:{}}));};
 $('discard').onclick=()=>run(async()=>{if(current.isNew)await fill({isNew:true,name:'',record:{},images:{}});else await select(current.name);});
@@ -137,7 +159,7 @@ $('form').onsubmit=event=>{
 };
 $('preview').onclick=()=>run(async()=>{
   if(dirty)throw Error('请先保存修改，再生成实际名片预览。');
-  status('正在生成名片预览…');const result=await bridge.apiGet('editor/preview',{name:current.name});
+  status('正在生成名片预览…');const result=await bridge.apiGet('editor/preview',{name:current.name,columns:birthdayColumns});
   $('previews').replaceChildren();
   for(const [kind,label] of [['birthday','生日卡'],['tantou','担当名片']]) {
     const figure=document.createElement('div'), title=document.createElement('p'), image=document.createElement('img');
@@ -147,4 +169,4 @@ $('preview').onclick=()=>run(async()=>{
 });
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 if(!bridge)status('请从 AstrBot 插件详情里的“角色图片与资料”页面进入。',true);
-else run(async()=>{await bridge.ready();await refreshList();status('选择角色开始编辑，或点击右上角新增角色。');});
+else run(async()=>{await bridge.ready();await $('tantou-mask').decode();await refreshList();status('选择角色开始编辑，或点击右上角新增角色。');});
