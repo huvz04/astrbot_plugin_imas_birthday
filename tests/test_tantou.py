@@ -101,6 +101,9 @@ class Event:
     def get_self_id(self):
         return "9999"
 
+    def get_platform_name(self):
+        return "aiocqhttp"
+
     def get_group_id(self):
         return self.group
 
@@ -205,10 +208,10 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
     async def test_corrected_batch_keeps_original_positions_until_every_name_is_valid(self):
         await self.plugin._change_tantou(self.event, "加推", "花海咲季")
         result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 一ノ瀬 志希 qzxv987 如月千早")
-        self.assertIn("尚未保存", result)
+        self.assertIn("加推确认", result)
         self.assertEqual(await self.follows(), ["花海咲季"])
         result = await self.plugin._change_tantou(self.event, "加推确认", "1 another_typo")
-        self.assertIn("仍未匹配", result)
+        self.assertIn("仍没找到", result)
         self.assertEqual(await self.follows(), ["花海咲季"])
         result = await self.plugin._change_tantou(self.event, "加推确认", "月村 手毬 高木 順二朗")
         self.assertIn("添加成功", result)
@@ -281,11 +284,89 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(result["message"].startswith("改过的群昵称P\n"))
         self.assertEqual((await restored._tantou_group(self.event.unified_msg_origin))[self.event.user], ["月村手毬"])
 
-    async def test_unknown_saved_owner_never_uses_viewers_nickname(self):
+    async def test_qq_lookup_fetches_current_group_card_even_without_saved_name(self):
         self.plugin.storage[f"tantou_v1:{self.event.unified_msg_origin}"] = {"3000": ["月村手毬"]}
+        viewer = Event(owner="查看者名字")
+        lookup = AsyncMock(return_value={"user_id": 3000, "card": "当前群名片", "nickname": "QQ昵称"})
+        viewer.bot = types.SimpleNamespace(call_action=lookup)
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=["card.png"]) as render:
+            result = await self.plugin._tantou_overview(viewer, "3000")
+        self.assertTrue(result["message"].startswith("当前群名片P\n"))
+        self.assertEqual(render.call_args.args[0], "当前群名片")
+        lookup.assert_awaited_once_with("get_group_member_info", group_id=100, user_id=3000, no_cache=True, self_id="9999")
+        profile = self.plugin.storage[f"tantou_profiles_v1:{viewer.unified_msg_origin}"]["3000"]
+        self.assertEqual(profile["nickname"], "当前群名片")
+
+    async def test_self_and_other_queries_share_custom_name_then_current_nickname_priority(self):
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬")
+        await self.plugin._change_tantou(self.event, "担当改名", "自己的CN")
+        viewer = Event(user="1002", owner="查看者")
+        viewer.bot = types.SimpleNamespace(call_action=AsyncMock(return_value={"card": "新群昵称", "nickname": "QQ昵称"}))
         with patch.object(self.plugin, "_render_tantou_cards", return_value=["card.png"]):
-            result = await self.plugin._tantou_overview(Event(owner="查看者名字"), "3000")
-        self.assertTrue(result["message"].startswith("3000P\n"))
+            own = await self.plugin._tantou_overview(Event(owner="新群昵称"))
+            other = await self.plugin._tantou_overview(viewer, "1001")
+            self.assertEqual(own["message"], other["message"])
+            self.assertTrue(other["message"].startswith("自己的CNP\n"))
+            await self.plugin._change_tantou(self.event, "担当改名", "重置")
+            own = await self.plugin._tantou_overview(Event(owner="新群昵称"))
+            other = await self.plugin._tantou_overview(viewer, "1001")
+            self.assertEqual(own["message"], other["message"])
+            self.assertTrue(other["message"].startswith("新群昵称P\n"))
+
+    async def test_empty_group_card_uses_qq_nickname(self):
+        self.plugin.storage[f"tantou_v1:{self.event.unified_msg_origin}"] = {"3000": ["月村手毬"]}
+        viewer = Event()
+        viewer.bot = types.SimpleNamespace(call_action=AsyncMock(return_value={"card": "", "nickname": "QQ昵称"}))
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=[]):
+            result = await self.plugin._tantou_overview(viewer, "3000")
+        self.assertTrue(result["message"].startswith("QQ昵称P\n"))
+
+    async def test_failed_group_lookup_uses_mention_name_then_cached_name_without_numeric_heading(self):
+        self.plugin.storage[f"tantou_v1:{self.event.unified_msg_origin}"] = {"3000": ["月村手毬"]}
+        viewer = Event()
+        viewer.messages.append(At("3000", "@里的群昵称"))
+        viewer.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=RuntimeError("offline")))
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=[]):
+            mentioned = await self.plugin._tantou_overview(viewer)
+            viewer.messages = [Plain("担当 3000")]
+            cached = await self.plugin._tantou_overview(viewer, "3000")
+            self.assertEqual(mentioned["message"], cached["message"])
+            self.assertTrue(cached["message"].startswith("@里的群昵称P\n"))
+            self.plugin.storage.pop(f"tantou_profiles_v1:{viewer.unified_msg_origin}")
+            unknown = await self.plugin._tantou_overview(viewer, "3000")
+        self.assertTrue(unknown["message"].startswith("制作人P\n"))
+
+    async def test_other_platform_member_lookup_keeps_group_scope(self):
+        self.plugin.storage[f"tantou_v1:{self.event.unified_msg_origin}"] = {"3000": ["月村手毬"]}
+        viewer = Event()
+        viewer.get_platform_name = lambda: "satori"
+        viewer.get_group = AsyncMock(return_value=types.SimpleNamespace(members=[
+            types.SimpleNamespace(user_id="4000", nickname="其他人"),
+            types.SimpleNamespace(user_id="3000", nickname="这位群友"),
+        ]))
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=[]):
+            result = await self.plugin._tantou_overview(viewer, "3000")
+        self.assertTrue(result["message"].startswith("这位群友P\n"))
+        viewer.get_group.assert_awaited_once_with()
+
+    async def test_unknown_name_prompt_is_short_but_waits_for_whole_ordered_batch(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "月村手毬 qzxv987 花海佑芽")
+        self.assertEqual(result, "没找到「qzxv987」。\n加推确认 完整名字（0 跳过）")
+        self.assertEqual(await self.follows(), [])
+        await self.plugin._change_tantou(self.event, "加推确认", "齋藤孝司")
+        self.assertEqual(await self.follows(), ["月村手毬", "斋藤孝司", "花海佑芽"])
+
+    async def test_supporting_characters_register_without_birthdays_and_render_japanese_names(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "美诚常务 315社长 十王 邦夫 根緒 亜紗里 美城専務 斎藤孝司")
+        self.assertIn("添加成功", result)
+        self.assertEqual(await self.follows(), ["美城常务", "斋藤孝司", "十王邦夫", "根绪亚纱里"])
+        with patch.object(self.plugin, "_render_tantou_cards", return_value=[]):
+            overview = await self.plugin._tantou_overview(self.event)
+        self.assertIn("美城常務、齋藤孝司、十王 邦夫、根緒 亜紗里", overview["message"])
+        self.assertEqual([self.plugin._character_brand(name) for name in await self.follows()], ["CINDERELLA_GIRLS", "SIDEM", "GAKUEN_IDOLMASTER", "GAKUEN_IDOLMASTER"])
+        for name in await self.follows():
+            self.assertFalse(self.plugin._lookup_character_profile(name).get("birthday"))
+        self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, ["月村手毬"]), [])
 
     async def test_target_validation_and_new_commands_dispatch_once(self):
         for args, mentions in (("随便聊聊", []), ("", ["1001", "1002"]), ("", ["all"]), ("1002", ["1001"])):

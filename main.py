@@ -199,7 +199,10 @@ def load_generated_character_colors() -> dict[str, str]:
 
 
 def load_generated_character_profiles() -> dict[str, dict[str, Any]]:
-    return load_generated_mapping("character_profiles.py", "CHARACTER_PROFILES")
+    profiles = load_generated_mapping("character_profiles.py", "CHARACTER_PROFILES")
+    for name, profile in load_generated_mapping("character_supplemental_profiles.py", "CHARACTER_SUPPLEMENTAL_PROFILES").items():
+        profiles[name] = {**profiles.get(name, {}), **profile}
+    return profiles
 
 
 def load_generated_mapping(filename: str, variable_name: str) -> dict[str, Any]:
@@ -701,7 +704,35 @@ class ImasBirthdayPlugin(Star):
         if nickname and profile.get("nickname") != nickname:
             profiles[user_id] = profile = {**profile, "nickname": nickname}
             await self.put_kv_data(key, profiles)
-        return str(profile.get("name") or profile.get("nickname") or user_id)
+        return str(profile.get("name") or profile.get("nickname") or "制作人")
+
+    async def _tantou_member_nickname(self, event: AstrMessageEvent, user_id: str) -> str:
+        if user_id == str(event.get_sender_id()):
+            return str(event.get_sender_name() or "")
+        bot = getattr(event, "bot", None)
+        platform = event.get_platform_name() if hasattr(event, "get_platform_name") else ""
+        try:
+            if platform == "aiocqhttp" and bot is not None:
+                routing = {"self_id": event.get_self_id()} if event.get_self_id() else {}
+                member = await asyncio.wait_for(bot.call_action(
+                    "get_group_member_info", group_id=int(event.get_group_id()),
+                    user_id=int(user_id), no_cache=True, **routing,
+                ), timeout=5)
+                nickname = clean_text(member.get("card") or member.get("nickname") or "")
+                if nickname:
+                    return nickname
+            elif hasattr(event, "get_group"):
+                group = await asyncio.wait_for(event.get_group(), timeout=5)
+                for member in getattr(group, "members", None) or []:
+                    if str(member.user_id) == user_id and member.nickname:
+                        return str(member.nickname)
+        except Exception as exc:
+            logger.debug(f"担当群昵称查询失败，使用已有昵称：{type(exc).__name__}")
+        at_type = getattr(Comp, "At", ())
+        for part in event.get_messages():
+            if isinstance(part, at_type) and str(part.qq) == user_id and part.name:
+                return str(part.name)
+        return ""
 
     async def _tantou_group(self, umo: str) -> dict[str, list[str]]:
         await self._load_idol_catalogue()
@@ -771,8 +802,8 @@ class ImasBirthdayPlugin(Star):
 
     def _tantou_aliases(self, name: str) -> list[str]:
         record = self._idol_catalogue.get(name, {})
-        japanese = self._lookup_character_profile(name).get("name_jp", "")
-        return [name, japanese, record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", [])]
+        profile = self._lookup_character_profile(name)
+        return [name, profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", []), *profile.get("aliases", [])]
 
     def _tantou_display_name(self, name: str) -> str:
         official = self._idol_catalogue.get(name, {}).get("idol_name")
@@ -877,7 +908,7 @@ class ImasBirthdayPlugin(Star):
                     candidates = [name for score, name in matches if score >= 0.45][:5]
                     pending.append({"query": query, "candidates": candidates, "position": position})
                     if not candidates:
-                        lines.append(f"没找到「{query}」，请填写修正后的完整名字，或用 0 跳过。")
+                        lines.append(f"没找到「{query}」。")
                         continue
                     lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {name}" for index, name in enumerate(candidates, 1)))
                 now = time.monotonic()
@@ -885,8 +916,7 @@ class ImasBirthdayPlugin(Star):
                 if pending:
                     self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending, "batch": batch}
                     example = " ".join("1" if item["candidates"] else "完整名字" for item in pending)
-                    lines.insert(0, "本次加推尚未保存，确认后按原顺序添加。")
-                    lines.append(f"按上面待修正名字的顺序发送：加推确认 {example}\n可填写候选序号或修正后的完整名字，0 表示跳过；5 分钟内有效。")
+                    lines.append(f"加推确认 {example}（0 跳过）")
                     return "\n".join(lines)
                 return await self._append_tantou_batch(umo, user_id, batch)
             except Exception:
@@ -897,23 +927,23 @@ class ImasBirthdayPlugin(Star):
         pending = self._tantou_pending.get((umo, user_id))
         if not pending or pending["expires"] <= time.monotonic():
             self._tantou_pending.pop((umo, user_id), None)
-            return "没有待确认的加推，或确认已过期。请重新发送「加推 名字」。"
+            return "没有待确认的加推或已过期，请重新加推。"
         items = pending["items"]
         aliases = self._tantou_alias_index(await self._tantou_records())
         choices = self._split_tantou_names(args, aliases, deduplicate=False)
         if len(choices) != len(items):
-            return f"请按待修正名字的顺序填写 {len(items)} 个序号或完整名字，用空格分隔；0 表示跳过。"
+            return f"请按顺序填写 {len(items)} 个序号或完整名字（空格分隔，0 跳过）。"
         selected = list(pending["batch"])
         for item, choice in zip(items, choices):
             if choice.isascii() and choice.isdigit():
                 index = int(choice)
                 if index > len(item["candidates"]):
-                    return f"「{item['query']}」的序号应为 0—{len(item['candidates'])}，也可填写完整名字；0 表示跳过。"
+                    return f"「{item['query']}」请填 0—{len(item['candidates'])} 或完整名字。"
                 selected[item["position"]] = item["candidates"][index - 1] if index else None
             else:
                 name = aliases.get(self._exact_name_key(choice))
                 if not name:
-                    return f"修正后的「{choice}」仍未匹配到完整名字；请重新填写，或用 0 跳过。"
+                    return f"仍没找到「{choice}」，请填完整名字或 0。"
                 selected[item["position"]] = name
         result = await self._append_tantou_batch(umo, user_id, selected)
         self._tantou_pending.pop((umo, user_id), None)
@@ -942,10 +972,12 @@ class ImasBirthdayPlugin(Star):
             return {"message": error, "card_path": ""}
         async with self._tantou_lock:
             names = list((await self._tantou_group(umo)).get(user_id, []))
-            owner = await self._tantou_owner(umo, user_id, str(event.get_sender_name() or "") if user_id == sender_id else "")
         if not names:
             message = "还没有登记担当，发送「加推 月村手毬」试试。" if user_id == sender_id else "这位群友还没有在本群登记担当。"
             return {"message": message, "card_path": ""}
+        nickname = await self._tantou_member_nickname(event, user_id)
+        async with self._tantou_lock:
+            owner = await self._tantou_owner(umo, user_id, nickname)
         message = self._tantou_producer_name(owner) + "\n担当アイドル\n" + "、".join(self._tantou_display_name(name) for name in names)
         try:
             await self._prepare_tantou_icons(names)
@@ -2863,7 +2895,8 @@ class ImasBirthdayPlugin(Star):
             prefix = re.split(r"[/\\]", filename, maxsplit=1)[0].lower()
             return BRAND_ALIASES.get(self._normalize_brand_key(prefix), "OTHER")
         official = self._idol_catalogue.get(base_character, {})
-        return BRAND_ALIASES.get(self._normalize_brand_key(official.get("brand_code", "")), "OTHER")
+        brand = official.get("brand_code") or self._lookup_character_profile(base_character).get("brand", "")
+        return BRAND_ALIASES.get(self._normalize_brand_key(brand), "OTHER")
 
     def _character_asset_filename(self, character: str) -> str:
         candidates = [
