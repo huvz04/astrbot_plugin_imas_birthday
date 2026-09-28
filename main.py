@@ -1029,6 +1029,11 @@ class ImasBirthdayPlugin(Star):
         owner = clean_text(owner).strip()
         return owner if owner.upper().endswith("P") else owner + "P"
 
+    def _tantou_query_label(self, name: str) -> str:
+        label = self._tantou_display_name(name)
+        # Several unrelated roles share this official name; identify query results.
+        return f"{label}（{name}）" if label == "プロデューサー" else label
+
     def _tantou_alias_index(self, names: Any) -> dict[str, str]:
         candidates: dict[str, set[str]] = {}
         for name in names:
@@ -1244,12 +1249,12 @@ class ImasBirthdayPlugin(Star):
                         reverse=True,
                     ) if not partial else []
                     choices = partial or [item for score, item in matches if score >= .45]
-                    labels = [self._tantou_display_name(item) for item in choices[:5]]
+                    labels = [self._tantou_query_label(item) for item in choices[:5]]
                     return "请填写完整名字：" + "、".join(labels) if labels else f"没找到「{query}」。"
         async with self._tantou_lock:
             group = await self._tantou_group(umo)
             followers = [uid for uid, names in group.items() if name in names]
-        label = self._tantou_display_name(name)
+        label = self._tantou_query_label(name)
         if not followers:
             if target_id:
                 return "查不到本群对这位群友的担当登记。"
