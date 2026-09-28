@@ -1,5 +1,8 @@
 """Check real group registrations, command routing and ranking image output."""
 import unittest
+import tempfile
+import types
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -81,14 +84,60 @@ class RankingTests(unittest.IsolatedAsyncioTestCase):
         path = Path(self.plugin._render_tantou_ranking(rows, members={"qq:2002": {"name": "ℒℴѵℯ•唯爱 丘比.✧=₂✭"}}))
         self.addCleanup(path.unlink, missing_ok=True)
         with Image.open(path) as image:
-            self.assertEqual(image.size, (1200, 512))
+            self.assertEqual(image.size, (1200, 608))
             color = tuple(bytes.fromhex(plugin_module.BRAND_COLORS["GAKUEN_IDOLMASTER"][1:]))
-            self.assertEqual(image.getpixel((900, 218)), color)
-            self.assertEqual(image.getpixel((600, 330)), color)
-            self.assertEqual(image.getpixel((900, 330)), (237, 241, 247))
-            self.assertEqual(image.getpixel((400, 442)), (129, 149, 181))
-            self.assertEqual(image.getpixel((600, 442)), (237, 241, 247))
-            self.assertNotEqual(image.getpixel((150, 420)), (255, 255, 255))
+            self.assertEqual(image.getpixel((900, 314)), color)
+            self.assertEqual(image.getpixel((600, 426)), color)
+            self.assertEqual(image.getpixel((900, 426)), (237, 241, 247))
+            self.assertEqual(image.getpixel((400, 538)), (129, 149, 181))
+            self.assertEqual(image.getpixel((600, 538)), (237, 241, 247))
+            self.assertNotEqual(image.getpixel((150, 516)), (255, 255, 255))
+
+    async def test_group_header_is_live_scoped_and_survives_api_failure(self):
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(return_value={"group_id": 100, "group_name": "ℒℴѵℯ 偶像大师 🎉"}))
+        with patch.object(self.plugin, "_cache_tantou_group_avatar", new_callable=AsyncMock):
+            header = await self.plugin._tantou_ranking_group(self.event)
+            self.assertEqual(header["name"], "ℒℴѵℯ 偶像大师 🎉")
+            self.event.bot.call_action.assert_awaited_once_with("get_group_info", group_id=100, no_cache=True, self_id="9999")
+            self.event.bot.call_action.side_effect = RuntimeError("offline")
+            self.assertEqual((await self.plugin._tantou_ranking_group(self.event))["name"], header["name"])
+            self.assertEqual((await self.plugin._tantou_ranking_group(Event(group="200")))["name"], "本群")
+            self.event.bot.call_action.side_effect = None
+            self.event.bot.call_action.return_value = {"group_id": 200, "group_name": "错误群资料"}
+            self.assertEqual((await self.plugin._tantou_ranking_group(self.event))["name"], header["name"])
+
+    async def test_group_avatar_uses_fixed_url_and_keeps_cache_on_bad_download(self):
+        import httpx
+        picture = BytesIO(); Image.new("RGB", (640, 640), "red").save(picture, format="PNG")
+        requests = []
+        def respond(request):
+            requests.append(str(request.url))
+            return httpx.Response(200, content=picture.getvalue())
+        original_client = httpx.AsyncClient
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "avatar.png"
+            with patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kwargs: original_client(transport=httpx.MockTransport(respond), **kwargs)):
+                await self.plugin._cache_tantou_group_avatar(path, "100")
+                await self.plugin._cache_tantou_group_avatar(path, "100")
+                await self.plugin._cache_tantou_group_avatar(path, "../200")
+            self.assertEqual(requests, ["https://p.qlogo.cn/gh/100/100/640"])
+            with Image.open(path) as avatar:
+                self.assertEqual(avatar.size, (320, 320))
+            before = path.read_bytes()
+            with patch.object(plugin_module.time, "time", return_value=path.stat().st_mtime + 86401), patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kwargs: original_client(transport=httpx.MockTransport(lambda request: httpx.Response(302, headers={"location": "http://localhost/secret"})), **kwargs)):
+                await self.plugin._cache_tantou_group_avatar(path, "100")
+            self.assertEqual(path.read_bytes(), before)
+
+    async def test_header_renders_circle_avatar_unicode_name_and_next_line_title(self):
+        with tempfile.TemporaryDirectory() as folder:
+            avatar = Path(folder) / "group.png"; Image.new("RGB", (100, 100), "red").save(avatar)
+            path = Path(self.plugin._render_tantou_ranking([("月村手毬", 1)], group_header={"name": "ℒℴѵℯ 偶像大师 🎉", "avatar_path": avatar}))
+            self.addCleanup(path.unlink, missing_ok=True)
+            with Image.open(path) as image:
+                self.assertEqual(image.getpixel((92, 82)), (255, 0, 0))
+                self.assertEqual(image.getpixel((48, 38)), (241, 243, 247))
+                self.assertTrue(any(low != high for low, high in image.crop((160, 38, 800, 126)).getextrema()))
+                self.assertTrue(any(low != high for low, high in image.crop((48, 145, 500, 208)).getextrema()))
 
 
 if __name__ == "__main__":

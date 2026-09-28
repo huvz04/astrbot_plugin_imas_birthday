@@ -1176,17 +1176,77 @@ class ImasBirthdayPlugin(Star):
             return {"message": "本群还没有登记担当，发送「加推 月村手毬」试试。", "card_path": ""}
         members = await self._tantou_member_cards(umo, list(counts))
         rows = sorted(counts.items(), key=lambda row: (-row[1], self._tantou_display_name(row[0], members), row[0]))[:10]
-        message = "本群担当排行\n" + "\n".join(
+        group_header = await self._tantou_ranking_group(event)
+        message = group_header["name"] + "\n担当排行榜\n" + "\n".join(
             f"{index}. {self._tantou_display_name(name, members)} · {count}人"
             for index, (name, count) in enumerate(rows, 1)
         )
         try:
             await self._prepare_tantou_icons([name for name, _ in rows])
-            path = await asyncio.to_thread(self._render_tantou_ranking, rows, members=members)
+            path = await asyncio.to_thread(self._render_tantou_ranking, rows, members=members, group_header=group_header)
         except Exception:
             logger.exception("担当排行图片渲染失败")
             path = ""
         return {"message": message, "card_path": path, "card_paths": [path] if path else []}
+
+    async def _tantou_ranking_group(self, event: AstrMessageEvent) -> dict[str, Any]:
+        umo, _ = self._tantou_identity(event)
+        group_id = str(event.get_group_id() or "")
+        key = f"tantou_group_header_v1:{umo}"
+        cached = await self.get_kv_data(key, {})
+        name = cached.get("name", "") if isinstance(cached, dict) else ""
+        path = self.tantou_icons_dir / "group_headers" / hashlib.sha256(umo.encode()).hexdigest()[:20] / "avatar.png"
+        group = getattr(getattr(event, "message_obj", None), "group", None)
+        if str(getattr(group, "group_id", "")) == group_id and getattr(group, "group_name", ""):
+            name = group.group_name
+        bot = getattr(event, "bot", None)
+        qq_group = event.get_platform_name() == "aiocqhttp" and bot is not None and bool(self._tantou_member_id("qq:" + group_id))
+        if qq_group:
+            try:
+                routing = {"self_id": event.get_self_id()} if event.get_self_id() else {}
+                info = await asyncio.wait_for(bot.call_action("get_group_info", group_id=int(group_id), no_cache=True, **routing), timeout=5)
+                if isinstance(info, dict) and str(info.get("group_id")) == group_id and info.get("group_name"):
+                    name = info["group_name"]
+            except Exception as exc:
+                logger.debug(f"排行榜群名读取失败，使用已有群名：{type(exc).__name__}")
+            await self._cache_tantou_group_avatar(path, group_id)
+        name = "".join(NicknameText.graphemes(clean_text(str(name)))[:100]) or "本群"
+        if name != (cached.get("name") if isinstance(cached, dict) else None):
+            await self.put_kv_data(key, {"name": name})
+        return {"name": name, "avatar_path": path if path.is_file() else None}
+
+    async def _cache_tantou_group_avatar(self, path: Path, group_id: str) -> None:
+        from PIL import Image
+
+        if not self._tantou_member_id("qq:" + group_id):
+            return
+        if path.is_file() and time.time() - path.stat().st_mtime < 86400:
+            return
+        try:
+            # The current event's numeric group ID determines the fixed QQ URL.
+            async with httpx.AsyncClient(follow_redirects=False, timeout=10) as client:
+                async with client.stream("GET", f"https://p.qlogo.cn/gh/{group_id}/{group_id}/640") as response:
+                    response.raise_for_status()
+                    data = bytearray()
+                    async for chunk in response.aiter_bytes():
+                        data.extend(chunk)
+                        if len(data) > 2_000_000:
+                            raise ValueError("Group avatar exceeds size limit")
+            with Image.open(BytesIO(data)) as source:
+                if source.format not in {"PNG", "JPEG", "WEBP", "GIF"} or max(source.size) > 2048:
+                    raise ValueError("Unexpected group avatar")
+                avatar = source.convert("RGBA")
+                avatar.thumbnail((320, 320), Image.Resampling.LANCZOS)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
+                temporary = Path(output.name)
+            try:
+                avatar.save(temporary, format="PNG")
+                temporary.replace(path)
+            finally:
+                temporary.unlink(missing_ok=True)
+        except Exception as exc:
+            logger.debug(f"排行榜群头像读取失败，使用已有头像或占位：{type(exc).__name__}")
 
     async def _send_tantou_cards(self, event: AstrMessageEvent, result: dict[str, Any]) -> None:
         for path in result["card_paths"]:
@@ -2648,23 +2708,44 @@ class ImasBirthdayPlugin(Star):
         image.save(path, format="PNG", dpi=(508, 508))
         return str(path)
 
-    def _render_tantou_ranking(self, rows: list[tuple[str, int]], *, members: dict[str, dict[str, Any]] | None = None) -> str:
-        from PIL import Image, ImageDraw, ImageFont
+    def _render_tantou_ranking(self, rows: list[tuple[str, int]], *, members: dict[str, dict[str, Any]] | None = None, group_header: dict[str, Any] | None = None) -> str:
+        from PIL import Image, ImageDraw, ImageFont, ImageOps
 
         if not rows or len(rows) > 10 or any(count <= 0 for _, count in rows):
             raise ValueError("A ranking must contain 1–10 positive vote counts")
         width, row_height = 1200, 112
-        height = 176 + row_height * len(rows)
+        height = 272 + row_height * len(rows)
         image = Image.new("RGB", (width, height), "#f1f3f7")
         draw = ImageDraw.Draw(image)
-        draw.text((48, 44), "本群担当排行", fill="#3c4d66", font=self._pil_font(ImageFont, 46, bold=True))
-        draw.rounded_rectangle((32, 128, 1168, height - 28), radius=24, fill="white", outline="#d6dce5", width=2)
+        header = group_header or {}
+        avatar = Image.new("RGBA", (88, 88), "#e3e9f2")
+        ImageDraw.Draw(avatar).text((44, 44), "群", fill="#8195b5", font=self._pil_font(ImageFont, 36, bold=True), anchor="mm")
+        if header.get("avatar_path"):
+            try:
+                with Image.open(header["avatar_path"]) as source:
+                    avatar = Image.new("RGBA", (88, 88), "#e3e9f2")
+                    avatar.alpha_composite(ImageOps.fit(source.convert("RGBA"), (88, 88), Image.Resampling.LANCZOS))
+            except Exception:
+                logger.debug("排行榜群头像无法读取，使用占位。")
+        mask = Image.new("L", (352, 352))
+        ImageDraw.Draw(mask).ellipse((0, 0, 351, 351), fill=255)
+        mask = mask.resize((88, 88), Image.Resampling.LANCZOS)
+        image.paste(avatar, (48, 38), mask)
+        group_font = self._pil_font(ImageFont, 42, bold=True)
+        group_text = NicknameText(group_font, self.plugin_dir / "assets" / "fonts", 42)
+        group_name = str(header.get("name") or "本群")
+        if group_text.width(group_name) > 980:
+            group_name = group_text.truncate(group_name, "…", 980)
+        label = group_text.render(group_name, "#3c4d66")
+        image.paste(label, (160, 82 - label.height // 2), label)
+        draw.text((48, 152), "担当排行榜", fill="#3c4d66", font=self._pil_font(ImageFont, 46, bold=True))
+        draw.rounded_rectangle((32, 224, 1168, height - 28), radius=24, fill="white", outline="#d6dce5", width=2)
         number_font = self._pil_font(ImageFont, 28, bold=True)
         label_font = self._pil_font(ImageFont, 32, bold=True)
         caption = NicknameText(label_font, self.plugin_dir / "assets" / "fonts", 32)
         maximum = max(count for _, count in rows)
         for index, (name, count) in enumerate(rows):
-            top = 144 + index * row_height
+            top = 240 + index * row_height
             rank_color = ("#c89432", "#8b9aae", "#b78362")[index] if index < 3 else "#8b96a8"
             draw.text((72, top + 43), str(index + 1), font=number_font, fill=rank_color, anchor="mm")
             member = (members or {}).get(name, {})

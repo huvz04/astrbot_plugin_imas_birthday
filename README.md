@@ -273,6 +273,8 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 发送 `担当排行` 或 `/担当排行`，按本群已保存登记中的群友人数，展示前十位担当。每行左侧为小头像，右侧为显示名字、横向柱状图和人数；柱长与人数成正比，颜色沿用对应企划色，群友使用灰蓝色。人数相同时按显示名字排序，不足十位时只展示已有条目。
 
+排行榜顶部显示圆形群头像和当前群名，下一行显示「担当排行榜」。QQ 群名通过当前机器人的 `get_group_info` 获取；群头像使用固定地址 `https://p.qlogo.cn/gh/群号/群号/640`（[NapCat 说明](https://github.com/NapNeko/NapCatQQ/discussions/1379)），按群缓存 24 小时，不接受消息或接口提供的任意图片 URL，不跟随跳转。资料读取失败时沿用缓存，缺少头像时用圆形占位；其他平台使用消息自带群名或「本群」。群名支持花体和 emoji，过长时省略末尾。
+
 同一群友对同一担当最多计一票，重复名字和中日文别名会合并；待确认但尚未保存的加推不计入。偶像、配角及已核验的群友担当都参与统计，沿用官网日文名、手动图片和群友绑定名。加推、减推、清空后下一次查询立即更新，各群独立统计。生成或发送图片失败时返回文字排行。
 
 ### 群友也可以登记为担当
@@ -291,7 +293,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.81 ZIP 安装包内附这些官方头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.82 ZIP 安装包内附这些官方头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 
