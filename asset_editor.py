@@ -165,7 +165,7 @@ class AssetEditor:
         if not settings:
             return None
         layout = self.plugin._card_layout(1)
-        size = size or ((layout["image_width"], layout["portrait_height"]) if kind == "birthday" else (600, 540))
+        size = size or ((layout["item_width"], layout["portrait_height"]) if kind == "birthday" else (600, 540))
         key = hashlib.sha256(json.dumps([settings, size], sort_keys=True).encode()).hexdigest()
         path = self.root / "renders" / (key + ".png")
         if not path.is_file():
@@ -357,7 +357,7 @@ class AssetEditor:
             paths = []
             try:
                 layout = plugin._card_layout(columns)
-                item = plugin._card_item(name, image_size=(layout["image_width"], layout["portrait_height"]))
+                item = plugin._card_item(name, image_size=(layout["item_width"], layout["portrait_height"]))
                 paths.append(Path(plugin._render_card_with_pillow(month, day, [item] * columns, [], [], [], layout)))
                 paths.append(Path(plugin._render_tantou_cards("预览", [name])[0]))
                 return {"birthday": plugin._image_data_uri(paths[0]), "tantou": plugin._image_data_uri(paths[1]),

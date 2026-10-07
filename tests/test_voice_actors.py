@@ -84,7 +84,19 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("角色：月村手毬", text)
         html = self.plugin._birthday_card_html(month=6, day=3, items=[], seiyuu=["小鹿 なお（月村 手毬役）"], related_people=[], events=[], layout=self.plugin._card_layout(0))
         self.assertIn("同日生日の声優", html)
+        self.assertNotIn("今天没有匹配到本地角色图", html)
         self.assertNotIn("Character images are sourced", html)
+
+    async def test_actor_only_birthday_card_keeps_the_actor_section_without_empty_idol_space(self):
+        layout = self.plugin._card_layout(0)
+        output = self.plugin._render_card_with_pillow(6, 3, [], ["小鹿 なお（月村 手毬役）"], [], [], layout)
+        with Image.open(output) as card:
+            self.assertEqual(card.width, 760)
+            self.assertLess(card.height, 500)
+        self.assertEqual(layout["item_width"], 700)
+        self.plugin.config["render_card_without_character_image"] = False
+        rendered = await self.plugin._render_card(6, 3, {"characters": [], "seiyuu": ["小鹿奈绪"]})
+        self.assertTrue(Path(rendered).is_file())
 
     async def test_bare_and_native_actor_commands_do_not_duplicate(self):
         bare = Event(text="加推 小鹿なお")
