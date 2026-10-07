@@ -82,7 +82,7 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
             self.assertGreater(pixels.count((255, 0, 0)), 300)
             self.assertGreater(pixels.count((0, 0, 255)), 300)
 
-    async def test_birthday_restores_original_sizes_and_separates_actor_cards(self):
+    async def test_birthday_keeps_original_sizes_and_actor_info_only_in_text(self):
         for count, width, height in [(1, 300, 360), (2, 260, 320), (3, 214, 300)]:
             layout = self.plugin._card_layout(count)
             self.assertEqual((layout["item_width"], layout["portrait_height"]), (width, height))
@@ -90,14 +90,13 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(self.plugin, "_render_card_with_pillow", return_value="birthday.png") as render:
             await self.plugin._render_card(4, 3, entry)
             items = render.call_args.args[2]
-            self.assertEqual(len(items), 2)
-            actor = items[1]
-            self.assertEqual(actor["section"], "voice_actor")
-            self.assertEqual(actor["label"], "月村 手毬役")
-            html = self.plugin._birthday_card_html(4, 3, items, [], [], [], self.plugin._card_layout(1))
-            self.assertIn("声優の誕生日", html)
-            self.assertIn("is-voice-actor", html)
-            self.assertIn("月村 手毬役", html)
+            self.assertEqual(len(items), 1)
+            self.assertEqual(render.call_args.args[3], [])
+            self.plugin._prepare_tantou_icons.assert_not_awaited()
+            html = self.plugin._birthday_card_html(4, 3, items, ["小鹿 なお（月村 手毬役）"], [], [], self.plugin._card_layout(1))
+            self.assertNotIn("声優の誕生日", html)
+            self.assertNotIn("小鹿", html)
+            self.assertIn("声优：小鹿 なお（月村 手毬役）", self.plugin._build_message_from_entry(4, 3, entry))
             self.plugin.config["include_seiyuu"] = False
             await self.plugin._render_card(4, 3, entry)
             self.assertEqual(len(render.call_args.args[2]), 1)
@@ -165,7 +164,8 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("小鹿 なお（月村 手毬役）", text)
         self.assertNotIn("角色：月村手毬", text)
         html = self.plugin._birthday_card_html(month=6, day=3, items=[], seiyuu=["小鹿 なお（月村 手毬役）"], related_people=[], events=[], layout=self.plugin._card_layout(0))
-        self.assertIn("同日生日の声優", html)
+        self.assertNotIn("同日生日の声優", html)
+        self.assertNotIn("小鹿", html)
         self.assertNotIn("今天没有匹配到本地角色图", html)
         self.assertNotIn("Character images are sourced", html)
 
@@ -176,16 +176,30 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('<div class="subtitle">THE IDOLM@STER</div>', html)
         self.assertNotIn('<div class="subtitle">THE IDOLM@STER Birthday</div>', html)
 
-    async def test_actor_only_birthday_card_keeps_the_actor_section_without_empty_idol_space(self):
-        layout = self.plugin._card_layout(0)
-        output = self.plugin._render_card_with_pillow(6, 3, [], ["小鹿 なお（月村 手毬役）"], [], [], layout)
-        with Image.open(output) as card:
-            self.assertEqual(card.width, 760)
-            self.assertLess(card.height, 500)
-        self.assertEqual(layout["item_width"], 700)
-        self.plugin.config["render_card_without_character_image"] = False
-        rendered = await self.plugin._render_card(6, 3, {"characters": [], "seiyuu": ["小鹿奈绪"]})
-        self.assertTrue(Path(rendered).is_file())
+    async def test_actor_only_birthday_sends_text_without_empty_image(self):
+        for allow_empty in (False, True):
+            self.plugin.config["render_card_without_character_image"] = allow_empty
+            rendered = await self.plugin._render_card(6, 3, {"characters": [], "seiyuu": ["小鹿奈绪"]})
+            self.assertEqual(rendered, "")
+
+    async def test_single_and_august_first_cards_center_complete_rows_below_header(self):
+        for date in ("10-06", "08-01"):
+            characters = [name for name, profile in plugin_module.CHARACTER_PROFILES.items() if profile.get("birthday") == date]
+            self.assertGreaterEqual(len(characters), 4 if date == "08-01" else 1)
+            layout = self.plugin._card_layout(len(characters))
+            items = [self.plugin._card_item(name, image_size=(layout["item_width"], layout["portrait_height"])) for name in characters]
+            with patch.object(self.plugin, "_draw_pillow_idol_card") as draw:
+                output = self.plugin._render_card_with_pillow(10, 6, items, [], [], [], layout)
+                self.assertEqual(draw.call_count, len(characters))
+                top = min(call.args[4] for call in draw.call_args_list)
+                bottom = max(call.args[4] + call.args[7] for call in draw.call_args_list)
+                with Image.open(output) as card:
+                    self.assertLessEqual(abs((top - 138) - (card.height - 30 - bottom)), 1)
+                    self.assertLessEqual(bottom, card.height - 30)
+                if date == "10-06":
+                    self.assertGreater(top, 138)
+                else:
+                    self.assertGreater(len({call.args[4] for call in draw.call_args_list}), 1)
 
     async def test_bare_and_native_actor_commands_do_not_duplicate(self):
         bare = Event(text="加推 小鹿なお")
@@ -204,6 +218,9 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
             await self.plugin._send_birthday_message(self.event.unified_msg_origin, "详细生日资料", "card.png", ["1001"])
             self.assertEqual(chain.call_args.args[0], "")
             self.assertEqual([part.qq for part in self.plugin.sent[-1][1].chain if isinstance(part, At)], ["1001"])
+            message = self.plugin._build_message_from_entry(10, 6, {"characters": ["乙仓悠贵"], "seiyuu": ["泰勇气"]})
+            await self.plugin._send_birthday_message(self.event.unified_msg_origin, message, "card.png", ["1001"])
+            self.assertEqual(chain.call_args.args[0], "声优：泰 勇気（ドラマCD プロデューサー役）")
             self.plugin.config["birthday_text_with_card"] = True
             await self.plugin._send_birthday_message(self.event.unified_msg_origin, "详细生日资料", "card.png")
             self.assertEqual(chain.call_args.args[0], "详细生日资料")

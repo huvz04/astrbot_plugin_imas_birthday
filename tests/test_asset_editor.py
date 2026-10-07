@@ -239,10 +239,11 @@ class EditorTests(unittest.IsolatedAsyncioTestCase):
         for columns in (1, 2, 3):
             layout = layouts[str(columns)]
             width, height = layout["item_width"], layout["portrait_height"]
-            result = await self.editor.preview("月村手毬", str(columns))
+            with patch.object(self.plugin, "_draw_pillow_idol_card", wraps=self.plugin._draw_pillow_idol_card) as draw_card:
+                result = await self.editor.preview("月村手毬", str(columns))
             with Image.open(BytesIO(base64.b64decode(result["birthday"].split(",", 1)[1]))) as card:
                 left = (card.width - (width * columns + layout["grid_gap"] * (columns - 1))) // 2
-                top = layout["card_padding"] + 108
+                top = draw_card.call_args_list[0].args[4]
                 with Image.open(self.editor.render_image("月村手毬", "birthday", (width, height))) as crop:
                     # Ignore the card's rounded border, compare its actual image content.
                     self.assertEqual(card.convert("RGB").crop((left+20, top+20, left+width-20, top+height-20)).tobytes(),

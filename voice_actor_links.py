@@ -1,6 +1,10 @@
 # Reviewed Chinese search aliases matched through official character CV pages.
 # These are aliases, not replacements for the official Japanese display names.
-VOICE_ACTOR_LINKS = {'va:10014': {'aliases': ['天崎滉平'],
+VOICE_ACTOR_LINKS = {'va:10270': {'aliases': ['泰勇气', '泰勇氣'],
+              'name': '泰 勇気',
+              'credited_roles': ['ドラマCD プロデューサー役'],
+              'sources': ['https://remax-web.jp/man/T/tai_y/tai_y.pdf']},
+ 'va:10014': {'aliases': ['天崎滉平'],
               'name': '天﨑 滉平',
               'sources': ['https://idollist.idolmaster-official.jp/search/detail/40027']},
  'va:10186': {'aliases': ['儿玉卓也'],

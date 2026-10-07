@@ -133,7 +133,7 @@ gakuen_idolmaster=portrait
 
 这里的 `image` 会使用旧的 `character_assets_dir` 图片或你手动替换过的卡面图，不会给透明立绘额外铺应援色背景；旧配置里的 `auto` 也会按 `image` 处理。只有显式设置 `portrait` 才会使用透明立绘和角色应援色面板。支持的企划 key 包括 `the_idolmaster`、`cinderellagirls`、`millionlive`、`sidem`、`shinycolors`、`gakuen_idolmaster`、`va_liv`、`dearlystars`、`starlitseason`、`876_pro`、`961_pro`。
 
-生日卡恢复原本可适配多角色的居中卡片样式；单人图为 300×360 图片区，双人图各为 260×320，三人图各为 214×300。WebUI 的生日裁剪预览会使用相同尺寸。角色名上方色条使用角色应援色；白色信息区右侧会以低透明度渲染 `assets/brand_marks/` 里的企划 icon。声优生日另列「声優の誕生日」栏目，使用缩放后的完整公式照，并标注已确认的「角色名役」；只有声优时不保留空角色卡。是否包含声优遵循 `include_seiyuu`；若希望仅有声优生日的日期也发送提醒，需关闭 `require_character_birthday`，发送范围仍由原设置控制。
+生日卡使用可适配多角色的居中卡片样式；单人图为 300×360 图片区，双人图各为 260×320，三列布局各为 214×300。角色卡整体在标题下方区域垂直居中，多行按全部行高安排位置，保留原尺寸和裁剪；WebUI 的生日裁剪预览同步。角色名上方色条使用角色应援色，信息区右侧显示企划 icon。声优生日只以消息文字显示「声优：姓名（角色名役）」，不在生日图里渲染照片、占位或文字栏目；只有声优生日时发送文字。是否包含声优遵循 `include_seiyuu`；若希望仅有声优生日的日期也发送提醒，需关闭 `require_character_birthday`。
 
 透明立绘建议放在插件目录外，配置项 `character_portraits_dir` 留空时，AstrBot 部署中默认使用：
 
@@ -314,7 +314,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 `tantou_llm_commentary` 默认开启：`担当` 出图后，使用当前会话在 AstrBot 配置的模型给出一句月村手毬视角的锐评。仅把角色/声优显示名传给模型，不发送 QQ 号或群友名字；未配置模型、超时或失败时直接跳过，不影响名片。关闭此项可避免模型调用。
 
-生日图片默认不再附带重复的详细聊天文字，图片中的声优生日另立栏目「声優の誕生日」，可确认的偶像大师配音关系另写「角色名役」；图片缺失时保留原文字通知和 @。如需原来的长文字，在插件设置开启 `birthday_text_with_card`。
+生日图片默认不再附带重复的详细聊天文字，但仍发送同日生日声优的姓名及已确认的「角色名役」；图片缺失时保留完整文字通知和 @。如需原来的长文字，在插件设置开启 `birthday_text_with_card`。泰勇气的配音关联依据[事务所履历](https://remax-web.jp/man/T/tai_y/tai_y.pdf)，显示为「声优：泰 勇気（ドラマCD プロデューサー役）」。
 
 ### 本群担当排行
 
@@ -346,7 +346,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.95 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.96 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 

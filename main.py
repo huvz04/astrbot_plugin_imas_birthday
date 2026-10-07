@@ -245,7 +245,7 @@ def load_voice_actor_registry(profiles: dict[str, dict[str, Any]]) -> dict[str, 
                         "image_url": previous.get("image_url", "")}
     alias_ids: dict[str, set[str]] = {}
     for ident, actor in actors.items():
-        actor.update(kind="voice_actor", is_idolmaster=False, roles=[])
+        actor.update(kind="voice_actor", is_idolmaster=bool(actor.get("credited_roles")), roles=[])
         for alias in [actor["name"], *actor.get("aliases", [])]:
             alias_ids.setdefault(person_name_key(alias), set()).add(ident)
     for character, profile in profiles.items():
@@ -1122,10 +1122,10 @@ class ImasBirthdayPlugin(Star):
 
     def _voice_actor_role_label(self, name: str) -> str:
         roles = self._voice_actor_roles().get(name, [])
-        if not roles:
-            return "声優"
-        return "／".join(f"{self._tantou_display_name(role)}役" for role in roles
-                        if self._tantou_display_name(role) != "―") or "声優"
+        labels = [f"{self._tantou_display_name(role)}役" for role in roles
+                  if self._tantou_display_name(role) != "―"]
+        labels.extend(VOICE_ACTOR_CATALOGUE.get(name, {}).get("credited_roles", []))
+        return "／".join(dict.fromkeys(labels)) or "声優"
 
     def _birthday_voice_actor_labels(self, names: list[str]) -> list[str]:
         aliases = self._voice_actor_alias_index()
@@ -2487,7 +2487,9 @@ class ImasBirthdayPlugin(Star):
 
     async def _send_birthday_message(self, umo: str, message: str, card_path: str = "", mention_ids: list[str] | None = None) -> bool:
         mode = self._birthday_send_mode()
-        display_message = message if not card_path or self._cfg_bool("birthday_text_with_card", False) else ""
+        display_message = message if not card_path or self._cfg_bool("birthday_text_with_card", False) else "\n".join(
+            line for line in message.splitlines() if line.strip().startswith("声优：")
+        )
         if mode != "split_file_image" and card_path:
             try:
                 chain = self._with_tantou_mentions(self._build_birthday_message_chain(display_message, card_path, mode), mention_ids)
@@ -2912,18 +2914,15 @@ class ImasBirthdayPlugin(Star):
         if not entry:
             return ""
         characters = self._visible_characters(entry)
-        actor_names = self._split_people(entry.get("seiyuu", [])) if self._cfg_bool("include_seiyuu", True) else []
-        seiyuu = self._birthday_voice_actor_labels(actor_names)
+        # Voice actor birthdays are sent as text, never as image cards or placeholders.
+        seiyuu: list[str] = []
         related_people = self._split_people(entry.get("related_people", []))
         events = entry.get("events", [])
 
-        layout = self._card_layout(max(len(characters), len(actor_names)))
+        if not characters and entry.get("seiyuu"):
+            return ""
+        layout = self._card_layout(len(characters))
         items = [self._card_item(name, image_size=(layout["item_width"], layout["portrait_height"])) for name in characters]
-        actor_aliases = self._voice_actor_alias_index()
-        actors = [(name, actor_aliases.get(self._exact_name_key(name), "")) for name in actor_names]
-        if actors:
-            await self._prepare_tantou_icons([ident for _, ident in actors if ident])
-            items.extend(self._birthday_actor_item(name, ident) for name, ident in actors)
         if not items and not seiyuu and not self._cfg_bool("render_card_without_character_image", True):
             return ""
 
@@ -2965,14 +2964,6 @@ class ImasBirthdayPlugin(Star):
             if render_mode == "html":
                 return ""
             return self._render_card_with_pillow(month, day, items, seiyuu, card_related_people, card_events, layout)
-
-    def _birthday_actor_item(self, name: str, ident: str) -> dict[str, str]:
-        path = self._tantou_icon_path(ident) if ident else None
-        return {"name": self._tantou_display_name(ident) if ident else name,
-                "label": self._voice_actor_role_label(ident) if ident else "声優",
-                "color": "#947cab", "project_color": "#947cab", "brand": "VOICE_ACTOR",
-                "logo_path": "", "logo_image": "", "path": str(path) if path else "",
-                "image": self._image_data_uri(path), "asset_kind": "voice_actor", "section": "voice_actor"}
 
     async def _prepare_rendered_card(self, card_path: str) -> str:
         if not card_path:
@@ -3270,13 +3261,9 @@ class ImasBirthdayPlugin(Star):
         portrait_height = layout["portrait_height"]
         card_height = portrait_height + 86
         max_columns = layout["columns"]
-        actor_items = [item for item in items if item.get("section") == "voice_actor"]
-        idol_items = [item for item in items if item.get("section") != "voice_actor"]
-        sections = [("", idol_items), ("声優の誕生日", actor_items)]
-        row_count = sum((len(section) + max_columns - 1) // max_columns for _, section in sections)
-        heading_height = 40 if actor_items else 0
+        rows = [items[index:index + max_columns] for index in range(0, len(items), max_columns)]
+        row_count = len(rows)
         meta_blocks = [
-            ("同日生日の声優", [] if actor_items else seiyuu),
             ("相关人士", related_people),
             ("事件", events),
         ]
@@ -3287,7 +3274,7 @@ class ImasBirthdayPlugin(Star):
             padding * 2
             + 108
             + 20
-            + row_count * card_height + heading_height
+            + row_count * card_height
             + max(0, row_count - 1) * gap
             + (14 + len(meta_rows) * 72 + max(0, len(meta_rows) - 1) * 10 if meta_rows else 0)
             + 20,
@@ -3318,20 +3305,17 @@ class ImasBirthdayPlugin(Star):
         draw.line((padding, y + 88, width - padding, y + 88), fill=(32, 36, 44, 36), width=3)
         y += 108
 
-        for heading, section in sections:
-            if not section:
-                continue
-            if heading:
-                draw.text((padding, y + 4), heading, fill="#695679", font=name_font)
-                y += heading_height
-            for index in range(0, len(section), max_columns):
-                row = section[index:index + max_columns]
-                row_width = len(row) * item_width + max(0, len(row) - 1) * gap
-                x = (width - row_width) // 2
-                for item in row:
-                    self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
-                    x += item_width + gap
-                y += card_height + gap
+        content_height = row_count * card_height + max(0, row_count - 1) * gap
+        if meta_rows:
+            content_height += 14 + len(meta_rows) * 72
+        y += max(0, (height - padding - y - content_height) // 2)
+        for row in rows:
+            row_width = len(row) * item_width + max(0, len(row) - 1) * gap
+            x = (width - row_width) // 2
+            for item in row:
+                self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
+                x += item_width + gap
+            y += card_height + gap
 
         if meta_rows:
             y += 2
@@ -3393,13 +3377,6 @@ class ImasBirthdayPlugin(Star):
             try:
                 if item.get("asset_kind") == "portrait":
                     self._draw_pillow_portrait_panel(draw, canvas, Path(image_path), x, y, width, portrait_height, brand_rgb)
-                elif item.get("asset_kind") == "voice_actor":
-                    from PIL import Image, ImageOps
-
-                    draw.rectangle((x, y, x + width, y + portrait_height), fill="#f3f5f8")
-                    with Image.open(image_path) as source:
-                        photo = ImageOps.contain(source.convert("RGBA"), (round(width * .9), round(portrait_height * .94)), Image.Resampling.LANCZOS)
-                    canvas.paste(photo, (x + (width - photo.width) // 2, y + (portrait_height - photo.height) // 2), photo)
                 else:
                     portrait = self._pil_cover_image(Path(image_path), width, portrait_height)
                     canvas.paste(portrait, (x, y))
@@ -3814,13 +3791,9 @@ class ImasBirthdayPlugin(Star):
         title = html.escape(str(self.config.get("card_title", "Happy Birthday")))
         subtitle = html.escape(self._card_subtitle())
         subtitle_html = f'<div class="subtitle">{subtitle}</div>' if subtitle else ""
-        actor_items = [item for item in items if item.get("section") == "voice_actor"]
-        item_html = "\n".join(self._birthday_card_item_html(item) for item in items if item.get("section") != "voice_actor")
-        voice_html = "\n".join(self._birthday_card_item_html(item) for item in actor_items)
-        voice_section = f'<div class="section-label">声優の誕生日</div><section class="grid">{voice_html}</section>' if voice_html else ""
-        if not item_html and not (actor_items or seiyuu or related_people or events):
+        item_html = "\n".join(self._birthday_card_item_html(item) for item in items)
+        if not item_html and not (seiyuu or related_people or events):
             item_html = '<div class="empty">今天没有匹配到本地角色图，但祝福照常送达。</div>'
-        seiyuu_html = self._meta_block("同日生日の声優", [] if actor_items else seiyuu)
         related_html = self._meta_block("相关人士", related_people)
         events_html = self._meta_block("事件", events)
         return f"""<!doctype html>
@@ -3846,6 +3819,8 @@ body {{
   background: #f5f1ea;
 }}
 .card {{
+  display: flex;
+  flex-direction: column;
   position: relative;
   overflow: hidden;
   width: {card_width}px;
@@ -3877,7 +3852,7 @@ body {{
 .header,
 .rule,
 .grid,
-.section-label,
+.content,
 .meta,
 .footer {{
   position: relative;
@@ -3919,7 +3894,13 @@ body {{
   justify-content: center;
   align-items: stretch;
   gap: {grid_gap}px;
-  margin-top: 20px;
+}}
+.content {{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 20px;
 }}
 .idol {{
   position: relative;
@@ -3959,23 +3940,8 @@ body {{
   object-fit: contain;
   object-position: center bottom;
 }}
-.portrait.is-voice-actor {{
-  background: #f3f5f8;
-  align-items: center;
-}}
-.portrait.is-voice-actor img {{
-  width: 90%;
-  height: 94%;
-  object-fit: contain;
-  object-position: center;
-}}
-.section-label {{
-  margin-top: 16px;
-  color: #695679;
-  font-size: 20px;
-  font-weight: 700;
-}}
 .grid:empty {{ display: none; }}
+.meta:empty {{ display: none; }}
 .placeholder {{
   width: 100%;
   height: 100%;
@@ -4085,9 +4051,10 @@ body {{
       </div>
       <div class="date">{month:02d}.{day:02d}<span>Birthday</span></div>
     </section>
-    <section class="grid">{item_html}</section>
-    {voice_section}
-    <section class="meta">{seiyuu_html}{related_html}{events_html}</section>
+    <div class="content">
+      <section class="grid">{item_html}</section>
+      <section class="meta">{related_html}{events_html}</section>
+    </div>
   </main>
 </body>
 </html>"""
@@ -4098,7 +4065,7 @@ body {{
         color = html.escape(item["color"])
         project_color = html.escape(item.get("project_color", color))
         logo_image = item.get("logo_image", "")
-        portrait_class = {"portrait": "portrait is-portrait", "voice_actor": "portrait is-voice-actor"}.get(item.get("asset_kind"), "portrait")
+        portrait_class = "portrait is-portrait" if item.get("asset_kind") == "portrait" else "portrait"
         if item["image"]:
             portrait = f'<img src="{html.escape(item["image"], quote=True)}" alt="{name}">'
         else:
