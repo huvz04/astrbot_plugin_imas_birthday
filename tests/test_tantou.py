@@ -400,7 +400,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_numeric_skip_and_validation_do_not_partially_save(self):
         await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 qzxv987 如月千早")
-        for value, hint in (("1", "2 个"), ("9 0", "请填")):
+        for value, hint in (("1 0 0", "1 个"), ("9 0", "请填")):
             replies = [text async for text in self.plugin.tantou_text_fallback(Event(text=value))]
             self.assertIn(hint, replies[0])
             self.assertEqual(await self.follows(), [])
@@ -451,7 +451,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
     async def test_corrected_batch_keeps_original_positions_until_every_name_is_valid(self):
         await self.plugin._change_tantou(self.event, "加推", "花海咲季")
         result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 一ノ瀬 志希 qzxv987 如月千早")
-        self.assertIn("加推确认", result)
+        self.assertIn("未找到的名字稍后修正", result)
         self.assertEqual(await self.follows(), ["花海咲季"])
         result = await self.plugin._change_tantou(self.event, "加推确认", "1 another_typo")
         self.assertIn("仍没找到", result)
@@ -594,7 +594,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unknown_name_prompt_is_short_but_waits_for_whole_ordered_batch(self):
         result = await self.plugin._change_tantou(self.event, "加推", "月村手毬 qzxv987 花海佑芽")
-        self.assertEqual(result, "没找到「qzxv987」。\n加推确认 完整名字（序号可直接回，0 跳过）")
+        self.assertEqual(result, "没找到「qzxv987」。\n加推确认 完整名字（按未找到的名字顺序修正，0 跳过）")
         self.assertEqual(await self.follows(), [])
         await self.plugin._change_tantou(self.event, "加推确认", "齋藤孝司")
         self.assertEqual(await self.follows(), ["月村手毬", "斋藤孝司", "花海佑芽"])

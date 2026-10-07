@@ -225,12 +225,46 @@ def load_generated_mapping(filename: str, variable_name: str) -> dict[str, Any]:
     return assets if isinstance(assets, dict) else {}
 
 
+def person_name_key(value: str) -> str:
+    value = unicodedata.normalize("NFKC", str(value))
+    value = "".join(chr(ord(char) - 0x60) if "ァ" <= char <= "ヶ" else char for char in value)
+    return re.sub(r"\s+", "", value)
+
+
+def load_voice_actor_registry(profiles: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    actors = load_generated_mapping("seiyuu_catalogue.py", "VOICE_ACTOR_CATALOGUE")
+    for ident, link in load_generated_mapping("voice_actor_links.py", "VOICE_ACTOR_LINKS").items():
+        # Keep established IDs when the public directory later adds a supplementary actor.
+        previous = actors.get(ident, {})
+        duplicate = next((key for key, row in actors.items()
+                          if key != ident and person_name_key(row["name"]) == person_name_key(link["name"])), None)
+        if duplicate:
+            previous = {**actors.pop(duplicate), **previous}
+        actors[ident] = {**previous, **link,
+                        "aliases": list(dict.fromkeys([*previous.get("aliases", []), *link.get("aliases", [])])),
+                        "image_url": previous.get("image_url", "")}
+    alias_ids: dict[str, set[str]] = {}
+    for ident, actor in actors.items():
+        actor.update(kind="voice_actor", is_idolmaster=False, roles=[])
+        for alias in [actor["name"], *actor.get("aliases", [])]:
+            alias_ids.setdefault(person_name_key(alias), set()).add(ident)
+    for character, profile in profiles.items():
+        for cv in re.split(r"[→、，,/／]+", str(profile.get("cv", ""))):
+            matches = alias_ids.get(person_name_key(cv), set())
+            if len(matches) == 1:
+                actor = actors[next(iter(matches))]
+                role = CHARACTER_NAME_ALIASES.get(character, character)
+                if role not in actor["roles"]:
+                    actor["roles"].append(role)
+                actor["is_idolmaster"] = True
+    return actors
+
+
 CHARACTER_IMAGE_ASSETS.update(load_generated_character_assets())
 CHARACTER_PORTRAIT_ASSETS.update(load_generated_character_portraits())
 CHARACTER_COLORS.update(load_generated_character_colors())
 CHARACTER_PROFILES.update(load_generated_character_profiles())
 CHARACTER_TANTOU_ICONS = load_generated_mapping("character_tantou_icons.py", "CHARACTER_TANTOU_ICONS")
-VOICE_ACTOR_CATALOGUE = load_generated_mapping("seiyuu_catalogue.py", "VOICE_ACTOR_CATALOGUE")
 CHARACTER_COLORS.update(
     {
         "灯里爱夏": "#ff4554",
@@ -358,6 +392,8 @@ CHARACTER_NAME_ALIASES = {
 CHARACTER_REVERSE_ALIASES = {
     alias: name for name, alias in CHARACTER_NAME_ALIASES.items()
 }
+
+VOICE_ACTOR_CATALOGUE = load_voice_actor_registry(CHARACTER_PROFILES)
 
 KR_CHARACTER_NAMES = {
     "Mint",
@@ -1067,7 +1103,7 @@ class ImasBirthdayPlugin(Star):
             logger.warning(f"官网角色库同步失败，保留已有中日文名字及头像映射：{type(exc).__name__}")
 
     def _exact_name_key(self, value: str) -> str:
-        return re.sub(r"\s+", "", unicodedata.normalize("NFKC", str(value)))
+        return person_name_key(value)
 
     @staticmethod
     def _voice_actor_id(name: str) -> str:
@@ -1082,21 +1118,14 @@ class ImasBirthdayPlugin(Star):
 
     @lru_cache(maxsize=1)
     def _voice_actor_roles(self) -> dict[str, list[str]]:
-        aliases = self._voice_actor_alias_index()
-        roles: dict[str, list[str]] = {}
-        for character, profile in CHARACTER_PROFILES.items():
-            for part in re.split(r"[→、，,/／]+", str(profile.get("cv", ""))):
-                actor = aliases.get(self._exact_name_key(part.strip()))
-                if actor and character not in roles.setdefault(actor, []):
-                    roles[actor].append(character)
-        return roles
+        return {ident: actor["roles"] for ident, actor in VOICE_ACTOR_CATALOGUE.items() if actor["is_idolmaster"]}
 
     def _voice_actor_role_label(self, name: str) -> str:
         roles = self._voice_actor_roles().get(name, [])
         if not roles:
             return "声優"
-        role = self._tantou_display_name(roles[0])
-        return f"{role}役" if role != "―" else "声優"
+        return "／".join(f"{self._tantou_display_name(role)}役" for role in roles
+                        if self._tantou_display_name(role) != "―") or "声優"
 
     def _birthday_voice_actor_labels(self, names: list[str]) -> list[str]:
         aliases = self._voice_actor_alias_index()
@@ -1258,16 +1287,21 @@ class ImasBirthdayPlugin(Star):
                 self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
                 if pending:
                     self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending, "batch": batch, "voice_actor": voice_actor}
-                    example = " ".join("1" if item["candidates"] else "完整名字" for item in pending)
-                    if all(item["candidates"] for item in pending):
-                        lines.append(f"直接回 {example}（0 跳过）；改名字用「加推确认 完整名字」")
-                    else:
-                        lines.append(f"加推确认 {example}（序号可直接回，0 跳过）")
+                    lines.append(self._tantou_confirmation_hint(pending))
                     return "\n".join(lines)
                 return await self._append_tantou_batch(umo, user_id, batch)
             except Exception:
                 logger.exception("担当登记失败")
                 return "担当登记失败，请稍后重试。"
+
+    def _tantou_confirmation_hint(self, items: list[dict[str, Any]]) -> str:
+        candidates = [item for item in items if item["candidates"]]
+        if candidates:
+            example = " ".join("1" for _ in candidates)
+            suffix = "；未找到的名字稍后修正。" if len(candidates) < len(items) else "；改名字用「加推确认 完整名字」"
+            return f"直接回 {example}（只填有候选的名字，0 跳过）{suffix}"
+        example = " ".join("完整名字" for _ in items)
+        return f"加推确认 {example}（按未找到的名字顺序修正，0 跳过）"
 
     async def _confirm_tantou(self, umo: str, user_id: str, args: str) -> str:
         pending = self._tantou_pending.get((umo, user_id))
@@ -1278,10 +1312,14 @@ class ImasBirthdayPlugin(Star):
         records = list(VOICE_ACTOR_CATALOGUE) if pending.get("voice_actor") else await self._all_tantou_records()
         aliases = self._voice_actor_alias_index() if pending.get("voice_actor") else self._tantou_alias_index(records)
         choices = self._split_tantou_names(args, self._tantou_split_aliases(records, aliases), deduplicate=False)
-        if len(choices) != len(items):
-            return f"请按顺序填写 {len(items)} 个序号或完整名字（空格分隔，0 跳过）。"
+        candidate_items = [item for item in items if item["candidates"]]
+        numeric = all(choice.isascii() and choice.isdigit() for choice in choices)
+        selected_items = candidate_items if numeric and candidate_items and len(choices) == len(candidate_items) else items
+        if len(choices) != len(selected_items):
+            count = len(candidate_items) if numeric and candidate_items else len(items)
+            return f"请填写 {count} 个{'候选序号' if numeric and candidate_items else '完整名字或 0'}（空格分隔，0 跳过）。"
         selected = list(pending["batch"])
-        for item, choice in zip(items, choices):
+        for item, choice in zip(selected_items, choices):
             if choice.isascii() and choice.isdigit():
                 index = int(choice)
                 if index > len(item["candidates"]):
@@ -1292,6 +1330,12 @@ class ImasBirthdayPlugin(Star):
                 if not name:
                     return f"仍没找到「{choice}」，请填完整名字或 0。"
                 selected[item["position"]] = name
+        remaining = [item for item in items if item not in selected_items]
+        if remaining:
+            pending["batch"] = selected
+            pending["items"] = remaining
+            missing = "、".join(f"「{item['query']}」" for item in remaining)
+            return f"候选已确认，尚未保存。待修正：{missing}\n{self._tantou_confirmation_hint(remaining)}"
         result = await self._append_tantou_batch(umo, user_id, selected)
         self._tantou_pending.pop((umo, user_id), None)
         return result
@@ -1583,7 +1627,8 @@ class ImasBirthdayPlugin(Star):
 
         async with self._tantou_icons_lock:
             missing = [name for name in dict.fromkeys(names) if name in self._idol_catalogue and not self._tantou_icon_path(name)]
-            missing_actors = [name for name in dict.fromkeys(names) if self._voice_actor_id(name) and not self._tantou_icon_path(name)]
+            missing_actors = [name for name in dict.fromkeys(names) if self._voice_actor_id(name)
+                              and VOICE_ACTOR_CATALOGUE[name].get("image_url") and not self._tantou_icon_path(name)]
             if not missing and not missing_actors:
                 return
             limit = asyncio.Semaphore(4)
@@ -2245,7 +2290,7 @@ class ImasBirthdayPlugin(Star):
     def _normalize_character_query(self, text: str) -> str:
         text = CHARACTER_NAME_ALIASES.get(text, text)
         text = self._base_character_name(text)
-        text = text.lower()
+        text = person_name_key(text).lower()
         return re.sub(r"[\s·・．.。\-_/＿—~～（）()【】\[\]「」『』]+", "", text)
 
     def _character_match_score(self, query_key: str, name_key: str) -> float:
@@ -2867,12 +2912,18 @@ class ImasBirthdayPlugin(Star):
         if not entry:
             return ""
         characters = self._visible_characters(entry)
-        seiyuu = self._birthday_voice_actor_labels(self._split_people(entry.get("seiyuu", [])))
+        actor_names = self._split_people(entry.get("seiyuu", [])) if self._cfg_bool("include_seiyuu", True) else []
+        seiyuu = self._birthday_voice_actor_labels(actor_names)
         related_people = self._split_people(entry.get("related_people", []))
         events = entry.get("events", [])
 
-        layout = self._card_layout(len(characters))
+        layout = self._card_layout(max(len(characters), len(actor_names)))
         items = [self._card_item(name, image_size=(layout["item_width"], layout["portrait_height"])) for name in characters]
+        actor_aliases = self._voice_actor_alias_index()
+        actors = [(name, actor_aliases.get(self._exact_name_key(name), "")) for name in actor_names]
+        if actors:
+            await self._prepare_tantou_icons([ident for _, ident in actors if ident])
+            items.extend(self._birthday_actor_item(name, ident) for name, ident in actors)
         if not items and not seiyuu and not self._cfg_bool("render_card_without_character_image", True):
             return ""
 
@@ -2914,6 +2965,14 @@ class ImasBirthdayPlugin(Star):
             if render_mode == "html":
                 return ""
             return self._render_card_with_pillow(month, day, items, seiyuu, card_related_people, card_events, layout)
+
+    def _birthday_actor_item(self, name: str, ident: str) -> dict[str, str]:
+        path = self._tantou_icon_path(ident) if ident else None
+        return {"name": self._tantou_display_name(ident) if ident else name,
+                "label": self._voice_actor_role_label(ident) if ident else "声優",
+                "color": "#947cab", "project_color": "#947cab", "brand": "VOICE_ACTOR",
+                "logo_path": "", "logo_image": "", "path": str(path) if path else "",
+                "image": self._image_data_uri(path), "asset_kind": "voice_actor", "section": "voice_actor"}
 
     async def _prepare_rendered_card(self, card_path: str) -> str:
         if not card_path:
@@ -3172,7 +3231,10 @@ class ImasBirthdayPlugin(Star):
                     avatar = ImageOps.contain(avatar, (size, size), Image.Resampling.LANCZOS)
                     canvas.paste(avatar, (x + (size - avatar.width) // 2, y + (size - avatar.height) // 2), avatar)
                     return
-                avatar = ImageOps.fit(avatar, (size, avatar_height), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))
+                if self._voice_actor_id(name) and not custom:
+                    avatar = ImageOps.contain(avatar, (round(size * .64), round(avatar_height * .80)), Image.Resampling.LANCZOS)
+                else:
+                    avatar = ImageOps.fit(avatar, (size, avatar_height), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))
             except Exception:
                 logger.exception(f"读取担当头像失败：{name}")
                 avatar = None
@@ -3180,7 +3242,7 @@ class ImasBirthdayPlugin(Star):
             avatar = None
         panel = Image.new("RGBA", (size, avatar_height), "#f3f5f8")
         if avatar:
-            panel.alpha_composite(avatar)
+            panel.alpha_composite(avatar, ((size - avatar.width) // 2, (avatar_height - avatar.height) // 2))
         with Image.open(self.plugin_dir / "pages" / "editor" / "assets" / "tantou-mask.png") as source_mask:
             mask = source_mask.getchannel("A").resize((size, avatar_height), Image.Resampling.LANCZOS)
         canvas.paste(panel, (x, y + (size - avatar_height) // 2), mask)
@@ -3208,9 +3270,13 @@ class ImasBirthdayPlugin(Star):
         portrait_height = layout["portrait_height"]
         card_height = portrait_height + 86
         max_columns = layout["columns"]
-        rows = [items[index : index + max_columns] for index in range(0, len(items), max_columns)]
+        actor_items = [item for item in items if item.get("section") == "voice_actor"]
+        idol_items = [item for item in items if item.get("section") != "voice_actor"]
+        sections = [("", idol_items), ("声優の誕生日", actor_items)]
+        row_count = sum((len(section) + max_columns - 1) // max_columns for _, section in sections)
+        heading_height = 40 if actor_items else 0
         meta_blocks = [
-            ("同日生日の声優", seiyuu),
+            ("同日生日の声優", [] if actor_items else seiyuu),
             ("相关人士", related_people),
             ("事件", events),
         ]
@@ -3221,8 +3287,8 @@ class ImasBirthdayPlugin(Star):
             padding * 2
             + 108
             + 20
-            + len(rows) * card_height
-            + max(0, len(rows) - 1) * gap
+            + row_count * card_height + heading_height
+            + max(0, row_count - 1) * gap
             + (14 + len(meta_rows) * 72 + max(0, len(meta_rows) - 1) * 10 if meta_rows else 0)
             + 20,
         )
@@ -3252,13 +3318,20 @@ class ImasBirthdayPlugin(Star):
         draw.line((padding, y + 88, width - padding, y + 88), fill=(32, 36, 44, 36), width=3)
         y += 108
 
-        for row in rows:
-            row_width = len(row) * item_width + max(0, len(row) - 1) * gap
-            x = (width - row_width) // 2
-            for item in row:
-                self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
-                x += item_width + gap
-            y += card_height + gap
+        for heading, section in sections:
+            if not section:
+                continue
+            if heading:
+                draw.text((padding, y + 4), heading, fill="#695679", font=name_font)
+                y += heading_height
+            for index in range(0, len(section), max_columns):
+                row = section[index:index + max_columns]
+                row_width = len(row) * item_width + max(0, len(row) - 1) * gap
+                x = (width - row_width) // 2
+                for item in row:
+                    self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
+                    x += item_width + gap
+                y += card_height + gap
 
         if meta_rows:
             y += 2
@@ -3320,6 +3393,13 @@ class ImasBirthdayPlugin(Star):
             try:
                 if item.get("asset_kind") == "portrait":
                     self._draw_pillow_portrait_panel(draw, canvas, Path(image_path), x, y, width, portrait_height, brand_rgb)
+                elif item.get("asset_kind") == "voice_actor":
+                    from PIL import Image, ImageOps
+
+                    draw.rectangle((x, y, x + width, y + portrait_height), fill="#f3f5f8")
+                    with Image.open(image_path) as source:
+                        photo = ImageOps.contain(source.convert("RGBA"), (round(width * .9), round(portrait_height * .94)), Image.Resampling.LANCZOS)
+                    canvas.paste(photo, (x + (width - photo.width) // 2, y + (portrait_height - photo.height) // 2), photo)
                 else:
                     portrait = self._pil_cover_image(Path(image_path), width, portrait_height)
                     canvas.paste(portrait, (x, y))
@@ -3334,7 +3414,9 @@ class ImasBirthdayPlugin(Star):
         draw.rounded_rectangle((x + 12, y + portrait_height + 10, x + width - 12, y + portrait_height + 15), radius=4, fill=brand_rgb)
         self._draw_pillow_brand_logo(canvas, item, x, y + portrait_height, width, 86)
         draw.text((x + 12, y + portrait_height + 25), item.get("name", ""), fill="#20242c", font=name_font)
-        draw.text((x + 12, y + portrait_height + 53), item.get("label", ""), fill="#5b6472", font=small_font)
+        labels = self._pil_wrap_text(draw, item.get("label", ""), small_font, width - 24)
+        for index, line in enumerate(labels[:2]):
+            draw.text((x + 12, y + portrait_height + 53 + index * 14), line, fill="#5b6472", font=small_font)
 
     def _draw_pillow_brand_logo(self, canvas: Any, item: dict[str, str], x: int, y: int, width: int, height: int) -> None:
         logo_path = item.get("logo_path", "")
@@ -3687,12 +3769,12 @@ class ImasBirthdayPlugin(Star):
 
     def _card_layout(self, item_count: int) -> dict[str, int]:
         columns = max(1, min(item_count, 3))
-        item_width = 700 if item_count == 0 else 480 if columns == 1 else 330 if columns == 2 else 214
+        item_width = 700 if item_count == 0 else 300 if columns == 1 else 260 if columns == 2 else 214
         grid_gap = 12
         card_padding = 30
         card_width = 760
         render_width = 760
-        portrait_height = 0 if item_count == 0 else 540 if columns == 1 else 400 if columns == 2 else 300
+        portrait_height = 0 if item_count == 0 else 360 if columns == 1 else 320 if columns == 2 else 300
         item_min_height = portrait_height + 86
         viewport_height = 300 if item_count == 0 else 720
         return {
@@ -3732,10 +3814,13 @@ class ImasBirthdayPlugin(Star):
         title = html.escape(str(self.config.get("card_title", "Happy Birthday")))
         subtitle = html.escape(self._card_subtitle())
         subtitle_html = f'<div class="subtitle">{subtitle}</div>' if subtitle else ""
-        item_html = "\n".join(self._birthday_card_item_html(item) for item in items)
-        if not item_html and not (seiyuu or related_people or events):
+        actor_items = [item for item in items if item.get("section") == "voice_actor"]
+        item_html = "\n".join(self._birthday_card_item_html(item) for item in items if item.get("section") != "voice_actor")
+        voice_html = "\n".join(self._birthday_card_item_html(item) for item in actor_items)
+        voice_section = f'<div class="section-label">声優の誕生日</div><section class="grid">{voice_html}</section>' if voice_html else ""
+        if not item_html and not (actor_items or seiyuu or related_people or events):
             item_html = '<div class="empty">今天没有匹配到本地角色图，但祝福照常送达。</div>'
-        seiyuu_html = self._meta_block("同日生日の声優", seiyuu)
+        seiyuu_html = self._meta_block("同日生日の声優", [] if actor_items else seiyuu)
         related_html = self._meta_block("相关人士", related_people)
         events_html = self._meta_block("事件", events)
         return f"""<!doctype html>
@@ -3792,6 +3877,7 @@ body {{
 .header,
 .rule,
 .grid,
+.section-label,
 .meta,
 .footer {{
   position: relative;
@@ -3873,6 +3959,23 @@ body {{
   object-fit: contain;
   object-position: center bottom;
 }}
+.portrait.is-voice-actor {{
+  background: #f3f5f8;
+  align-items: center;
+}}
+.portrait.is-voice-actor img {{
+  width: 90%;
+  height: 94%;
+  object-fit: contain;
+  object-position: center;
+}}
+.section-label {{
+  margin-top: 16px;
+  color: #695679;
+  font-size: 20px;
+  font-weight: 700;
+}}
+.grid:empty {{ display: none; }}
 .placeholder {{
   width: 100%;
   height: 100%;
@@ -3983,6 +4086,7 @@ body {{
       <div class="date">{month:02d}.{day:02d}<span>Birthday</span></div>
     </section>
     <section class="grid">{item_html}</section>
+    {voice_section}
     <section class="meta">{seiyuu_html}{related_html}{events_html}</section>
   </main>
 </body>
@@ -3994,7 +4098,7 @@ body {{
         color = html.escape(item["color"])
         project_color = html.escape(item.get("project_color", color))
         logo_image = item.get("logo_image", "")
-        portrait_class = "portrait is-portrait" if item.get("asset_kind") == "portrait" else "portrait"
+        portrait_class = {"portrait": "portrait is-portrait", "voice_actor": "portrait is-voice-actor"}.get(item.get("asset_kind"), "portrait")
         if item["image"]:
             portrait = f'<img src="{html.escape(item["image"], quote=True)}" alt="{name}">'
         else:

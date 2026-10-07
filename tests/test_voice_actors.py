@@ -40,6 +40,78 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         names = (await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"]
         self.assertEqual(names, ["va:21149", "va:10001", "月村手毬"])
 
+    async def test_reported_gakuen_aliases_resolve_in_order_with_verified_roles(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "七濑紬 长月葵 饭田光 天音缘 小鹿ナオ 湊ミヤ")
+        self.assertIn("添加成功", result)
+        self.assertFalse(self.plugin._tantou_pending)
+        identities = (await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"]
+        self.assertEqual([self.plugin._tantou_display_name(ident) for ident in identities],
+                         ["七瀬 つむぎ", "長月 あおい", "飯田 ヒカル", "天音 ゆかり", "小鹿 なお", "湊 みや"])
+        for ident, role in zip(identities, ["有村 麻央役", "花海 咲季役", "藤田 ことね役", "雨夜 燕役", "月村 手毬役", "紫雲 清夏役"]):
+            self.assertTrue(plugin_module.VOICE_ACTOR_CATALOGUE[ident]["is_idolmaster"])
+            self.assertIn(role, self.plugin._voice_actor_role_label(ident))
+        self.assertFalse(plugin_module.VOICE_ACTOR_CATALOGUE["va:21077"]["is_idolmaster"])
+
+    async def test_candidate_only_numbers_leave_unknowns_for_ordered_correction(self):
+        await self.plugin._change_tantou(self.event, "加推", "qzxv987 あおい 光 ゆかり なお qzxv999")
+        key = (self.event.unified_msg_origin, self.event.user)
+        pending = self.plugin._tantou_pending[key]
+        self.assertEqual(len(pending["items"]), 6)
+        candidates = [item for item in pending["items"] if item["candidates"]]
+        self.assertEqual(len(candidates), 4)
+        expected = ["月村手毬", candidates[0]["candidates"][0], candidates[2]["candidates"][2], candidates[3]["candidates"][0]]
+        reply = await self.plugin._change_tantou(self.event, "加推确认", "1 0 3 1")
+        self.assertIn("候选已确认", reply)
+        self.assertEqual([item["query"] for item in pending["items"]], ["qzxv987", "qzxv999"])
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001", []), [])
+        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推确认", "月村手毬 0"))
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"], expected)
+        self.assertNotIn(key, self.plugin._tantou_pending)
+
+    async def test_actor_avatar_preserves_both_ends_of_official_portrait(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "portrait.png"
+            photo = Image.new("RGB", (80, 160), "white")
+            photo.paste("red", (0, 0, 80, 20))
+            photo.paste("blue", (0, 140, 80, 160))
+            photo.save(path)
+            canvas = Image.new("RGB", (170, 170), "white")
+            with patch.object(self.plugin, "_tantou_icon_path", return_value=path):
+                self.plugin._draw_tantou_avatar(canvas, "va:21149", 0, 0, 170)
+            pixels = list(canvas.getdata())
+            self.assertGreater(pixels.count((255, 0, 0)), 300)
+            self.assertGreater(pixels.count((0, 0, 255)), 300)
+
+    async def test_birthday_restores_original_sizes_and_separates_actor_cards(self):
+        for count, width, height in [(1, 300, 360), (2, 260, 320), (3, 214, 300)]:
+            layout = self.plugin._card_layout(count)
+            self.assertEqual((layout["item_width"], layout["portrait_height"]), (width, height))
+        entry = {"characters": ["天海春香"], "seiyuu": ["小鹿奈绪"]}
+        with patch.object(self.plugin, "_render_card_with_pillow", return_value="birthday.png") as render:
+            await self.plugin._render_card(4, 3, entry)
+            items = render.call_args.args[2]
+            self.assertEqual(len(items), 2)
+            actor = items[1]
+            self.assertEqual(actor["section"], "voice_actor")
+            self.assertEqual(actor["label"], "月村 手毬役")
+            html = self.plugin._birthday_card_html(4, 3, items, [], [], [], self.plugin._card_layout(1))
+            self.assertIn("声優の誕生日", html)
+            self.assertIn("is-voice-actor", html)
+            self.assertIn("月村 手毬役", html)
+            self.plugin.config["include_seiyuu"] = False
+            await self.plugin._render_card(4, 3, entry)
+            self.assertEqual(len(render.call_args.args[2]), 1)
+
+    async def test_supplemental_actor_registry_has_stable_identity_and_blank_photo(self):
+        matches = [(ident, row) for ident, row in plugin_module.VOICE_ACTOR_CATALOGUE.items()
+                   if plugin_module.person_name_key(row["name"]) == "春野ななみ"]
+        self.assertEqual(len(matches), 1)
+        ident, row = matches[0]
+        self.assertTrue(ident.startswith("va:imas-"))
+        self.assertEqual(row["image_url"], "")
+        self.assertTrue(row["is_idolmaster"])
+        self.assertIn("上田铃帆", row["roles"])
+
     async def test_remove_shows_names_and_accepts_shindo_chinese_alias(self):
         added = await self.plugin._change_tantou(self.event, "加推", "花宮 初奈 月村手毬 进藤天音")
         self.assertIn("進藤 あまね", added)
