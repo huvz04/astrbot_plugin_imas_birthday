@@ -162,7 +162,7 @@
   "card_subtitle": {
     "description": "生日卡副标题",
     "type": "string",
-    "default": "THE IDOLM@STER Birthday"
+    "default": "THE IDOLM@STER"
   },
   "source_url": {
     "description": "萌娘百科生日信息页面",

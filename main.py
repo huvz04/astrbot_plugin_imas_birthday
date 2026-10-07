@@ -1234,7 +1234,7 @@ class ImasBirthdayPlugin(Star):
                         group.pop(user_id, None)
                     await self.put_kv_data(f"tantou_v1:{umo}", group)
                     missing = [query for query in tokens if resolved.get(query) not in removed]
-                    lines = ["已移除：" + "、".join(removed)] if removed else []
+                    lines = ["已移除：" + "、".join(self._tantou_display_name(name) for name in removed)] if removed else []
                     if missing:
                         lines.append("未登记这些完整名字：" + "、".join(missing))
                     return "\n".join(lines)
@@ -3241,7 +3241,9 @@ class ImasBirthdayPlugin(Star):
 
         y = padding
         draw.text((padding, y), str(self.config.get("card_title", "Happy Birthday")), fill="#20242c", font=title_font)
-        draw.text((padding, y + 50), str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")), fill="#5b6472", font=subtitle_font)
+        subtitle = self._card_subtitle()
+        if subtitle:
+            draw.text((padding, y + 58), subtitle, fill="#5b6472", font=subtitle_font)
         date_text = f"{month:02d}.{day:02d}"
         date_bbox = draw.textbbox((0, 0), date_text, font=date_font)
         date_x = width - padding - (date_bbox[2] - date_bbox[0])
@@ -3705,6 +3707,10 @@ class ImasBirthdayPlugin(Star):
             "viewport_height": viewport_height,
         }
 
+    def _card_subtitle(self) -> str:
+        subtitle = str(self.config.get("card_subtitle", "THE IDOLM@STER") or "").strip()
+        return "THE IDOLM@STER" if subtitle == "THE IDOLM@STER Birthday" else subtitle
+
     def _birthday_card_html(
         self,
         month: int,
@@ -3724,7 +3730,8 @@ class ImasBirthdayPlugin(Star):
         item_min_height = layout["item_min_height"]
         viewport_height = layout["viewport_height"]
         title = html.escape(str(self.config.get("card_title", "Happy Birthday")))
-        subtitle = html.escape(str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")))
+        subtitle = html.escape(self._card_subtitle())
+        subtitle_html = f'<div class="subtitle">{subtitle}</div>' if subtitle else ""
         item_html = "\n".join(self._birthday_card_item_html(item) for item in items)
         if not item_html and not (seiyuu or related_people or events):
             item_html = '<div class="empty">今天没有匹配到本地角色图，但祝福照常送达。</div>'
@@ -3804,7 +3811,7 @@ body {{
   font-weight: 800;
 }}
 .subtitle {{
-  margin-top: 18px;
+  margin-top: 24px;
   font-size: 13px;
   color: #5b6472;
 }}
@@ -3971,7 +3978,7 @@ body {{
     <section class="header">
       <div>
         <div class="title">{title}</div>
-        <div class="subtitle">{subtitle}</div>
+        {subtitle_html}
       </div>
       <div class="date">{month:02d}.{day:02d}<span>Birthday</span></div>
     </section>

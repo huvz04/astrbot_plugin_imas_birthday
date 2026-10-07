@@ -40,6 +40,16 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         names = (await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"]
         self.assertEqual(names, ["va:21149", "va:10001", "月村手毬"])
 
+    async def test_remove_shows_names_and_accepts_shindo_chinese_alias(self):
+        added = await self.plugin._change_tantou(self.event, "加推", "花宮 初奈 月村手毬 进藤天音")
+        self.assertIn("進藤 あまね", added)
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"],
+                         ["va:21077", "月村手毬", "va:20961"])
+        removed = await self.plugin._change_tantou(self.event, "减推", "花宮 初奈 月村手毬 进藤天音")
+        self.assertEqual(removed, "已移除：花宮 初奈、月村 手毬、進藤 あまね")
+        self.assertNotIn("va:", removed)
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001"), None)
+
     async def test_ambiguous_actor_and_producer_wait_for_confirmation_as_one_name(self):
         answer = await self.plugin._change_tantou(self.event, "加推", "月村手毬 武内 駿輔 小鹿なお")
         self.assertIn("武内 駿輔", answer)
@@ -86,6 +96,13 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("同日生日の声優", html)
         self.assertNotIn("今天没有匹配到本地角色图", html)
         self.assertNotIn("Character images are sourced", html)
+
+    async def test_legacy_birthday_subtitle_is_shortened(self):
+        self.plugin.config["card_subtitle"] = "THE IDOLM@STER Birthday"
+        self.assertEqual(self.plugin._card_subtitle(), "THE IDOLM@STER")
+        html = self.plugin._birthday_card_html(10, 7, [], [], [], [], self.plugin._card_layout(0))
+        self.assertIn('<div class="subtitle">THE IDOLM@STER</div>', html)
+        self.assertNotIn('<div class="subtitle">THE IDOLM@STER Birthday</div>', html)
 
     async def test_actor_only_birthday_card_keeps_the_actor_section_without_empty_idol_space(self):
         layout = self.plugin._card_layout(0)

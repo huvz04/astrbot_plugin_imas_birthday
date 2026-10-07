@@ -53,7 +53,7 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `enable_send_test`：是否启用图片发送兼容性测试指令，默认关闭。
 - `debug_send_test`：输出图片发送测试调试日志，默认关闭。
 - `send_test_timeout`：图片发送测试单次超时秒数，默认 `10`。
-- `card_title` / `card_subtitle`：生日卡标题文案。
+- `card_title` / `card_subtitle`：生日卡标题文案。副标题默认只显示 `THE IDOLM@STER`；旧默认值 `THE IDOLM@STER Birthday` 也会自动简化，自定义文案仍按原样显示。
 
 `message_template` 支持这些变量：
 
@@ -302,7 +302,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 ### 声优担当与分类排行榜
 
-`加推 小鹿なお 会 一太郎` 可一次登记女声优和男声优，也接受已核对的中文别名，如 `小鹿奈绪`。名字不确定时沿用 `加推确认` 或直接回复序号，`0` 跳过。`减推 小鹿なお` 移除；`担当` 名片会将声优作为独立类型展示，能确认的偶像大师配音关系标作「月村 手毬役」。`担当查询 小鹿なお` 可以反查群内担当。声优身份不会参与偶像排行或角色生日 @。旧指令 `加推女声优`、`减推女声优`、`女声优排行` 暂保留兼容，排行现已统计全部声优。
+`加推 小鹿なお 会 一太郎` 可一次登记女声优和男声优，也接受已核对的中文别名，如 `小鹿奈绪`、`进藤天音`。名字不确定时沿用 `加推确认` 或直接回复序号，`0` 跳过。`减推 小鹿なお` 移除；`担当` 名片会将声优作为独立类型展示，能确认的偶像大师配音关系标作「月村 手毬役」。`担当查询 小鹿なお` 可以反查群内担当。声优身份不会参与偶像排行或角色生日 @。旧指令 `加推女声优`、`减推女声优`、`女声优排行` 暂保留兼容，排行现已统计全部声优。
 
 声优资料来自[声優グランプリ公开声优名鉴](https://sugotoku-seigura.secureserv.jp/directory/list.php)列表，当前快照收录 153 页共 1,836 位声优。人物详情页需要访问权限，所以这里只使用公开列表的姓名与头像；生日不由本目录推断。中文别名只用于检索。头像在第一次展示时下载至 `tantou_icons_dir/seiyuu/`，下载失败则留空白占位。维护者可运行 `python tools/sync_seiyuu_catalogue.py` 重新检查全部页面；脚本在页面或条目明显缺失时不覆盖当前快照。
 
@@ -342,7 +342,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.93 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.94 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 
