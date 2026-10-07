@@ -159,7 +159,10 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("武内 駿輔", answer)
         self.assertIn("武内P", answer)
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001", []), [])
-        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推确认", "1"))
+        candidates = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]["items"][0]["candidates"]
+        self.assertEqual(candidates[0], "武内P")
+        actor_choice = str(candidates.index("va:10293") + 1)
+        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推确认", actor_choice))
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"],
                          ["月村手毬", "va:10293", "va:21149"])
 

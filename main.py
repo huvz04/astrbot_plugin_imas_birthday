@@ -1192,6 +1192,29 @@ class ImasBirthdayPlugin(Star):
         profile = self._lookup_character_profile(name)
         return f"{label}（{profile['cv']}）" if profile.get("display_name") and profile.get("cv") else label
 
+    def _tantou_candidate_label(self, name: str) -> str:
+        kind = "声优" if self._voice_actor_id(name) else "角色"
+        return f"{self._tantou_query_label(name)}（{kind}）"
+
+    def _tantou_candidates(self, query: str, records: list[str], limit: int = 5) -> list[str]:
+        key = self._normalize_character_query(query)
+        if not key:
+            return []
+        indexed = [(name, {self._normalize_character_query(alias) for alias in self._tantou_aliases(name) if alias})
+                   for name in records]
+        # Match full names and name fragments before comparing possible typos.
+        # This applies to every installed character, including future catalogue updates.
+        matches = [(1.0 if key in aliases else .92, name) for name, aliases in indexed
+                   if any(alias and (key in alias or alias in key) for alias in aliases)]
+        if matches:
+            matches.sort(key=lambda item: (-item[0], bool(self._voice_actor_id(item[1])), self._tantou_display_name(item[1]), item[1]))
+        else:
+            matches = [(max((self._character_match_score(key, alias) for alias in aliases), default=0), name)
+                       for name, aliases in indexed]
+            matches = [item for item in matches if item[0] >= .45]
+            matches.sort(key=lambda item: (-item[0], bool(self._voice_actor_id(item[1])), self._tantou_display_name(item[1]), item[1]))
+        return [name for _, name in matches[:limit]]
+
     def _tantou_alias_index(self, names: Any) -> dict[str, str]:
         candidates: dict[str, set[str]] = {}
         for name in dict.fromkeys(CHARACTER_NAME_ALIASES.get(name, name) for name in names):
@@ -1292,17 +1315,12 @@ class ImasBirthdayPlugin(Star):
                 for position, query in enumerate(tokens):
                     if query in resolved:
                         continue
-                    key = self._normalize_character_query(query)
-                    matches = sorted(
-                        ((max(self._character_match_score(key, self._normalize_character_query(alias)) for alias in self._tantou_aliases(name) if alias), name) for name in records),
-                        key=lambda item: (-item[0], item[1]),
-                    )
-                    candidates = [name for score, name in matches if score >= 0.45][:5]
+                    candidates = self._tantou_candidates(query, records)
                     pending.append({"query": query, "candidates": candidates, "position": position})
                     if not candidates:
                         lines.append(f"没找到「{query}」。")
                         continue
-                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {self._tantou_query_label(name) if self._lookup_character_profile(name).get('display_name') or self._voice_actor_id(name) else name}" for index, name in enumerate(candidates, 1)))
+                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {self._tantou_candidate_label(name)}" for index, name in enumerate(candidates, 1)))
                 now = time.monotonic()
                 self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
                 if pending:
@@ -1449,11 +1467,7 @@ class ImasBirthdayPlugin(Star):
                 if len(partial) == 1:
                     name = partial[0]
                 else:
-                    matches = sorted(
-                        ((max(self._character_match_score(self._normalize_character_query(query), self._normalize_character_query(alias)) for alias in self._tantou_aliases(item) if alias), item) for item in records),
-                        reverse=True,
-                    ) if not partial else []
-                    choices = partial or [item for score, item in matches if score >= .45]
+                    choices = partial or self._tantou_candidates(query, records)
                     if not choices:
                         actor_partial = [item for item in VOICE_ACTOR_CATALOGUE if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item))]
                         if len(actor_partial) == 1:
@@ -1461,7 +1475,7 @@ class ImasBirthdayPlugin(Star):
                         else:
                             choices = actor_partial
                     if not name:
-                        labels = [self._tantou_query_label(item) for item in choices[:5]]
+                        labels = [self._tantou_candidate_label(item) for item in choices[:5]]
                         if labels and any(self._lookup_character_profile(item).get("display_name") for item in choices[:5]):
                             return "是否在找：\n" + "\n".join(f"{index}. {label}" for index, label in enumerate(labels, 1)) + "\n请填写完整名字。"
                         return "请填写完整名字：" + "、".join(labels) if labels else f"没找到「{query}」。"

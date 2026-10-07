@@ -381,6 +381,38 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("添加成功", result)
         self.assertEqual(await self.follows(), ["月村手毬"])
 
+    async def test_surname_candidates_put_idolmaster_characters_before_actors(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "橘")
+        pending = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]
+        candidates = pending["items"][0]["candidates"]
+        self.assertEqual(candidates[:2], ["橘爱丽丝", "橘志狼"])
+        self.assertIn("1. 橘 ありす（角色）", result)
+        self.assertIn("2. 橘 志狼（角色）", result)
+        self.assertIn("（声优）", result)
+        self.assertEqual(await self.follows(), [])
+        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推确认", "1"))
+        self.assertEqual(await self.follows(), ["橘爱丽丝"])
+        self.assertIn("橘 ありす", await self.plugin._tantou_followers(self.event, "爱丽丝"))
+
+    async def test_every_official_surname_and_given_name_keeps_character_candidates_first(self):
+        records = await self.plugin._all_tantou_records()
+        fragments = {part for row in self.plugin._idol_catalogue.values()
+                     for part in row.get("idol_name", "").split() if part}
+        self.assertGreater(len(fragments), 300)
+        for fragment in sorted(fragments):
+            candidates = self.plugin._tantou_candidates(fragment, records)
+            self.assertTrue(candidates, fragment)
+            self.assertFalse(self.plugin._voice_actor_id(candidates[0]), fragment)
+
+    async def test_new_catalogue_entry_uses_the_same_surname_priority(self):
+        self.plugin._idol_catalogue["橘新增角色"] = {"idol_name": "橘 追加キャラクター", "aliases": [], "brand_code": "OTHER"}
+        result = await self.plugin._change_tantou(self.event, "加推", "橘")
+        choices = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]["items"][0]["candidates"]
+        self.assertIn("橘新增角色", choices)
+        first_actor = next(index for index, name in enumerate(choices) if self.plugin._voice_actor_id(name))
+        self.assertTrue(all(not self.plugin._voice_actor_id(name) for name in choices[:first_actor]))
+        self.assertIn("追加キャラクター（角色）", result)
+
     async def test_numeric_single_and_repeated_choices_keep_original_batch_order(self):
         await self.plugin._change_tantou(self.event, "加推", "手毬")
         reply = Event(text="1")
