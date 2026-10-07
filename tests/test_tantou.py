@@ -232,7 +232,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.follows(), ["七尾百合子"])
 
     async def test_producer_aliases_merge_the_same_role_and_keep_other_roles_separate(self):
-        result = await self.plugin._change_tantou(self.event, "加推", "闪p 夏目P 夏目响平 武内p 武内骏辅 武内駿輔 米内P U149P 源太P 中村P 百万Chief赤羽根P 间岛P 学p 秋月律子P")
+        result = await self.plugin._change_tantou(self.event, "加推", "闪p 夏目P 武内p 米内P U149P 源太P 中村P 百万Chief赤羽根P 间岛P 学p 秋月律子P")
         self.assertIn("添加成功", result)
         expected = ["闪耀色彩P", "武内P", "米内P", "百万动画P", "赤羽根P", "间岛P", "学园P", "秋月律子"]
         self.assertEqual(await self.follows(), expected)
@@ -391,7 +391,10 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 千早 一ノ瀬 高木顺二朗")
         self.assertIn("直接回 1 1 1", result)
         self.assertEqual(await self.follows(), [])
-        reply = Event(text="1 1 1")
+        pending = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]
+        choices = [str(item["candidates"].index(name) + 1) for item, name in zip(
+            pending["items"], ("月村手毬", "如月千早", "一之濑志希"))]
+        reply = Event(text=" ".join(choices))
         self.assertIn("添加成功", ([text async for text in self.plugin.tantou_text_fallback(reply)])[0])
         self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬", "如月千早", "一之濑志希", "高木顺二朗"])
 

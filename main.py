@@ -633,7 +633,7 @@ class ImasBirthdayPlugin(Star):
 
     @filter.command("加推女声优")
     async def tantou_add_voice_actor(self, event: AstrMessageEvent, names: GreedyStr = ""):
-        """按声优名鉴登记女声优，多个名字以空格分隔。"""
+        """旧版声优登记指令，多个名字以空格分隔。"""
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._change_tantou(event, "加推女声优", str(names)))
 
@@ -698,8 +698,18 @@ class ImasBirthdayPlugin(Star):
             else:
                 yield event.plain_result(result["message"])
 
-    @filter.command("女声优排行")
+    @filter.command("声优排行")
     async def tantou_actor_rank(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        if self._claim_tantou_event(event):
+            result = await self._tantou_ranking(event, str(args), kind="voice_actor")
+            if result["card_path"]:
+                await self._send_tantou_cards(event, result)
+            else:
+                yield event.plain_result(result["message"])
+
+    @filter.command("女声优排行")
+    async def tantou_old_actor_rank(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        """Compatibility alias for the old, women-only command name."""
         if self._claim_tantou_event(event):
             result = await self._tantou_ranking(event, str(args), kind="voice_actor")
             if result["card_path"]:
@@ -740,7 +750,7 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "女声优排行", "DD排行", "担当查询"}:
+        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行", "担当查询"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
@@ -748,10 +758,10 @@ class ImasBirthdayPlugin(Star):
         if command == "担当查询":
             yield event.plain_result(await self._tantou_followers(event, args))
             return
-        if command not in {"担当", "担当排行", "偶像排行", "群友排行", "女声优排行", "DD排行"}:
+        if command not in {"担当", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行"}:
             yield event.plain_result(await self._change_tantou(event, command, args))
             return
-        ranks = {"担当排行": "all", "偶像排行": "idol", "群友排行": "member", "女声优排行": "voice_actor", "DD排行": "dd"}
+        ranks = {"担当排行": "all", "偶像排行": "idol", "群友排行": "member", "声优排行": "voice_actor", "女声优排行": "voice_actor", "DD排行": "dd"}
         result = await (self._tantou_ranking(event, args, kind=ranks[command]) if command in ranks else self._tantou_overview(event, args))
         if result["card_path"]:
             await self._send_tantou_cards(event, result)
@@ -1141,6 +1151,11 @@ class ImasBirthdayPlugin(Star):
                     candidates.setdefault(self._exact_name_key(alias), set()).add(name)
         return {key: next(iter(values)) for key, values in candidates.items() if len(values) == 1}
 
+    def _tantou_split_aliases(self, names: Any, unique: dict[str, str]) -> dict[str, str | None]:
+        # An ambiguous full name must stay one token so it can be confirmed as one item.
+        all_keys = {self._exact_name_key(alias) for name in names for alias in self._tantou_aliases(name) if alias}
+        return {**dict.fromkeys(all_keys), **unique}
+
     def _split_tantou_names(self, text: str, aliases: dict[str, str], *, deduplicate: bool = True) -> list[str]:
         parts, result, index = text.split(), [], 0
         while index < len(parts):
@@ -1159,6 +1174,9 @@ class ImasBirthdayPlugin(Star):
         if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
             names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
         return sorted({CHARACTER_NAME_ALIASES.get(name, self._base_character_name(name)) for name in names if name and not name.startswith("qq:") and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
+
+    async def _all_tantou_records(self) -> list[str]:
+        return [*await self._tantou_records(), *VOICE_ACTOR_CATALOGUE]
 
     async def _change_tantou(self, event: AstrMessageEvent, command: str, args: str) -> str:
         umo, user_id = self._tantou_identity(event)
@@ -1200,9 +1218,9 @@ class ImasBirthdayPlugin(Star):
                 if command == "加推确认":
                     return await self._confirm_tantou(umo, user_id, args)
                 voice_actor = command in {"加推女声优", "减推女声优"}
-                records = list(VOICE_ACTOR_CATALOGUE) if voice_actor else await self._tantou_records()
+                records = list(VOICE_ACTOR_CATALOGUE) if voice_actor else await self._all_tantou_records()
                 aliases = self._voice_actor_alias_index() if voice_actor else self._tantou_alias_index(records)
-                tokens = self._split_tantou_names(args, aliases)
+                tokens = self._split_tantou_names(args, self._tantou_split_aliases(records, aliases))
                 if len(tokens) > 30:
                     return "一次最多处理 30 个名字，请分次发送。"
                 resolved = {query: aliases[self._exact_name_key(query)] for query in tokens if self._exact_name_key(query) in aliases}
@@ -1235,7 +1253,7 @@ class ImasBirthdayPlugin(Star):
                     if not candidates:
                         lines.append(f"没找到「{query}」。")
                         continue
-                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {self._tantou_query_label(name) if self._lookup_character_profile(name).get('display_name') or voice_actor else name}" for index, name in enumerate(candidates, 1)))
+                    lines.append(f"「{query}」需要确认：\n" + "\n".join(f"  {index}. {self._tantou_query_label(name) if self._lookup_character_profile(name).get('display_name') or self._voice_actor_id(name) else name}" for index, name in enumerate(candidates, 1)))
                 now = time.monotonic()
                 self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
                 if pending:
@@ -1257,8 +1275,9 @@ class ImasBirthdayPlugin(Star):
             self._tantou_pending.pop((umo, user_id), None)
             return "没有待确认的加推或已过期，请重新加推。"
         items = pending["items"]
-        aliases = self._voice_actor_alias_index() if pending.get("voice_actor") else self._tantou_alias_index(await self._tantou_records())
-        choices = self._split_tantou_names(args, aliases, deduplicate=False)
+        records = list(VOICE_ACTOR_CATALOGUE) if pending.get("voice_actor") else await self._all_tantou_records()
+        aliases = self._voice_actor_alias_index() if pending.get("voice_actor") else self._tantou_alias_index(records)
+        choices = self._split_tantou_names(args, self._tantou_split_aliases(records, aliases), deduplicate=False)
         if len(choices) != len(items):
             return f"请按顺序填写 {len(items)} 个序号或完整名字（空格分隔，0 跳过）。"
         selected = list(pending["batch"])
@@ -1420,7 +1439,7 @@ class ImasBirthdayPlugin(Star):
         umo, user_id = self._tantou_identity(event)
         if not umo or not user_id:
             return {"message": "请在群聊里查看担当排行。", "card_path": ""}
-        titles = {"all": "担当排行榜", "idol": "偶像排行榜", "member": "群友排行榜", "voice_actor": "女声优排行榜", "dd": "DD排行榜"}
+        titles = {"all": "担当排行榜", "idol": "偶像排行榜", "member": "群友排行榜", "voice_actor": "声优排行榜", "dd": "DD排行榜"}
         if kind not in titles or args.strip() or self._tantou_mentions(event):
             return {"message": "请直接发送排行指令，不要附加名字或 @。", "card_path": ""}
         async with self._tantou_lock:
@@ -1614,7 +1633,7 @@ class ImasBirthdayPlugin(Star):
                             finally:
                                 temporary.unlink(missing_ok=True)
                         except Exception as exc:
-                            logger.warning(f"女声优头像读取失败，使用占位：{name} ({type(exc).__name__})")
+                            logger.warning(f"声优头像读取失败，使用占位：{name} ({type(exc).__name__})")
                 await asyncio.gather(*(fetch(name) for name in missing), *(fetch_actor(name) for name in missing_actors))
 
     @imasbd.command("sid")

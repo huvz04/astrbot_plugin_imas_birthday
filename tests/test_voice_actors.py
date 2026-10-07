@@ -19,25 +19,41 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_directory_actors_are_distinct_from_idols_and_support_ordered_confirmation(self):
         actors = plugin_module.VOICE_ACTOR_CATALOGUE
-        self.assertGreaterEqual(len(actors), 1100)
-        self.assertNotIn("va:10001", actors)
+        self.assertGreaterEqual(len(actors), 1800)
+        self.assertEqual(actors["va:10001"]["name"], "会 一太郎")
         self.assertEqual(self.plugin._tantou_display_name("va:21149"), "小鹿 なお")
-        result = await self.plugin._change_tantou(self.event, "加推女声优", "小鹿奈绪 不存在的声优 希水汐")
+        result = await self.plugin._change_tantou(self.event, "加推", "小鹿奈绪 不存在的声优 希水汐")
         self.assertIn("没找到", result)
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001", []), [])
         confirmed = await self.plugin._change_tantou(self.event, "加推确认", "0")
         self.assertIn("添加成功", confirmed)
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"], ["va:21149", "va:21026"])
         self.assertIn("小鹿 なお · 本群 1人", await self.plugin._tantou_followers(self.event, "小鹿 なお"))
-        await self.plugin._change_tantou(self.event, "减推女声优", "小鹿奈绪")
+        await self.plugin._change_tantou(self.event, "减推", "小鹿奈绪")
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"], ["va:21026"])
         self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, ["月村手毬"]), [])
+
+    async def test_direct_add_searches_idols_actors_and_verified_mentions(self):
+        self.assertIn("添加成功：小鹿 なお", await self.plugin._change_tantou(self.event, "加推", "小鹿なお"))
+        self.assertIn("添加成功：会 一太郎", await self.plugin._change_tantou(self.event, "加推", "会 一太郎"))
+        self.assertIn("添加成功：月村 手毬", await self.plugin._change_tantou(self.event, "加推", "月村手毬"))
+        names = (await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"]
+        self.assertEqual(names, ["va:21149", "va:10001", "月村手毬"])
+
+    async def test_ambiguous_actor_and_producer_wait_for_confirmation_as_one_name(self):
+        answer = await self.plugin._change_tantou(self.event, "加推", "月村手毬 武内 駿輔 小鹿なお")
+        self.assertIn("武内 駿輔", answer)
+        self.assertIn("武内P", answer)
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001", []), [])
+        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推确认", "1"))
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"],
+                         ["月村手毬", "va:10293", "va:21149"])
 
     async def test_rankings_separate_votes_and_dd_counts_unique_follows(self):
         umo = self.event.unified_msg_origin
         self.plugin.storage[f"tantou_v1:{umo}"] = {
             "1001": ["月村手毬", "月村手毬", "va:21149", "qq:2002"],
-            "1002": ["月村手毬", "va:21026"],
+            "1002": ["月村手毬", "va:21026", "va:10001"],
         }
         self.plugin.storage[f"tantou_members_v1:{umo}"] = {"2002": {"nickname": "群友A"}}
         self.plugin.storage[f"tantou_profiles_v1:{umo}"] = {"1001": {"name": "甲"}, "1002": {"name": "乙"}}
@@ -45,8 +61,8 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
             expected = {
                 "idol": {"月村手毬": 2},
                 "member": {"qq:2002": 1},
-                "voice_actor": {"va:21149": 1, "va:21026": 1},
-                "dd": {"qq:1001": 3, "qq:1002": 2},
+                "voice_actor": {"va:21149": 1, "va:21026": 1, "va:10001": 1},
+                "dd": {"qq:1001": 3, "qq:1002": 3},
             }
             for kind, counts in expected.items():
                 result = await self.plugin._tantou_ranking(self.event, kind=kind)
@@ -56,7 +72,7 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(render.call_args.kwargs["brand_counts"], Counter({"GAKUEN_IDOLMASTER": 2}))
                 if kind == "dd":
                     self.assertIn("甲P · 3推", result["message"])
-                    self.assertIn("乙P · 2推", result["message"])
+                    self.assertIn("乙P · 3推", result["message"])
         self.assertNotIn("va:", result["message"])
 
     async def test_role_labels_only_use_matched_cast_and_birthday_text_uses_japanese(self):
@@ -71,11 +87,11 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("Character images are sourced", html)
 
     async def test_bare_and_native_actor_commands_do_not_duplicate(self):
-        bare = Event(text="加推女声优 小鹿なお")
+        bare = Event(text="加推 小鹿なお")
         replies = [text async for text in self.plugin.tantou_text_fallback(bare)]
         self.assertIn("添加成功", replies[0])
-        self.assertEqual([text async for text in self.plugin.tantou_add_voice_actor(bare, "小鹿なお")], [])
-        slash = Event(text="/女声优排行")
+        self.assertEqual([text async for text in self.plugin.tantou_add(bare, "小鹿なお")], [])
+        slash = Event(text="/声优排行")
         self.plugin._tantou_ranking = AsyncMock(return_value={"message": "rank", "card_path": "", "card_paths": []})
         self.assertEqual([text async for text in self.plugin.tantou_text_fallback(slash)], [])
         self.assertEqual([text async for text in self.plugin.tantou_actor_rank(slash)], ["rank"])
