@@ -2872,7 +2872,7 @@ class ImasBirthdayPlugin(Star):
         events = entry.get("events", [])
 
         layout = self._card_layout(len(characters))
-        items = [self._card_item(name, image_size=(layout["item_width"], layout["portrait_height"])) for name in characters]
+        items = [self._card_item(name, image_size=(layout["image_width"], layout["portrait_height"])) for name in characters]
         if not items and not self._cfg_bool("render_card_without_character_image", True):
             return ""
 
@@ -3206,7 +3206,7 @@ class ImasBirthdayPlugin(Star):
         gap = layout["grid_gap"]
         item_width = layout["item_width"]
         portrait_height = layout["portrait_height"]
-        card_height = portrait_height + 86
+        card_height = layout["item_min_height"]
         max_columns = layout["columns"]
         rows = [items[index : index + max_columns] for index in range(0, len(items), max_columns)] or [[]]
         meta_blocks = [
@@ -3254,7 +3254,10 @@ class ImasBirthdayPlugin(Star):
             row_width = len(row) * item_width + max(0, len(row) - 1) * gap
             x = (width - row_width) // 2
             for item in row:
-                self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
+                if len(items) == 1:
+                    self._draw_pillow_hero_card(draw, image, item, x, y, item_width, layout["image_width"], portrait_height, Image, ImageDraw, ImageFont)
+                else:
+                    self._draw_pillow_idol_card(draw, image, item, x, y, item_width, portrait_height, card_height, name_font, small_font)
                 x += item_width + gap
             y += card_height + gap
 
@@ -3281,6 +3284,53 @@ class ImasBirthdayPlugin(Star):
         image.save(destination, format="PNG")
         logger.info(self._image_send_debug("生日卡片本地 Pillow 渲染产物已准备", str(destination), str(destination)))
         return str(destination)
+
+    def _draw_pillow_hero_card(self, draw: Any, canvas: Any, item: dict[str, str], x: int, y: int,
+                               width: int, image_width: int, height: int, image_module: Any,
+                               image_draw: Any, image_font: Any) -> None:
+        brand_rgb = self._hex_rgb(item.get("color", ""), (99, 111, 129))
+        tint = tuple(round(channel * .13 + 255 * .87) for channel in brand_rgb)
+        draw.rounded_rectangle((x, y, x + width, y + height), radius=16,
+                               fill=tint, outline=(225, 230, 236), width=2)
+        image_path = item.get("path", "")
+        if image_path and Path(image_path).exists():
+            try:
+                if item.get("asset_kind") == "portrait":
+                    picture = image_module.new("RGB", (image_width, height), brand_rgb)
+                    self._draw_pillow_portrait_panel(image_draw.Draw(picture), picture, Path(image_path),
+                                                     0, 0, image_width, height, brand_rgb)
+                else:
+                    picture = self._pil_cover_image(Path(image_path), image_width, height)
+            except Exception:
+                logger.exception(f"本地卡片读取角色图失败：{image_path}")
+                picture = image_module.new("RGB", (image_width, height), brand_rgb)
+        else:
+            picture = image_module.new("RGB", (image_width, height), brand_rgb)
+        mask = image_module.new("L", (image_width, height), 0)
+        image_draw.Draw(mask).rounded_rectangle((0, 0, image_width, height), radius=16, fill=255)
+        canvas.paste(picture, (x, y), mask)
+
+        panel_x = x + image_width
+        draw.rectangle((panel_x, y, panel_x + 6, y + height), fill=brand_rgb)
+        text_x = panel_x + 25
+        text_width = width - image_width - 48
+        kicker_font = self._pil_font(image_font, 15, bold=True)
+        name_font = self._pil_font(image_font, 30, bold=True)
+        label_font = self._pil_font(image_font, 15, bold=True)
+        draw.text((text_x, y + 63), "HAPPY BIRTHDAY", fill=brand_rgb, font=kicker_font)
+        draw.rounded_rectangle((text_x, y + 104, x + width - 25, y + 110), radius=3, fill=brand_rgb)
+        lines = self._pil_wrap_text(draw, item.get("name", ""), name_font, text_width)[:4]
+        line_height = 42
+        name_y = y + max(160, (height - len(lines) * line_height) // 2 - 4)
+        for line in lines:
+            draw.text((text_x, name_y), line, fill="#20242c", font=name_font)
+            name_y += line_height
+        label_y = y + height - 128
+        label_lines = self._pil_wrap_text(draw, item.get("label", ""), label_font, text_width)[:2]
+        for line in label_lines:
+            draw.text((text_x, label_y), line, fill="#5b6472", font=label_font)
+            label_y += 21
+        self._draw_pillow_brand_logo(canvas, item, panel_x + 10, y + height - 80, width - image_width - 20, 68)
 
     def _pillow_six_brand_background(self, image_module: Any, image_draw: Any, image_filter: Any, width: int, height: int) -> Any:
         base = image_module.new("RGBA", (width, height), "#f7f3ec")
@@ -3678,17 +3728,19 @@ class ImasBirthdayPlugin(Star):
 
     def _card_layout(self, item_count: int) -> dict[str, int]:
         columns = max(1, min(item_count, 3))
-        item_width = 300 if columns == 1 else 260 if columns == 2 else 214
+        item_width = 700 if item_count <= 1 else 340 if columns == 2 else 214
+        image_width = 440 if item_count <= 1 else item_width
         grid_gap = 12
         card_padding = 30
         card_width = 760
         render_width = 760
-        portrait_height = 360 if columns == 1 else 320 if columns == 2 else 300
-        item_min_height = portrait_height + 86
-        viewport_height = 1280
+        portrait_height = 510 if item_count <= 1 else 390 if columns == 2 else 300
+        item_min_height = portrait_height if item_count <= 1 else portrait_height + 86
+        viewport_height = 720
         return {
             "columns": columns,
             "item_width": item_width,
+            "image_width": image_width,
             "grid_gap": grid_gap,
             "card_padding": card_padding,
             "card_width": card_width,
@@ -3719,6 +3771,7 @@ class ImasBirthdayPlugin(Star):
         title = html.escape(str(self.config.get("card_title", "Happy Birthday")))
         subtitle = html.escape(str(self.config.get("card_subtitle", "THE IDOLM@STER Birthday")))
         item_html = "\n".join(self._birthday_card_item_html(item) for item in items)
+        grid_class = "grid hero" if len(items) == 1 else "grid"
         if not item_html:
             item_html = '<div class="empty">今天没有匹配到本地角色图，但祝福照常送达。</div>'
         seiyuu_html = self._meta_block("同日生日の声優", seiyuu)
@@ -3859,6 +3912,67 @@ body {{
   object-fit: contain;
   object-position: center bottom;
 }}
+.idol-details {{
+  position: relative;
+  flex: 1;
+  min-height: 86px;
+}}
+.hero-kicker {{ display: none; }}
+.grid.hero .idol {{
+  flex-direction: row;
+  width: {item_width}px;
+  height: {portrait_height}px;
+  border-radius: 16px;
+}}
+.grid.hero .portrait {{
+  flex: 0 0 {layout['image_width']}px;
+  height: {portrait_height}px;
+  border-radius: 16px;
+  overflow: hidden;
+}}
+.grid.hero .idol-details {{
+  min-height: {portrait_height}px;
+  padding: 62px 24px 20px;
+  border-left: 6px solid var(--brand);
+  background: color-mix(in srgb, var(--brand) 13%, white);
+}}
+.grid.hero .hero-kicker {{
+  display: block;
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .06em;
+}}
+.grid.hero .idol-name {{
+  margin-top: 102px;
+  padding: 18px 0 0;
+  font-size: 30px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}}
+.grid.hero .idol-name::before {{
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 6px;
+}}
+.grid.hero .brand {{
+  position: absolute;
+  left: 24px;
+  right: 16px;
+  bottom: 100px;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1.35;
+}}
+.grid.hero .brand-logo {{
+  right: 18px;
+  top: auto;
+  bottom: 12px;
+  width: 70%;
+  height: 70px;
+  transform: none;
+}}
 .placeholder {{
   width: 100%;
   height: 100%;
@@ -3968,7 +4082,7 @@ body {{
       </div>
       <div class="date">{month:02d}.{day:02d}<span>Birthday</span></div>
     </section>
-    <section class="grid">{item_html}</section>
+    <section class="{grid_class}">{item_html}</section>
     <section class="meta">{seiyuu_html}{related_html}{events_html}</section>
   </main>
 </body>
@@ -3993,9 +4107,12 @@ body {{
         }.get(item.get("brand", ""), "53%")
         return f"""<article class="idol" style="--brand:{color};--project:{project_color};--logo-y:{logo_y}">
   <div class="{portrait_class}">{portrait}</div>
-  <div class="idol-name">{name}</div>
-  <div class="brand">{label}</div>
-  {logo_html}
+  <div class="idol-details">
+    <div class="hero-kicker">HAPPY BIRTHDAY</div>
+    <div class="idol-name">{name}</div>
+    <div class="brand">{label}</div>
+    {logo_html}
+  </div>
 </article>"""
 
     def _meta_block(self, title: str, values: list[str]) -> str:

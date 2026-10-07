@@ -85,7 +85,7 @@ async function makeImageEditor(kind, initial) {
     const label = document.createElement('label'); label.textContent = '生日卡布局';
     layoutSelect = document.createElement('select'); layoutSelect.dataset.previewOnly = 'true';
     for (const [columns, layout] of Object.entries(birthdayLayouts)) {
-      layoutSelect.add(new Option(`${columns} 列 · ${layout.item_width} × ${layout.portrait_height}`, columns));
+      layoutSelect.add(new Option(`${columns} 列 · ${layout.image_width} × ${layout.portrait_height}`, columns));
     }
     layoutSelect.value = birthdayColumns;
     label.append(layoutSelect); card.querySelector('.stage').before(label);
