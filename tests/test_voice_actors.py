@@ -40,6 +40,39 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         names = (await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"]
         self.assertEqual(names, ["va:21149", "va:10001", "月村手毬"])
 
+    async def test_chinese_romanized_names_and_nickname_share_actor_identity(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "伊達 小百合 IWA Sayuri Date Kana Hanaiwa")
+        self.assertIn("添加成功", result)
+        self.assertFalse(self.plugin._tantou_pending)
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"], ["va:20966", "va:21218"])
+        for query in ("伊达小百合", "DATE SAYURI", "SayuriDate", "date sayuri"):
+            self.assertIn("伊達 さゆり · 本群 1人", await self.plugin._tantou_followers(self.event, query))
+        for query in ("iwa", "Iwa", "hanaiwa kana", "KanaHanaiwa"):
+            self.assertIn("花岩 香奈 · 本群 1人", await self.plugin._tantou_followers(self.event, query))
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "date sayuri iwa"), "已移除：伊達 さゆり、花岩 香奈")
+
+    async def test_romanized_long_vowels_keep_spelling_variants_and_original_order(self):
+        answer = await self.plugin._change_tantou(self.event, "加推", "Nao Ojika Itou Mao Amasaki Kohei Mao Ito Kōhei Amasaki")
+        self.assertIn("添加成功", answer)
+        self.assertFalse(self.plugin._tantou_pending)
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"],
+                         ["va:21149", "va:21138", "va:10014"])
+        self.assertEqual(self.plugin._tantou_display_name("va:21138"), "伊藤 舞音")
+        actor = plugin_module.VOICE_ACTOR_CATALOGUE["va:21138"]
+        self.assertTrue(actor["is_idolmaster"])
+        self.assertIn("仓本千奈", actor["roles"])
+        self.assertTrue(any("moegirl" in url for url in actor["sources"]))
+
+    async def test_shared_nickname_waits_for_choice_and_does_not_overwrite_identity(self):
+        actors = plugin_module.VOICE_ACTOR_CATALOGUE
+        duplicate = {**actors["va:21149"], "aliases": [*actors["va:21149"]["aliases"], "iwa"]}
+        with patch.dict(actors, {"va:21149": duplicate}):
+            result = await self.plugin._change_tantou(self.event, "加推", "iwa")
+            self.assertIn("需要确认", result)
+            self.assertIn("花岩 香奈", result)
+            self.assertIn("小鹿 なお", result)
+            self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001", []), [])
+
     async def test_reported_gakuen_aliases_resolve_in_order_with_verified_roles(self):
         result = await self.plugin._change_tantou(self.event, "加推", "七濑紬 长月葵 饭田光 天音缘 小鹿ナオ 湊ミヤ")
         self.assertIn("添加成功", result)

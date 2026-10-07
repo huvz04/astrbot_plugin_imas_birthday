@@ -678,10 +678,10 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         await self.plugin._change_tantou(self.event, "加推", "花海佑芽")
         self.assertIn("没有待确认", await self.plugin._change_tantou(self.event, "加推确认", "1"))
 
-    async def test_normalized_match_is_not_exact(self):
+    async def test_latin_name_case_does_not_require_confirmation(self):
         result = await self.plugin._change_tantou(self.event, "加推", "roco")
-        self.assertIn("需要确认", result)
-        self.assertEqual(await self.follows(), [])
+        self.assertIn("添加成功", result)
+        self.assertEqual(await self.follows(), ["Roco"])
 
     async def test_failed_storage_keeps_confirmation_for_retry(self):
         await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 一ノ瀬 志希")

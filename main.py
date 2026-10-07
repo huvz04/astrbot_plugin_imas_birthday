@@ -228,7 +228,21 @@ def load_generated_mapping(filename: str, variable_name: str) -> dict[str, Any]:
 def person_name_key(value: str) -> str:
     value = unicodedata.normalize("NFKC", str(value))
     value = "".join(chr(ord(char) - 0x60) if "ァ" <= char <= "ヶ" else char for char in value)
-    return re.sub(r"\s+", "", value)
+    return re.sub(r"\s+", "", value).casefold()
+
+
+def voice_actor_name_aliases(actor: dict[str, Any]) -> list[str]:
+    aliases = [actor["name"], *actor.get("aliases", []), *actor.get("nicknames", [])]
+    long_vowels = str.maketrans({"ā": "aa", "ī": "ii", "ū": "uu", "ē": "ee", "ō": "ou"})
+    for name in actor.get("romanized_names", []):
+        name = unicodedata.normalize("NFC", name).strip()
+        plain = "".join(char for char in unicodedata.normalize("NFD", name) if not unicodedata.combining(char))
+        for spelling in (name, plain, name.casefold().translate(long_vowels)):
+            aliases.append(spelling)
+            parts = spelling.split()
+            if len(parts) == 2:
+                aliases.append(" ".join(reversed(parts)))
+    return list(dict.fromkeys(aliases))
 
 
 def load_voice_actor_registry(profiles: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -243,10 +257,16 @@ def load_voice_actor_registry(profiles: dict[str, dict[str, Any]]) -> dict[str, 
         actors[ident] = {**previous, **link,
                         "aliases": list(dict.fromkeys([*previous.get("aliases", []), *link.get("aliases", [])])),
                         "image_url": previous.get("image_url", "")}
+    for ident, names in load_generated_mapping("voice_actor_names.py", "VOICE_ACTOR_NAMES").items():
+        if ident in actors:
+            actor = actors[ident]
+            for field in ("aliases", "romanized_names", "nicknames", "sources"):
+                actor[field] = list(dict.fromkeys([*actor.get(field, []), *names.get(field, [])]))
     alias_ids: dict[str, set[str]] = {}
     for ident, actor in actors.items():
         actor.update(kind="voice_actor", is_idolmaster=bool(actor.get("credited_roles")), roles=[])
-        for alias in [actor["name"], *actor.get("aliases", [])]:
+        actor["aliases"] = voice_actor_name_aliases(actor)
+        for alias in actor["aliases"]:
             alias_ids.setdefault(person_name_key(alias), set()).add(ident)
     for character, profile in profiles.items():
         for cv in re.split(r"[→、，,/／]+", str(profile.get("cv", ""))):
