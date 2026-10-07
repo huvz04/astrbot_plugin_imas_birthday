@@ -49,7 +49,8 @@ class RankingTests(unittest.IsolatedAsyncioTestCase):
         self.plugin.storage[f"tantou_v1:{umo}"] = {"1001": ["qq:2002", "月村手毬"], "1003": ["qq:2002"]}
         self.plugin.storage[f"tantou_members_v1:{umo}"] = {"2002": {"nickname": "旧群名"}}
         self.plugin.storage[f"tantou_profiles_v1:{umo}"] = {"2002": {"name": "ℒℴѵℯ•唯爱 丘比.✧=₂✭"}}
-        with patch.object(self.plugin, "_render_tantou_ranking", side_effect=RuntimeError("render unavailable")):
+        with patch.object(self.plugin, "_render_tantou_ranking", side_effect=RuntimeError("render unavailable")), \
+                patch.object(self.plugin, "_cache_tantou_member_avatars", new_callable=AsyncMock):
             with self.assertLogs("test_tantou", level="ERROR"):
                 result = await self.plugin._tantou_ranking(self.event)
         self.assertIn("1. ℒℴѵℯ•唯爱 丘比.✧=₂✭ · 2人", result["message"])

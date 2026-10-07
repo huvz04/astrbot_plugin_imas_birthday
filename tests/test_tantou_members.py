@@ -2,7 +2,9 @@
 import copy
 import io
 import json
+import os
 import tempfile
+import time
 import types
 import unittest
 from pathlib import Path
@@ -64,6 +66,7 @@ class MemberTantouTests(unittest.IsolatedAsyncioTestCase):
         self.plugin._cache_tantou_member_avatars.assert_awaited_once_with(event.unified_msg_origin, ["3003", "2002"])
         restored = make_plugin(self.plugin.storage)
         restored.tantou_icons_dir = self.plugin.tantou_icons_dir
+        restored._cache_tantou_member_avatars = AsyncMock()
         with patch.object(restored, "_render_tantou_cards", return_value=[]):
             result = await restored._tantou_overview(Event(owner="登记人"))
         self.assertIn("月村 手毬、ℒℴѵℯ•😀、群友CN", result["message"])
@@ -224,6 +227,112 @@ class MemberTantouTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(len(requests), 1)
             self.assertEqual(requests[0].url.host, "q1.qlogo.cn")
             self.assertFalse(self.plugin._tantou_member_avatar_path("bot:GroupMessage:100", "2002").exists())
+
+    async def test_stale_and_forced_avatars_replace_png_but_failed_refresh_keeps_old_image(self):
+        event = mentioned_event()
+        path = self.plugin._tantou_member_avatar_path(event.unified_msg_origin, "2002")
+        path.parent.mkdir(parents=True)
+        PILImage.new("RGB", (20, 20), "red").save(path)
+        requests = []
+        colors = iter(("blue", "green"))
+        def respond(request):
+            requests.append(request)
+            if len(requests) == 3:
+                return httpx.Response(503)
+            data = io.BytesIO()
+            PILImage.new("RGB", (640, 640), next(colors)).save(data, format="PNG")
+            return httpx.Response(200, content=data.getvalue())
+        original = httpx.AsyncClient
+        with patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(respond), **kw)):
+            self.assertEqual(await self.real_avatar_cache(event.unified_msg_origin, ["2002"]), {"2002"})
+            self.assertEqual(requests, [])
+            os.utime(path, (time.time() - 3601,) * 2)
+            self.assertEqual(await self.real_avatar_cache(event.unified_msg_origin, ["2002"]), {"2002"})
+            with PILImage.open(path) as image:
+                self.assertEqual(image.getpixel((0, 0)), (0, 0, 255, 255))
+            self.assertEqual(await self.real_avatar_cache(event.unified_msg_origin, ["2002"], force=True), {"2002"})
+            before_failure = path.read_bytes()
+            self.assertEqual(await self.real_avatar_cache(event.unified_msg_origin, ["2002"], force=True), set())
+            self.assertEqual(path.read_bytes(), before_failure)
+        self.assertEqual(len(requests), 3)
+        self.assertEqual(len({request.url.params["t"] for request in requests}), 3)
+        for request in requests:
+            self.assertEqual(request.url.host, "q1.qlogo.cn")
+            self.assertEqual(request.headers["cache-control"], "no-cache")
+        with PILImage.open(path) as image:
+            self.assertEqual(image.getpixel((0, 0)), (0, 128, 0, 255))
+
+    async def test_overview_and_ranking_read_new_avatar_after_automatic_refresh(self):
+        event = Event()
+        self.plugin.storage[f"tantou_v1:{event.unified_msg_origin}"] = {event.user: ["qq:2002"]}
+        self.plugin.storage[f"tantou_members_v1:{event.unified_msg_origin}"] = {"2002": {"nickname": "真正的群友"}}
+        path = self.plugin._tantou_member_avatar_path(event.unified_msg_origin, "2002")
+        path.parent.mkdir(parents=True)
+        PILImage.new("RGB", (20, 20), "red").save(path)
+        data = io.BytesIO()
+        PILImage.new("RGB", (640, 640), "blue").save(data, format="PNG")
+        original = httpx.AsyncClient
+        self.plugin._cache_tantou_member_avatars = self.real_avatar_cache
+        def inspect_card(*args, members, **kwargs):
+            with PILImage.open(members["qq:2002"]["avatar_path"]) as image:
+                self.assertEqual(image.getpixel((0, 0)), (0, 0, 255, 255))
+            return []
+        with patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(lambda request: httpx.Response(200, content=data.getvalue())), **kw)), \
+                patch.object(self.plugin, "_render_tantou_cards", side_effect=inspect_card), \
+                patch.object(self.plugin, "_render_tantou_ranking", side_effect=inspect_card), \
+                patch.object(self.plugin, "_tantou_ranking_group", return_value={"name": "本群", "avatar_path": None}):
+            for query in (lambda: self.plugin._tantou_overview(event), lambda: self.plugin._tantou_ranking(event, kind="member")):
+                os.utime(path, (time.time() - 3601,) * 2)
+                await query()
+            self.plugin._render_tantou_cards.assert_called_once()
+            self.plugin._render_tantou_ranking.assert_called_once()
+
+    async def test_manual_refresh_verifies_real_at_keeps_follows_and_bound_name_and_limits_repeats(self):
+        event = mentioned_event(command="刷新群友头像", wake=True)
+        install_bot(event, [member()])
+        self.plugin.storage[f"tantou_v1:{event.unified_msg_origin}"] = {event.user: ["月村手毬", "qq:2002"]}
+        self.plugin.storage[f"tantou_profiles_v1:{event.unified_msg_origin}"] = {"2002": {"name": "群友CN"}}
+        self.plugin._cache_tantou_member_avatars.return_value = {"2002"}
+        self.plugin._tantou_pending[(event.unified_msg_origin, event.user)] = {"unrelated": "pending batch"}
+        result = [reply async for reply in self.plugin.tantou_refresh_member_avatar(event, "@截断名字")]
+        self.assertEqual(result, ["头像已重新获取：群友CN。"])
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(event)], [])
+        self.assertEqual(await self.follows(event), ["月村手毬", "qq:2002"])
+        self.assertEqual(self.plugin._tantou_pending[(event.unified_msg_origin, event.user)], {"unrelated": "pending batch"})
+        event.bot.call_action.assert_any_await("get_group_member_info", group_id=100, user_id=2002, no_cache=True, self_id="9999")
+        self.plugin._cache_tantou_member_avatars.assert_awaited_once_with(event.unified_msg_origin, ["2002"], force=True)
+        repeated = mentioned_event(command="刷新群友头像")
+        install_bot(repeated, [member()])
+        self.assertIn("1 分钟", await self.plugin._refresh_tantou_member_avatars(repeated))
+        self.assertEqual(self.plugin._cache_tantou_member_avatars.await_count, 1)
+
+    async def test_refresh_rejects_spoofed_at_nonmembers_foreign_identity_and_extra_content(self):
+        command = "刷新群友头像"
+        handwritten = Event(text=command + " @真正的群友")
+        mixed = mentioned_event(command=command)
+        mixed.messages.append(Plain(" https://evil.example/avatar"))
+        too_many = mentioned_event(command=command, ids=tuple(str(2000 + i) for i in range(31)))
+        private = mentioned_event(command=command, group="")
+        nonmember = mentioned_event(command=command)
+        install_bot(nonmember, [])
+        foreign = mentioned_event(command=command)
+        install_bot(foreign, [member()])
+        foreign.bot.call_action.side_effect = lambda action, **kw: [member()] if action == "get_group_member_list" else member(group_id="200")
+        for event in (handwritten, mixed, too_many, private, nonmember, foreign, mentioned_event(command=command, ids=("all",))):
+            with self.subTest(text=event.message_str, ids=self.plugin._tantou_mentions(event)):
+                result = await self.plugin._refresh_tantou_member_avatars(event)
+                self.assertNotIn("已重新获取", result)
+                self.assertEqual(await self.follows(event), [])
+        self.plugin._cache_tantou_member_avatars.assert_not_awaited()
+        self.assertFalse(any(key.startswith("tantou_avatar_refresh_v1:") for key in self.plugin.storage))
+
+    async def test_fallback_refresh_reports_partial_failures_without_registering_members(self):
+        event = mentioned_event(command="刷新群友头像", ids=("2002", "3003"))
+        install_bot(event, [member(), member("3003", nickname="第二位")])
+        self.plugin._cache_tantou_member_avatars.return_value = {"2002"}
+        result = [reply async for reply in self.plugin.tantou_text_fallback(event)]
+        self.assertEqual(result, ["头像已重新获取：真正的群友。\n获取失败，保留原图：第二位。"])
+        self.assertEqual(await self.follows(event), [])
 
     async def test_new_profiles_and_unicode_member_names_render_with_blank_avatars(self):
         names = ["美作武史", "赤羽根P", "武内P", "闪耀色彩P", "石川P", "百万动画P", "今西部长", "训练员", "资深训练员", "新人训练员", "石川实", "冈本真奈美", "尾崎玲子", "武田苍一"]

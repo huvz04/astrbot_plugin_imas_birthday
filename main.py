@@ -726,6 +726,12 @@ class ImasBirthdayPlugin(Star):
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._change_tantou(event, "清空担当", str(args)))
 
+    @filter.command("刷新群友头像")
+    async def tantou_refresh_member_avatar(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        """核验真实 @ 的本群群友并重新下载头像。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._refresh_tantou_member_avatars(event))
+
     @filter.command("担当排行")
     async def tantou_rank(self, event: AstrMessageEvent, args: GreedyStr = ""):
         """查看本群被担当最多的前十位。"""
@@ -806,10 +812,13 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行", "担当查询"}:
+        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行", "担当查询", "刷新群友头像"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
+            return
+        if command == "刷新群友头像":
+            yield event.plain_result(await self._refresh_tantou_member_avatars(event))
             return
         if command == "担当查询":
             yield event.plain_result(await self._tantou_followers(event, args))
@@ -963,42 +972,96 @@ class ImasBirthdayPlugin(Star):
 
         return dict(await asyncio.gather(*(verify(user_id) for user_id in user_ids)))
 
-    async def _cache_tantou_member_avatars(self, umo: str, user_ids: list[str]) -> None:
+    async def _cache_tantou_member_avatars(self, umo: str, user_ids: list[str], *, force: bool = False) -> set[str]:
         import io
         from PIL import Image
 
-        limit = asyncio.Semaphore(4)
-        async with httpx.AsyncClient(follow_redirects=False, timeout=10) as client:
-            async def fetch(user_id: str) -> None:
-                async with limit:
-                    path = self._tantou_member_avatar_path(umo, user_id)
-                    if path.is_file() and time.time() - path.stat().st_mtime < 86400:
-                        return
-                    try:
-                        # Never accept avatar URLs from message components or API metadata.
-                        async with client.stream("GET", "https://q1.qlogo.cn/g", params={"b": "qq", "nk": user_id, "s": "640"}) as response:
-                            response.raise_for_status()
-                            data = bytearray()
-                            async for chunk in response.aiter_bytes():
-                                data.extend(chunk)
-                                if len(data) > 2_000_000:
-                                    raise ValueError("QQ avatar exceeds size limit")
-                        with Image.open(io.BytesIO(data)) as source:
-                            if source.format not in {"PNG", "JPEG", "WEBP", "GIF"} or max(source.size) > 2048:
-                                raise ValueError("Unexpected QQ avatar")
-                            avatar = source.convert("RGBA")
-                            avatar.thumbnail((320, 320), Image.Resampling.LANCZOS)
-                        path.parent.mkdir(parents=True, exist_ok=True)
-                        with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
-                            temporary = Path(output.name)
+        available = set()
+        async with self._tantou_icons_lock:
+            pending = []
+            for user_id in dict.fromkeys(user_ids):
+                path = self._tantou_member_avatar_path(umo, user_id)
+                if not force and path.is_file() and time.time() - path.stat().st_mtime < 3600:
+                    available.add(user_id)
+                else:
+                    pending.append((user_id, path))
+            if not pending:
+                return available
+            limit = asyncio.Semaphore(4)
+            async with httpx.AsyncClient(follow_redirects=False, timeout=10) as client:
+                async def fetch(user_id: str, path: Path) -> None:
+                    async with limit:
                         try:
-                            avatar.save(temporary, format="PNG")
-                            temporary.replace(path)
-                        finally:
-                            temporary.unlink(missing_ok=True)
-                    except Exception as exc:
-                        logger.debug(f"群友头像读取失败，使用空白占位：{type(exc).__name__}")
-            await asyncio.gather(*(fetch(user_id) for user_id in user_ids))
+                            # Fixed host/ID only; ask HTTP caches to revalidate without
+                            # trusting avatar URLs from messages or API metadata.
+                            params = {"b": "qq", "nk": user_id, "s": "640", "t": str(time.time_ns())}
+                            async with client.stream("GET", "https://q1.qlogo.cn/g", params=params,
+                                                     headers={"Cache-Control": "no-cache", "Pragma": "no-cache"}) as response:
+                                response.raise_for_status()
+                                data = bytearray()
+                                async for chunk in response.aiter_bytes():
+                                    data.extend(chunk)
+                                    if len(data) > 2_000_000:
+                                        raise ValueError("QQ avatar exceeds size limit")
+                            with Image.open(io.BytesIO(data)) as source:
+                                if source.format not in {"PNG", "JPEG", "WEBP", "GIF"} or max(source.size) > 2048:
+                                    raise ValueError("Unexpected QQ avatar")
+                                avatar = source.convert("RGBA")
+                                avatar.thumbnail((320, 320), Image.Resampling.LANCZOS)
+                            path.parent.mkdir(parents=True, exist_ok=True)
+                            with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
+                                temporary = Path(output.name)
+                            try:
+                                avatar.save(temporary, format="PNG")
+                                temporary.replace(path)
+                                available.add(user_id)
+                            finally:
+                                temporary.unlink(missing_ok=True)
+                        except Exception as exc:
+                            logger.debug(f"群友头像读取失败，保留原图或使用空白占位：{type(exc).__name__}")
+                await asyncio.gather(*(fetch(user_id, path) for user_id, path in pending))
+        return available
+
+    async def _refresh_tantou_member_avatars(self, event: AstrMessageEvent) -> str:
+        umo, owner_id = self._tantou_identity(event)
+        if not umo or not owner_id:
+            return "请在群聊里刷新群友头像。"
+        user_ids = self._tantou_mentions(event)
+        allowed = tuple(cls for cls in (getattr(Comp, "Plain", None), getattr(Comp, "At", None), getattr(Comp, "Reply", None)) if isinstance(cls, type))
+        parts = event.get_messages()
+        plain = "".join(part.text for part in parts if isinstance(part, Comp.Plain)).strip()
+        if (not user_ids or any(not isinstance(part, allowed) for part in parts)
+                or plain not in {"刷新群友头像", "/刷新群友头像"}
+                or not all(self._tantou_member_id("qq:" + user_id) for user_id in user_ids)):
+            return "用法：刷新群友头像 @群友；请发送真实 @。"
+        if len(user_ids) > 30:
+            return "一次最多刷新 30 位群友。"
+        try:
+            verified = await self._verify_tantou_members(event, user_ids)
+            async with self._tantou_lock:
+                cooldown_key = f"tantou_avatar_refresh_v1:{umo}"
+                previous = await self.get_kv_data(cooldown_key, 0)
+                if time.time() - float(previous or 0) < 60:
+                    return "本群刚刷新过头像，请 1 分钟后再试。"
+                await self.put_kv_data(cooldown_key, time.time())
+            refreshed = await self._cache_tantou_member_avatars(umo, user_ids, force=True)
+            async with self._tantou_lock:
+                key = f"tantou_members_v1:{umo}"
+                members = await self.get_kv_data(key, {})
+                members.update(verified)
+                await self.put_kv_data(key, members)
+            cards = await self._tantou_member_cards(umo, ["qq:" + uid for uid in user_ids])
+            labels = lambda ids: "、".join(cards["qq:" + uid]["name"] for uid in ids)
+            lines = ["头像已重新获取：" + labels(uid for uid in user_ids if uid in refreshed) + "。"] if refreshed else []
+            failed = [uid for uid in user_ids if uid not in refreshed]
+            if failed:
+                lines.append("获取失败，保留原图：" + labels(failed) + "。")
+            return "\n".join(lines)
+        except ValueError as exc:
+            return str(exc)
+        except Exception:
+            logger.exception("群友头像刷新失败")
+            return "刷新失败，保留原图，请稍后重试。"
 
     async def _tantou_member_cards(self, umo: str, names: list[str]) -> dict[str, dict[str, Any]]:
         ids = [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)]
@@ -1409,6 +1472,7 @@ class ImasBirthdayPlugin(Star):
         nickname = await self._tantou_member_nickname(event, user_id)
         async with self._tantou_lock:
             owner = await self._tantou_owner(umo, user_id, nickname)
+        await self._cache_tantou_member_avatars(umo, [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)])
         members = await self._tantou_member_cards(umo, names)
         title = "担当" if any(self._voice_actor_id(name) or self._tantou_member_id(name) for name in names) else "担当アイドル"
         message = self._tantou_producer_name(owner) + "\n" + title + "\n" + "、".join(self._tantou_display_name(name, members) for name in names)
@@ -1539,6 +1603,11 @@ class ImasBirthdayPlugin(Star):
                     owner = await self._tantou_owner(umo, uid, str(event.get_sender_name() or "") if uid == user_id else "")
                     members[key] = {**members.get(key, {}), "name": self._tantou_producer_name(owner)}
         rows = sorted(counts.items(), key=lambda row: (-row[1], self._tantou_display_name(row[0], members), row[0]))[:10]
+        member_ids = [self._tantou_member_id(name) for name, _ in rows if self._tantou_member_id(name)]
+        await self._cache_tantou_member_avatars(umo, member_ids)
+        for uid in member_ids:
+            avatar = self._tantou_member_avatar_path(umo, uid)
+            members["qq:" + uid]["avatar_path"] = avatar if avatar.is_file() else None
         group_header = await self._tantou_ranking_group(event)
         unit = "推" if kind == "dd" else "人"
         message = group_header["name"] + "\n" + titles[kind] + "\n" + "\n".join(
@@ -1548,12 +1617,7 @@ class ImasBirthdayPlugin(Star):
         brand_counts = Counter({brand: sum(count for name, count in counts.items() if self._character_brand(name) == brand)
                                 for brand in {self._character_brand(name) for name in counts}}) if kind == "idol" else None
         try:
-            if kind == "dd":
-                await self._cache_tantou_member_avatars(umo, [name[3:] for name, _ in rows])
-                for key, value in members.items():
-                    avatar = self._tantou_member_avatar_path(umo, key[3:])
-                    value["avatar_path"] = avatar if avatar.is_file() else None
-            else:
+            if kind != "dd":
                 await self._prepare_tantou_icons([name for name, _ in rows])
             if kind == "all":
                 path = await asyncio.to_thread(self._render_tantou_ranking, rows, members=members, group_header=group_header)
