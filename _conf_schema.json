@@ -16,6 +16,12 @@
     "default": true,
     "hint": "加推即登记本群担当；仅随已有白名单群每日生日公告发送，同一群友每条公告最多 @ 一次。减推后停止对应角色提醒。"
   },
+  "tantou_llm_commentary": {
+    "description": "查看担当时生成月村手毬视角的一句锐评",
+    "type": "bool",
+    "default": true,
+    "hint": "调用当前会话在 AstrBot 配置的聊天模型；未配置、超时或失败时只发送担当图片。可关闭以节省模型调用。"
+  },
   "send_time": {
     "description": "每日推送时间",
     "type": "string",
@@ -76,6 +82,12 @@
     "description": "发送生日祝贺时同时渲染生日卡片",
     "type": "bool",
     "default": true
+  },
+  "birthday_text_with_card": {
+    "description": "生日图片后同时发送详细文字",
+    "type": "bool",
+    "default": false,
+    "hint": "默认只发简洁生日图片与担当 @；无图片时仍发送文字。开启后恢复详细文字与图片同时发送。"
   },
   "card_render_mode": {
     "description": "生日卡片渲染方式",
