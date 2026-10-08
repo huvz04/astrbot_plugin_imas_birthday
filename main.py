@@ -245,6 +245,30 @@ def voice_actor_name_aliases(actor: dict[str, Any]) -> list[str]:
     return list(dict.fromkeys(aliases))
 
 
+@lru_cache(maxsize=1024)
+def character_romanized_aliases(code: str) -> tuple[str, ...]:
+    """Derive search aliases from the official catalogue's romanized name code."""
+    if not isinstance(code, str) or not re.fullmatch(r"[a-z]+(?:_[a-z]+)*", code):
+        return ()
+    parts = code.split("_")
+    names = [" ".join(parts), " ".join(reversed(parts)), *parts]
+    return tuple(dict.fromkeys(names))
+
+
+@lru_cache(maxsize=1024)
+def character_romanized_abbreviations(code: str) -> tuple[str, ...]:
+    if not character_romanized_aliases(code):
+        return ()
+    parts = code.split("_")
+    consonants = [re.sub(r"[aeiou]", "", part) for part in parts]
+    abbreviations = [*consonants, "".join(consonants), "".join(reversed(consonants))]
+    if len(parts) > 1:
+        initials = "".join(part[0] for part in parts)
+        abbreviations.extend((initials, initials[::-1]))
+    # Single-letter shortcuts match too many unrelated names to be useful.
+    return tuple(dict.fromkeys(value for value in abbreviations if len(value) >= 2))
+
+
 def load_voice_actor_registry(profiles: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     actors = load_generated_mapping("seiyuu_catalogue.py", "VOICE_ACTOR_CATALOGUE")
     for ident, link in load_generated_mapping("voice_actor_links.py", "VOICE_ACTOR_LINKS").items():
@@ -1113,7 +1137,7 @@ class ImasBirthdayPlugin(Star):
                         group.pop(owner_id, None)
                     await self.put_kv_data(f"tantou_v1:{umo}", group)
                     cards = await self._tantou_member_cards(umo, removed)
-                    result = "已移除：" + "、".join(cards[name]["name"] for name in removed) if removed else "未登记这些群友。"
+                    result = "成功减推了：" + "、".join(cards[name]["name"] for name in removed) if removed else "你还没加推。"
                 self._tantou_pending.pop((umo, owner_id), None)
                 return result
         except ValueError as exc:
@@ -1226,7 +1250,8 @@ class ImasBirthdayPlugin(Star):
             return [actor["name"], *actor.get("aliases", [])]
         record = self._idol_catalogue.get(name, {})
         profile = self._lookup_character_profile(name)
-        return [name, profile.get("display_name", ""), profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), record.get("idol_code", ""), *record.get("aliases", []), *profile.get("aliases", [])]
+        code = record.get("idol_code", "")
+        return [name, profile.get("display_name", ""), profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), code, *character_romanized_aliases(code), *character_romanized_abbreviations(code), *record.get("aliases", []), *profile.get("aliases", [])]
 
     def _tantou_display_name(self, name: str, members: dict[str, dict[str, Any]] | None = None) -> str:
         if self._voice_actor_id(name):
@@ -1259,23 +1284,32 @@ class ImasBirthdayPlugin(Star):
         kind = "声优" if self._voice_actor_id(name) else "角色"
         return f"{self._tantou_query_label(name)}（{kind}）"
 
+    def _tantou_search_keys(self, name: str) -> tuple[set[str], set[str]]:
+        aliases = {self._normalize_character_query(alias) for alias in self._tantou_aliases(name) if alias}
+        abbreviations = set(character_romanized_abbreviations(self._idol_catalogue.get(name, {}).get("idol_code", "")))
+        return aliases, aliases - abbreviations
+
     def _tantou_candidates(self, query: str, records: list[str], limit: int = 5) -> list[str]:
         key = self._normalize_character_query(query)
         if not key:
             return []
-        indexed = [(name, {self._normalize_character_query(alias) for alias in self._tantou_aliases(name) if alias})
-                   for name in records]
+        indexed = [(name, *self._tantou_search_keys(name)) for name in records]
         # Match full names and name fragments before comparing possible typos.
         # This applies to every installed character, including future catalogue updates.
-        matches = [(1.0 if key in aliases else .92, name) for name, aliases in indexed
-                   if any(alias and (key in alias or alias in key) for alias in aliases)]
+        # Generated shortcuts only match as a whole; a two-letter initial inside
+        # an unrelated word must not turn a missing name into a false candidate.
+        matches = [(1.0 if key in aliases else .92, name) for name, aliases, regular in indexed
+                   if key in aliases or any(alias and (key in alias or alias in key) for alias in regular)]
         if matches:
-            matches.sort(key=lambda item: (-item[0], bool(self._voice_actor_id(item[1])), self._tantou_display_name(item[1]), item[1]))
+            if any(score == 1.0 for score, _ in matches):
+                matches = [item for item in matches if item[0] == 1.0]
         else:
-            matches = [(max((self._character_match_score(key, alias) for alias in aliases), default=0), name)
-                       for name, aliases in indexed]
+            matches = [(max((self._character_match_score(key, alias) for alias in regular), default=0), name)
+                       for name, _, regular in indexed]
             matches = [item for item in matches if item[0] >= .45]
-            matches.sort(key=lambda item: (-item[0], bool(self._voice_actor_id(item[1])), self._tantou_display_name(item[1]), item[1]))
+        preferred = {name for _, name in matches if not self._voice_actor_id(name)
+                     and any(key == self._normalize_character_query(alias) for alias in self._lookup_character_profile(name).get("aliases", []))}
+        matches.sort(key=lambda item: (-item[0], bool(self._voice_actor_id(item[1])), item[1] not in preferred, self._tantou_display_name(item[1]), item[1]))
         return [name for _, name in matches[:limit]]
 
     def _tantou_alias_index(self, names: Any) -> dict[str, str]:
@@ -1368,11 +1402,7 @@ class ImasBirthdayPlugin(Star):
                     if not group[user_id]:
                         group.pop(user_id, None)
                     await self.put_kv_data(f"tantou_v1:{umo}", group)
-                    missing = [query for query in tokens if resolved.get(query) not in removed]
-                    lines = ["已移除：" + "、".join(self._tantou_display_name(name) for name in removed)] if removed else []
-                    if missing:
-                        lines.append("未登记这些完整名字：" + "、".join(missing))
-                    return "\n".join(lines)
+                    return "成功减推了：" + "、".join(self._tantou_display_name(name) for name in removed) if removed else "你还没加推。"
                 batch = [resolved.get(query) for query in tokens]
                 lines, pending = [], []
                 for position, query in enumerate(tokens):
@@ -1398,11 +1428,9 @@ class ImasBirthdayPlugin(Star):
     def _tantou_confirmation_hint(self, items: list[dict[str, Any]]) -> str:
         candidates = [item for item in items if item["candidates"]]
         if candidates:
-            example = " ".join("1" for _ in candidates)
-            suffix = "；未找到的名字稍后修正。" if len(candidates) < len(items) else "；改名字用「加推确认 完整名字」"
-            return f"直接回 {example}（只填有候选的名字，0 跳过）{suffix}"
-        example = " ".join("完整名字" for _ in items)
-        return f"加推确认 {example}（按未找到的名字顺序修正，0 跳过）"
+            suffix = "未找到的名字稍后修正。" if len(candidates) < len(items) else ""
+            return "回复候选数字，0跳过。" + suffix
+        return "用「加推确认 完整名字」修正，0跳过。"
 
     async def _confirm_tantou(self, umo: str, user_id: str, args: str) -> str:
         pending = self._tantou_pending.get((umo, user_id))
@@ -1527,17 +1555,22 @@ class ImasBirthdayPlugin(Star):
             name = self._tantou_alias_index(records).get(key) or self._voice_actor_alias_index().get(key)
             if not name:
                 # Count distinct characters, not the number of matching aliases.
-                partial = [item for item in records if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item) if alias)]
+                partial = []
+                query_key = self._normalize_character_query(query)
+                for item in records:
+                    all_keys, regular = self._tantou_search_keys(item)
+                    if query_key in all_keys or any(query_key in alias for alias in regular):
+                        partial.append(item)
                 if len(partial) == 1:
                     name = partial[0]
                 else:
-                    choices = partial or self._tantou_candidates(query, records)
-                    if not choices:
+                    choices = self._tantou_candidates(query, records)
+                    if not partial:
                         actor_partial = [item for item in VOICE_ACTOR_CATALOGUE if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item))]
                         if len(actor_partial) == 1:
                             name = actor_partial[0]
-                        else:
-                            choices = actor_partial
+                        elif actor_partial:
+                            choices = self._tantou_candidates(query, actor_partial)
                     if not name:
                         labels = [self._tantou_candidate_label(item) for item in choices[:5]]
                         if labels and any(self._lookup_character_profile(item).get("display_name") for item in choices[:5]):
@@ -2357,8 +2390,9 @@ class ImasBirthdayPlugin(Star):
         for record in records:
             name_key = self._normalize_character_query(record["name"])
             base_key = self._normalize_character_query(self._base_character_name(record["name"]))
-            keys = [name_key, base_key] + [self._normalize_character_query(alias) for alias in self._tantou_aliases(record["name"]) if alias]
-            score = max(self._character_match_score(query_key, key) for key in keys if key)
+            all_keys, regular = self._tantou_search_keys(record["name"])
+            keys = [name_key, base_key, *regular]
+            score = 1.0 if query_key in all_keys else max(self._character_match_score(query_key, key) for key in keys if key)
             if score >= 0.45:
                 matches.append((score, record))
 

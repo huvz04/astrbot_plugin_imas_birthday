@@ -5,6 +5,17 @@ remain unknown; adding a profile does not create a birthday reminder.
 """
 
 CHARACTER_SUPPLEMENTAL_PROFILES = {
+    "天海春香": {
+        # Community aliases explicitly supplied by the plugin owner; display
+        # names and identity continue to come from the official catalogue.
+        "aliases": ["卡卡", "kaka"],
+    },
+    "高坂海美": {
+        "aliases": ["umi"],
+    },
+    "樱井桃华": {
+        "aliases": ["mmk"],
+    },
     "美城常务": {
         "name_cn": "美城常务",
         "name_jp": "美城常務",

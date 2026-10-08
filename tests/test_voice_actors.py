@@ -49,7 +49,7 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("伊達 さゆり · 本群 1人", await self.plugin._tantou_followers(self.event, query))
         for query in ("iwa", "Iwa", "hanaiwa kana", "KanaHanaiwa"):
             self.assertIn("花岩 香奈 · 本群 1人", await self.plugin._tantou_followers(self.event, query))
-        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "date sayuri iwa"), "已移除：伊達 さゆり、花岩 香奈")
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "date sayuri iwa"), "成功减推了：伊達 さゆり、花岩 香奈")
 
     async def test_romanized_long_vowels_keep_spelling_variants_and_original_order(self):
         answer = await self.plugin._change_tantou(self.event, "加推", "Nao Ojika Itou Mao Amasaki Kohei Mao Ito Kōhei Amasaki")
@@ -150,7 +150,7 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))["1001"],
                          ["va:21077", "月村手毬", "va:20961"])
         removed = await self.plugin._change_tantou(self.event, "减推", "花宮 初奈 月村手毬 进藤天音")
-        self.assertEqual(removed, "已移除：花宮 初奈、月村 手毬、進藤 あまね")
+        self.assertEqual(removed, "成功减推了：花宮 初奈、月村 手毬、進藤 あまね")
         self.assertNotIn("va:", removed)
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin)).get("1001"), None)
 

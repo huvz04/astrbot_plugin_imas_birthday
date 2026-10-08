@@ -177,12 +177,22 @@ class MemberTantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.follows(elsewhere), ["qq:2002"])
         remove = mentioned_event("减推")  # No member API: removal still works after departure.
         result = await self.plugin._change_tantou(remove, "减推", "@名字")
-        self.assertEqual(result, "已移除：真正的群友")
+        self.assertEqual(result, "成功减推了：真正的群友")
         self.assertEqual(await self.follows(event), [])
         self.assertEqual(await self.follows(elsewhere), ["qq:2002"])
         await self.plugin._change_tantou(Event(group="200"), "清空担当", "")
         self.assertEqual(await self.follows(elsewhere), [])
         self.assertNotEqual(self.plugin._tantou_member_avatar_path(event.unified_msg_origin, "2002"), self.plugin._tantou_member_avatar_path(elsewhere.unified_msg_origin, "2002"))
+
+    async def test_remove_members_only_names_existing_follows_in_mention_order(self):
+        event = mentioned_event(ids=("2002", "3003"))
+        install_bot(event, [member(), member("3003", nickname="第二位")])
+        await self.plugin._change_tantou(event, "加推", "@群友")
+        removal = mentioned_event("减推", ids=("3003", "4004", "2002"))
+        self.assertEqual(await self.plugin._change_tantou(removal, "减推", "@群友"), "成功减推了：第二位、真正的群友")
+        self.assertEqual(await self.follows(event), [])
+        self.assertEqual(await self.plugin._change_tantou(removal, "减推", "@群友"), "你还没加推。")
+        self.assertEqual(await self.plugin._change_tantou(mentioned_event("减推"), "减推", "@群友"), "你还没加推。")
 
     async def test_avatar_uses_fixed_host_ignores_metadata_url_and_caches_bounded_png(self):
         data = io.BytesIO()

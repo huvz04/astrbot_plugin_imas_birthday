@@ -394,6 +394,85 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.follows(), ["橘爱丽丝"])
         self.assertIn("橘 ありす", await self.plugin._tantou_followers(self.event, "爱丽丝"))
 
+    async def test_romanized_names_full_order_and_community_nicknames_keep_character_identity(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "momoka KAKA 卡卡 Haruka Amami Kousaka Umi")
+        self.assertIn("添加成功", result)
+        self.assertEqual(await self.follows(), ["樱井桃华", "天海春香", "高坂海美"])
+        self.assertFalse(self.plugin._tantou_pending)
+        self.assertIn("櫻井 桃華 · 本群 1人", await self.plugin._tantou_followers(self.event, "MOMOKA"))
+        self.assertIn("天海 春香 · 本群 1人", await self.plugin._tantou_followers(self.event, "kaka"))
+
+    async def test_shared_romanized_shortcuts_prioritize_requested_characters_and_require_confirmation(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "umi mmk")
+        self.assertEqual(await self.follows(), [])
+        pending = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]
+        self.assertEqual(pending["items"][0]["candidates"], ["高坂海美", "杉坂海"])
+        self.assertEqual(pending["items"][1]["candidates"], ["樱井桃华", "周防桃子"])
+        self.assertEqual(result.splitlines()[-1], "回复候选数字，0跳过。")
+        self.assertIn("添加成功", (await self.plugin._tantou_numeric_reply(Event(text="1 1"))))
+        self.assertEqual(await self.follows(), ["高坂海美", "樱井桃华"])
+        query = await self.plugin._tantou_followers(self.event, "umi")
+        self.assertIn("高坂 海美（角色）", query)
+        self.assertIn("杉坂 海（角色）", query)
+        self.assertLess(query.index("高坂 海美"), query.index("杉坂 海"))
+
+    async def test_every_official_romanized_token_and_abbreviation_is_indexed_without_first_match_wins(self):
+        records = await self.plugin._all_tantou_records()
+        index = self.plugin._tantou_alias_index(records)
+        owners = {}
+        for name in records:
+            for alias in self.plugin._tantou_aliases(name):
+                if alias:
+                    owners.setdefault(self.plugin._exact_name_key(alias), set()).add(name)
+        covered = 0
+        for name, record in self.plugin._idol_catalogue.items():
+            aliases = [*plugin_module.character_romanized_aliases(record["idol_code"]),
+                       *plugin_module.character_romanized_abbreviations(record["idol_code"])]
+            self.assertTrue(aliases, name)
+            covered += 1
+            for alias in aliases:
+                key = self.plugin._exact_name_key(alias)
+                self.assertIn(name, owners[key])
+                if len(owners[key]) == 1:
+                    self.assertEqual(index[key], name)
+                else:
+                    self.assertNotIn(key, index)
+        self.assertEqual(covered, 341)
+        # A generated initial must not match as a fragment inside unrelated input.
+        self.assertEqual(self.plugin._tantou_candidates("完全无关的测试词abcdef", records), [])
+        self.assertEqual(self.plugin._tantou_candidates("qzxv987", records), [])
+
+    async def test_new_official_character_gets_romanized_shortcuts_without_static_alias_patch(self):
+        name = "测试新增角色"
+        self.plugin._idol_catalogue[name] = {"idol_name": "テスト モモカ", "idol_code": "test_momoka", "aliases": []}
+        records = await self.plugin._all_tantou_records()
+        self.assertEqual(self.plugin._tantou_alias_index(records)["testmomoka"], name)
+        self.assertIn(name, self.plugin._tantou_candidates("mmk", records))
+
+    async def test_removal_only_lists_saved_characters_and_actors_in_requested_order(self):
+        await self.plugin._change_tantou(self.event, "加推", "月村手毬 小鹿なお 花海佑芽")
+        result = await self.plugin._change_tantou(self.event, "减推", "花海佑芽 不存在的名字 小鹿なお 月村手毬 小鹿なお")
+        self.assertEqual(result, "成功减推了：花海 佑芽、小鹿 なお、月村 手毬")
+        self.assertEqual(await self.follows(), [])
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "花海佑芽"), "你还没加推。")
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "花海佑芽 小鹿なお 不存在的名字"), "你还没加推。")
+
+    async def test_actor_prefix_uses_short_confirmation_and_queries_the_same_actor(self):
+        result = await self.plugin._change_tantou(self.event, "加推", "liy")
+        self.assertEqual(result, "「liy」需要确认：\n  1. Liyuu（声优）\n回复候选数字，0跳过。")
+        self.assertIn("添加成功", await self.plugin._tantou_numeric_reply(Event(text="1")))
+        self.assertIn("Liyuu · 本群 1人", await self.plugin._tantou_followers(self.event, "liy"))
+
+    async def test_generated_shortcuts_do_not_become_fragments_in_follower_or_birthday_queries(self):
+        self.plugin._get_birthdays = AsyncMock(return_value={"04-08": {"characters": ["樱井桃华"], "seiyuu": []}})
+        _, matches, error = await self.plugin._find_character_matches("mmk")
+        self.assertFalse(error)
+        self.assertEqual(matches[0][1]["name"], "樱井桃华")
+        _, matches, error = await self.plugin._find_character_matches("xyzmmkxyz")
+        self.assertEqual(matches, [])
+        self.assertIn("没有找到", error)
+        self.assertIn("没找到", await self.plugin._tantou_followers(self.event, "qzxhrk987"))
+
     async def test_every_official_surname_and_given_name_keeps_character_candidates_first(self):
         records = await self.plugin._all_tantou_records()
         fragments = {part for row in self.plugin._idol_catalogue.values()
@@ -421,7 +500,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([text async for text in self.plugin.tantou_text_fallback(reply)], [])
         await self.plugin._change_tantou(self.event, "清空担当", "")
         result = await self.plugin._change_tantou(self.event, "加推", "花海佑芽 手毬 千早 一ノ瀬 高木顺二朗")
-        self.assertIn("直接回 1 1 1", result)
+        self.assertIn("回复候选数字，0跳过。", result)
         self.assertEqual(await self.follows(), [])
         pending = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]
         choices = [str(item["candidates"].index(name) + 1) for item, name in zip(
@@ -626,7 +705,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_unknown_name_prompt_is_short_but_waits_for_whole_ordered_batch(self):
         result = await self.plugin._change_tantou(self.event, "加推", "月村手毬 qzxv987 花海佑芽")
-        self.assertEqual(result, "没找到「qzxv987」。\n加推确认 完整名字（按未找到的名字顺序修正，0 跳过）")
+        self.assertEqual(result, "没找到「qzxv987」。\n用「加推确认 完整名字」修正，0跳过。")
         self.assertEqual(await self.follows(), [])
         await self.plugin._change_tantou(self.event, "加推确认", "齋藤孝司")
         self.assertEqual(await self.follows(), ["月村手毬", "斋藤孝司", "花海佑芽"])
@@ -1027,7 +1106,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(shiki["idol_code"], "ichinose_shiki")
         self.assertEqual(shiki["id"], 32)
         result = await self.plugin._change_tantou(self.event, "减推", "一ノ瀬 志希")
-        self.assertIn("已移除", result)
+        self.assertIn("成功减推了", result)
         self.assertEqual(await self.follows(), ["月村手毬", "花海佑芽"])
 
     async def test_japanese_abbreviation_requires_confirmation(self):
