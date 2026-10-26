@@ -137,6 +137,7 @@ def make_plugin(storage=None):
     plugin._tantou_lock = asyncio.Lock()
     plugin._tantou_icons_lock = asyncio.Lock()
     plugin._tantou_pending = {}
+    plugin._tantou_sync_pending = {}
     plugin._idol_catalogue = copy.deepcopy(plugin_module.CHARACTER_TANTOU_ICONS)
     plugin._idol_catalogue_loaded = False
     plugin._idol_catalogue_lock = asyncio.Lock()

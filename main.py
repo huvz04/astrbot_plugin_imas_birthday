@@ -649,6 +649,7 @@ class ImasBirthdayPlugin(Star):
         self._tantou_lock = asyncio.Lock()
         self._tantou_icons_lock = asyncio.Lock()
         self._tantou_pending: dict[tuple[str, str], dict[str, Any]] = {}
+        self._tantou_sync_pending: dict[tuple[str, str], dict[str, Any]] = {}
         self._idol_catalogue = {name: dict(record) for name, record in CHARACTER_TANTOU_ICONS.items()}
         self._idol_catalogue_loaded = False
         self._idol_catalogue_lock = asyncio.Lock()
@@ -680,6 +681,7 @@ class ImasBirthdayPlugin(Star):
 
     async def terminate(self):
         global IMASBD_PLUGIN_INSTANCE
+        self._tantou_sync_pending.clear()
         if IMASBD_PLUGIN_INSTANCE is self:
             IMASBD_PLUGIN_INSTANCE = None
         if self._catalogue_task:
@@ -824,10 +826,18 @@ class ImasBirthdayPlugin(Star):
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._tantou_followers(event, str(name)))
 
+    @filter.command("担当同步")
+    async def tantou_sync(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        """选择自己在其他群保存的担当，预览并确认覆盖本群登记。"""
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._tantou_sync_action(event, str(args)))
+
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def tantou_text_fallback(self, event: AstrMessageEvent):
         """Support the same commands without a slash or a wake prefix."""
-        confirmation = await self._tantou_numeric_reply(event)
+        confirmation = await self._tantou_sync_reply(event)
+        if confirmation is None:
+            confirmation = await self._tantou_numeric_reply(event)
         if confirmation is not None:
             yield event.plain_result(confirmation)
             return
@@ -836,10 +846,13 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行", "担当查询", "刷新群友头像"}:
+        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行", "担当查询", "刷新群友头像", "担当同步"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
+            return
+        if command == "担当同步":
+            yield event.plain_result(await self._tantou_sync_action(event, args))
             return
         if command == "刷新群友头像":
             yield event.plain_result(await self._refresh_tantou_member_avatars(event))
@@ -868,6 +881,202 @@ class ImasBirthdayPlugin(Star):
         if not event.get_group_id():
             return "", ""
         return str(event.unified_msg_origin), str(event.get_sender_id() or "")
+
+    async def _tantou_saved_groups(self) -> dict[str, dict[str, Any]]:
+        # Enumerate only this plugin's namespace, including historical records
+        # that are absent from the bot's current group list.
+        plugin_id = getattr(self, "plugin_id", "")
+        if not plugin_id:
+            raise ValueError("当前环境无法读取历史登记，暂不能同步。")
+        from astrbot.core import sp
+
+        rows = await asyncio.wait_for(sp.range_get_async("plugin", plugin_id), timeout=10)
+        prefix = "tantou_v1:"
+        return {row.key[len(prefix):]: row.value["val"] for row in rows
+                if row.scope == "plugin" and row.scope_id == plugin_id
+                and isinstance(row.key, str) and row.key.startswith(prefix)
+                and isinstance(row.value, dict) and isinstance(row.value.get("val"), dict)}
+
+    @staticmethod
+    def _tantou_sync_mask(name: str, group_id: str) -> str:
+        clusters = NicknameText.graphemes(clean_text(name))
+        title = (clusters[0] + "***群") if clusters else "未知群"
+        number = group_id[:2] + "***" + group_id[-4:] if len(group_id) > 6 else (group_id[:1] + "***" + group_id[-1:] if len(group_id) > 1 else "***")
+        return f"{title}（{number}）"
+
+    async def _tantou_sync_group_label(self, event: AstrMessageEvent, umo: str, group_id: str) -> str:
+        header = await self.get_kv_data(f"tantou_group_header_v1:{umo}", {})
+        name = str(header.get("name") or "") if isinstance(header, dict) else ""
+        bot = getattr(event, "bot", None)
+        if event.get_platform_name() == "aiocqhttp" and bot is not None and self._tantou_member_id("qq:" + group_id):
+            try:
+                routing = {"self_id": event.get_self_id()} if event.get_self_id() else {}
+                info = await asyncio.wait_for(bot.call_action("get_group_info", group_id=int(group_id), no_cache=True, **routing), timeout=5)
+                if isinstance(info, dict) and str(info.get("group_id")) == group_id:
+                    name = str(info.get("group_name") or name)
+            except Exception as exc:
+                logger.debug(f"担当同步来源群名不可用，使用缓存：{type(exc).__name__}")
+        return self._tantou_sync_mask(name, group_id)
+
+    async def _tantou_sync_names(self, umo: str, user_id: str) -> list[str]:
+        group = await self.get_kv_data(f"tantou_v1:{umo}", {})
+        names = group.get(user_id, []) if isinstance(group, dict) else []
+        if not isinstance(names, list) or any(not isinstance(name, str) or not name.strip() for name in names):
+            raise ValueError("这份担当记录格式异常，未同步。")
+        await self._load_idol_catalogue()
+        aliases = self._tantou_alias_index(set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS))
+        return list(dict.fromkeys(aliases.get(self._exact_name_key(name), name) for name in names))
+
+    async def _tantou_sync_members(self, event: AstrMessageEvent, names: list[str]) -> tuple[dict[str, dict[str, Any]], list[str]]:
+        ids = [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)]
+        if not ids:
+            return {}, [name for name in names if name.startswith("qq:")]
+        bot = getattr(event, "bot", None)
+        group_id = str(event.get_group_id() or "")
+        if event.get_platform_name() != "aiocqhttp" or bot is None or not self._tantou_member_id("qq:" + group_id):
+            raise ValueError("无法核验本群群友，暂不能同步这份记录。")
+        routing = {"self_id": event.get_self_id()} if event.get_self_id() else {}
+        rows = await asyncio.wait_for(bot.call_action("get_group_member_list", group_id=int(group_id), **routing), timeout=5)
+        if not isinstance(rows, list):
+            raise ValueError("无法核验本群群友，暂不能同步这份记录。")
+        present = {str(row.get("user_id")) for row in rows if isinstance(row, dict) and str(row.get("group_id")) == group_id}
+        ids = [user_id for user_id in ids if user_id in present]
+        verified = await self._verify_tantou_members(event, ids) if ids else {}
+        skipped = [name for name in names if name.startswith("qq:") and self._tantou_member_id(name) not in verified]
+        return verified, skipped
+
+    async def _tantou_sync_reply(self, event: AstrMessageEvent) -> str | None:
+        allowed = tuple(cls for cls in (getattr(Comp, "Plain", None), getattr(Comp, "At", None), getattr(Comp, "Reply", None)) if isinstance(cls, type))
+        parts = event.get_messages()
+        if self._tantou_mentions(event) or any(not isinstance(part, allowed) for part in parts):
+            return None
+        text = "".join(part.text for part in parts if isinstance(part, Comp.Plain)).strip()
+        if text not in {"确认", "取消"} and not re.fullmatch(r"[0-9]+(?:\s+[0-9]+)*", text):
+            return None
+        key = self._tantou_identity(event)
+        pending = self._tantou_sync_pending.get(key)
+        if not pending:
+            return None
+        if pending["expires"] <= time.monotonic():
+            self._tantou_sync_pending.pop(key, None)
+            return None
+        if not self._claim_tantou_event(event):
+            return None
+        return await self._tantou_sync_action(event, text)
+
+    async def _tantou_sync_action(self, event: AstrMessageEvent, args: str = "") -> str:
+        umo, user_id = self._tantou_identity(event)
+        if not umo or not user_id:
+            return "请在目标群里发送「担当同步」。"
+        allowed = tuple(cls for cls in (getattr(Comp, "Plain", None), getattr(Comp, "At", None), getattr(Comp, "Reply", None)) if isinstance(cls, type))
+        if self._tantou_mentions(event) or any(not isinstance(part, allowed) for part in event.get_messages()):
+            return "用法：担当同步；只同步你自己的登记，不要附加 @ 或图片。"
+        key = (umo, user_id)
+        args = args.strip()
+        request = None
+        try:
+            if not args:
+                async with self._tantou_lock:
+                    self._tantou_pending.pop(key, None)
+                    now = time.monotonic()
+                    self._tantou_sync_pending = {ident: item for ident, item in self._tantou_sync_pending.items() if item["expires"] > now and ident != key}
+                    request = {"stage": "loading", "expires": now + 300}
+                    self._tantou_sync_pending[key] = request
+                prefix, marker, _ = umo.partition(":GroupMessage:")
+                if not marker:
+                    self._tantou_sync_pending.pop(key, None)
+                    return "当前群会话格式不受支持，暂不能同步。"
+                groups = await self._tantou_saved_groups()
+                origins = []
+                for source, group in sorted(groups.items()):
+                    source_prefix, source_marker, group_id = source.partition(":GroupMessage:")
+                    names = group.get(user_id, [])
+                    if (source != umo and source_marker and source_prefix == prefix and group_id
+                            and isinstance(names, list) and names and all(isinstance(name, str) and name.strip() for name in names)):
+                        origins.append((source, group_id))
+                if not origins:
+                    if self._tantou_sync_pending.get(key) is request:
+                        self._tantou_sync_pending.pop(key, None)
+                    return "你在其他群还没有已保存的担当记录。"
+                limit = asyncio.Semaphore(4)
+                async def label(source: str, group_id: str) -> dict[str, str]:
+                    async with limit:
+                        return {"umo": source, "label": await self._tantou_sync_group_label(event, source, group_id)}
+                sources = await asyncio.gather(*(label(source, group_id) for source, group_id in origins))
+                async with self._tantou_lock:
+                    if self._tantou_sync_pending.get(key) is not request:
+                        return "本次同步已失效，请重新发送「担当同步」。"
+                    self._tantou_sync_pending[key] = {"stage": "choose", "sources": sources, "expires": time.monotonic() + 300}
+                return "选择要同步的担当记录：\n" + "\n".join(f"{index}. {source['label']}" for index, source in enumerate(sources, 1)) + "\n回复群序号，0取消。"
+            async with self._tantou_lock:
+                pending = self._tantou_sync_pending.get(key)
+                if not pending or pending["expires"] <= time.monotonic():
+                    self._tantou_sync_pending.pop(key, None)
+                    return "没有待同步的记录或已过期，请发送「担当同步」。"
+                if args in {"取消", "0"}:
+                    self._tantou_sync_pending.pop(key, None)
+                    return "已取消同步。"
+                if pending["stage"] == "loading":
+                    return "正在读取历史登记，请稍候。"
+            if pending["stage"] == "choose":
+                if not re.fullmatch(r"[0-9]{1,6}", args) or not 1 <= int(args) <= len(pending["sources"]):
+                    return "请回复有效的群序号，0取消。"
+                source = pending["sources"][int(args) - 1]
+                names = await self._tantou_sync_names(source["umo"], user_id)
+                if not names:
+                    return "这份担当记录已清空，请重新发送「担当同步」。"
+                verified, skipped = await self._tantou_sync_members(event, names)
+                incoming = [name for name in names if name not in skipped]
+                if not incoming:
+                    return "这份记录里的群友均不在本群，没有可同步的担当。"
+                async with self._tantou_lock:
+                    if self._tantou_sync_pending.get(key) is not pending or pending["expires"] <= time.monotonic():
+                        return "本次同步已失效，请重新发送「担当同步」。"
+                    if await self._tantou_sync_names(source["umo"], user_id) != names:
+                        self._tantou_sync_pending.pop(key, None)
+                        return "来源担当已变化，请重新发送「担当同步」。"
+                    current = await self._tantou_sync_names(umo, user_id)
+                    cards = await self._tantou_member_cards(umo, list(dict.fromkeys([*current, *incoming])))
+                    profiles = await self.get_kv_data(f"tantou_profiles_v1:{umo}", {})
+                    for uid, member in verified.items():
+                        cards["qq:" + uid]["name"] = profiles.get(uid, {}).get("name") or member["nickname"]
+                    labels = lambda values: "、".join(clean_text(self._tantou_display_name(name, cards)) or name for name in values) or "未登记"
+                    lines = ["来源：" + source["label"], "当前担当：" + labels(current), "同步后：" + labels(incoming)]
+                    if skipped:
+                        source_cards = await self._tantou_member_cards(source["umo"], skipped)
+                        lines.append("未通过本群核验，跳过：" + "、".join(clean_text(self._tantou_display_name(name, source_cards)) for name in skipped))
+                    pending.update(stage="confirm", source=source["umo"], source_names=names, names=incoming, current=current, expires=time.monotonic() + 300)
+                    return "\n".join([*lines, "将覆盖你在本群的全部担当。回复「确认」同步，或「取消」。"])
+            if args != "确认":
+                return "回复「确认」覆盖本群担当，或「取消」。"
+            verified, skipped = await self._tantou_sync_members(event, pending["source_names"])
+            incoming = [name for name in pending["source_names"] if name not in skipped]
+            async with self._tantou_lock:
+                if self._tantou_sync_pending.get(key) is not pending or pending["expires"] <= time.monotonic():
+                    return "本次同步已失效，请重新发送「担当同步」。"
+                if (await self._tantou_sync_names(pending["source"], user_id) != pending["source_names"]
+                        or await self._tantou_sync_names(umo, user_id) != pending["current"] or incoming != pending["names"]):
+                    self._tantou_sync_pending.pop(key, None)
+                    return "担当或群友状态已变化，请重新发送「担当同步」。"
+                if verified:
+                    members_key = f"tantou_members_v1:{umo}"
+                    members = await self.get_kv_data(members_key, {})
+                    await self.put_kv_data(members_key, {**members, **verified})
+                group = await self.get_kv_data(f"tantou_v1:{umo}", {})
+                group[user_id] = list(incoming)
+                await self.put_kv_data(f"tantou_v1:{umo}", group)
+                self._tantou_sync_pending.pop(key, None)
+                self._tantou_pending.pop(key, None)
+            return "同步成功，已覆盖你在本群的担当。发送「担当」查看。"
+        except ValueError as exc:
+            if self._tantou_sync_pending.get(key) is request:
+                self._tantou_sync_pending.pop(key, None)
+            return str(exc)
+        except Exception:
+            if self._tantou_sync_pending.get(key) is request:
+                self._tantou_sync_pending.pop(key, None)
+            logger.exception("担当跨群同步失败")
+            return "同步失败，请稍后重试。"
 
     async def _tantou_numeric_reply(self, event: AstrMessageEvent) -> str | None:
         messages = event.get_messages()
@@ -1115,6 +1324,7 @@ class ImasBirthdayPlugin(Star):
         if len(user_ids) > 30:
             return "一次最多处理 30 位群友。"
         umo, owner_id = self._tantou_identity(event)
+        self._tantou_sync_pending.pop((umo, owner_id), None)
         try:
             if command == "加推":
                 verified = await self._verify_tantou_members(event, user_ids)
@@ -1361,6 +1571,8 @@ class ImasBirthdayPlugin(Star):
         if command != "清空担当" and not args.split():
             examples = {"加推": "加推 月村手毬", "加推女声优": "加推女声优 小鹿なお", "减推": "减推 月村手毬", "减推女声优": "减推女声优 小鹿なお", "加推确认": "加推确认 1（按待修正名字的顺序填写序号或完整名字，0 跳过）", "担当改名": "担当改名 你的CN（填写“重置”恢复群昵称）"}
             return f"用法：{examples[command]}"
+        if command != "担当改名":
+            self._tantou_sync_pending.pop((umo, user_id), None)
         async with self._tantou_lock:
             try:
                 await self._tantou_owner(umo, user_id, str(event.get_sender_name() or ""))
