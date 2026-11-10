@@ -830,7 +830,9 @@ class ImasBirthdayPlugin(Star):
     async def tantou_sync(self, event: AstrMessageEvent, args: GreedyStr = ""):
         """选择自己在其他群保存的担当，预览并确认覆盖本群登记。"""
         if self._claim_tantou_event(event):
-            yield event.plain_result(await self._tantou_sync_action(event, str(args)))
+            reply = await self._tantou_sync_action(event, str(args))
+            if reply is not None:
+                yield event.plain_result(reply)
 
     @filter.event_message_type(filter.EventMessageType.ALL)
     async def tantou_text_fallback(self, event: AstrMessageEvent):
@@ -852,7 +854,9 @@ class ImasBirthdayPlugin(Star):
         if not self._claim_tantou_event(event):
             return
         if command == "担当同步":
-            yield event.plain_result(await self._tantou_sync_action(event, args))
+            reply = await self._tantou_sync_action(event, args)
+            if reply is not None:
+                yield event.plain_result(reply)
             return
         if command == "刷新群友头像":
             yield event.plain_result(await self._refresh_tantou_member_avatars(event))
@@ -964,7 +968,39 @@ class ImasBirthdayPlugin(Star):
             return None
         return await self._tantou_sync_action(event, text)
 
-    async def _tantou_sync_action(self, event: AstrMessageEvent, args: str = "") -> str:
+    async def _send_tantou_sync_list(self, event: AstrMessageEvent, message: str, pending: dict[str, Any]) -> bool:
+        bot = getattr(event, "bot", None)
+        group_id, self_id = str(event.get_group_id() or ""), event.get_self_id()
+        if event.get_platform_name() != "aiocqhttp" or bot is None or not self_id or not self._tantou_member_id("qq:" + group_id):
+            return False
+        try:
+            sent = await asyncio.wait_for(bot.call_action(
+                "send_group_msg", group_id=int(group_id), message=[{"type": "text", "data": {"text": message}}], self_id=self_id,
+            ), timeout=5)
+        except Exception as exc:
+            logger.debug(f"担当同步列表发送接口不可用，使用普通回复：{type(exc).__name__}")
+            return False
+        message_id = str(sent.get("message_id", "")) if isinstance(sent, dict) else ""
+        if re.fullmatch(r"-?[0-9]{1,19}", message_id):
+            pending["list_receipt"] = (str(self_id), int(message_id))
+            if self._tantou_sync_pending.get(self._tantou_identity(event)) is not pending or pending["stage"] != "choose":
+                # A reply can arrive before OneBot acknowledges the send.
+                await self._recall_tantou_sync_list(event, pending)
+        return True
+
+    async def _recall_tantou_sync_list(self, event: AstrMessageEvent, pending: dict[str, Any]) -> None:
+        receipt = pending.get("list_receipt")
+        bot = getattr(event, "bot", None)
+        self_id = event.get_self_id()
+        if not receipt or event.get_platform_name() != "aiocqhttp" or bot is None or receipt[0] != str(self_id):
+            return
+        pending.pop("list_receipt")
+        try:
+            await asyncio.wait_for(bot.call_action("delete_msg", message_id=receipt[1], self_id=self_id), timeout=3)
+        except Exception as exc:
+            logger.debug(f"担当同步来源群列表未能撤回：{type(exc).__name__}")
+
+    async def _tantou_sync_action(self, event: AstrMessageEvent, args: str = "") -> str | None:
         umo, user_id = self._tantou_identity(event)
         if not umo or not user_id:
             return "请在目标群里发送「担当同步」。"
@@ -1006,18 +1042,24 @@ class ImasBirthdayPlugin(Star):
                 async with self._tantou_lock:
                     if self._tantou_sync_pending.get(key) is not request:
                         return "本次同步已失效，请重新发送「担当同步」。"
-                    self._tantou_sync_pending[key] = {"stage": "choose", "sources": sources, "expires": time.monotonic() + 300}
-                return "选择要同步的担当记录：\n" + "\n".join(f"{index}. {source['label']}" for index, source in enumerate(sources, 1)) + "\n回复群序号，0取消。"
+                    request.update(stage="choose", sources=sources, expires=time.monotonic() + 300)
+                message = "选择要同步的担当记录：\n" + "\n".join(f"{index}. {source['label']}" for index, source in enumerate(sources, 1)) + "\n回复群序号，0取消。"
+                if await self._send_tantou_sync_list(event, message, request):
+                    return None
+                return message if self._tantou_sync_pending.get(key) is request and request["stage"] == "choose" else None
             async with self._tantou_lock:
                 pending = self._tantou_sync_pending.get(key)
                 if not pending or pending["expires"] <= time.monotonic():
                     self._tantou_sync_pending.pop(key, None)
                     return "没有待同步的记录或已过期，请发送「担当同步」。"
-                if args in {"取消", "0"}:
+                cancelled = args in {"取消", "0"}
+                if cancelled:
                     self._tantou_sync_pending.pop(key, None)
-                    return "已取消同步。"
-                if pending["stage"] == "loading":
+                elif pending["stage"] == "loading":
                     return "正在读取历史登记，请稍候。"
+            if cancelled:
+                await self._recall_tantou_sync_list(event, pending)
+                return "已取消同步。"
             if pending["stage"] == "choose":
                 if not re.fullmatch(r"[0-9]{1,6}", args) or not 1 <= int(args) <= len(pending["sources"]):
                     return "请回复有效的群序号，0取消。"
@@ -1030,7 +1072,7 @@ class ImasBirthdayPlugin(Star):
                 if not incoming:
                     return "这份记录里的群友均不在本群，没有可同步的担当。"
                 async with self._tantou_lock:
-                    if self._tantou_sync_pending.get(key) is not pending or pending["expires"] <= time.monotonic():
+                    if self._tantou_sync_pending.get(key) is not pending or pending["stage"] != "choose" or pending["expires"] <= time.monotonic():
                         return "本次同步已失效，请重新发送「担当同步」。"
                     if await self._tantou_sync_names(source["umo"], user_id) != names:
                         self._tantou_sync_pending.pop(key, None)
@@ -1046,7 +1088,8 @@ class ImasBirthdayPlugin(Star):
                         source_cards = await self._tantou_member_cards(source["umo"], skipped)
                         lines.append("未通过本群核验，跳过：" + "、".join(clean_text(self._tantou_display_name(name, source_cards)) for name in skipped))
                     pending.update(stage="confirm", source=source["umo"], source_names=names, names=incoming, current=current, expires=time.monotonic() + 300)
-                    return "\n".join([*lines, "将覆盖你在本群的全部担当。回复「确认」同步，或「取消」。"])
+                await self._recall_tantou_sync_list(event, pending)
+                return "\n".join([*lines, "将覆盖你在本群的全部担当。回复「确认」同步，或「取消」。"])
             if args != "确认":
                 return "回复「确认」覆盖本群担当，或「取消」。"
             verified, skipped = await self._tantou_sync_members(event, pending["source_names"])

@@ -55,16 +55,75 @@ class TantouSyncTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_only_saved_own_other_groups_appear_masked_without_common_group_enumeration(self):
         async def info(action, **kwargs):
+            if action == "send_group_msg":
+                return {"message_id": 43210}
             self.assertEqual(action, "get_group_info")
             return {"group_id": kwargs["group_id"], "group_name": "Fresh秘密群"}
         self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=info))
-        result = await self.start()
+        self.assertIsNone(await self.start())
+        action, payload = self.event.bot.call_action.await_args
+        self.assertEqual(action, ("send_group_msg",))
+        self.assertEqual(payload["group_id"], 100)
+        result = payload["message"][0]["data"]["text"]
         self.assertIn("1. F***群（19***3724）", result)
         self.assertIn("2. F***群（97***4519）", result)
         for hidden in ("Fresh", "Alpha", "Beta", "秘密群", "191233724", "971234519", "333333333", "555555555"):
             self.assertNotIn(hidden, result)
-        self.assertEqual(self.event.bot.call_action.await_count, 2)
+        self.assertEqual(self.event.bot.call_action.await_count, 3)
         self.store.range_get_async.assert_awaited_once_with("plugin", self.plugin.plugin_id)
+        self.assertEqual(self.follows(), ["花海佑芽"])
+
+    async def test_valid_choice_recalls_only_the_bots_list_and_does_not_send_it_twice(self):
+        async def action(name, **kwargs):
+            if name == "send_group_msg":
+                return {"message_id": "-43210"}
+        bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
+        start = Event(text="担当同步")
+        start.bot = bot
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(start)], [])
+        self.assertEqual([reply async for reply in self.plugin.tantou_sync(start)], [])
+        for event in (Event(user="1002", text="1"), Event(group="200", text="1"), Event(text="99")):
+            event.bot = bot
+            await self.plugin._tantou_sync_reply(event)
+        self.assertFalse(any(call.args == ("delete_msg",) for call in bot.call_action.await_args_list))
+        choose = Event(text="1")
+        choose.bot = bot
+        choose.message_obj = types.SimpleNamespace(message_id=12345)
+        self.assertIn("同步后", await self.plugin._tantou_sync_reply(choose))
+        self.assertEqual(self.follows(), ["花海佑芽"])
+        confirmed = Event(text="确认")
+        confirmed.bot = bot
+        self.assertIn("同步成功", await self.plugin._tantou_sync_reply(confirmed))
+        actions = [call for call in bot.call_action.await_args_list if call.args[0] != "get_group_info"]
+        self.assertEqual([call.args[0] for call in actions], ["send_group_msg", "delete_msg"])
+        self.assertEqual(actions[1].kwargs, {"message_id": -43210, "self_id": "9999"})
+
+    async def test_recall_failure_still_allows_preview_and_confirmation(self):
+        async def action(name, **kwargs):
+            if name == "send_group_msg":
+                return {"message_id": 43210}
+            if name == "delete_msg":
+                raise RuntimeError("recall unavailable")
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
+        self.assertIsNone(await self.start())
+        self.assertIn("同步后", await self.choose())
+        self.assertIn("同步成功", await self.confirm())
+        self.event.bot.call_action.assert_any_await("delete_msg", message_id=43210, self_id="9999")
+
+    async def test_cancelling_before_send_acknowledgement_still_recalls_the_list(self):
+        entered, release = asyncio.Event(), asyncio.Event()
+        async def action(name, **kwargs):
+            if name == "send_group_msg":
+                entered.set()
+                await release.wait()
+                return {"message_id": 43210}
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
+        task = asyncio.create_task(self.start())
+        await asyncio.wait_for(entered.wait(), timeout=2)
+        self.assertEqual(await self.choose("0"), "已取消同步。")
+        release.set()
+        self.assertIsNone(await task)
+        self.event.bot.call_action.assert_awaited_with("delete_msg", message_id=43210, self_id="9999")
         self.assertEqual(self.follows(), ["花海佑芽"])
 
     async def test_preview_then_explicit_confirmation_overwrites_only_self_and_keeps_order_and_profile(self):
