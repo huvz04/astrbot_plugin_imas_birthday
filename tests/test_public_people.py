@@ -44,8 +44,11 @@ class PublicPeopleSourceTests(unittest.TestCase):
                 counts[kind] += 1
         self.assertNotIn("vtuber", counts)
         self.assertFalse((ROOT / "data" / "people" / "vtubers.json").exists())
-        self.assertEqual(counts["utaite"], 48)
-        self.assertEqual(counts["music_creator"], 253)
+        coverage = json.loads((ROOT / "data" / "people" / "music_catalogue_coverage.json").read_text(encoding="utf-8"))
+        self.assertTrue(coverage["complete"])
+        self.assertEqual(dict(counts), coverage["totals"])
+        self.assertGreater(sum(counts.values()), 301)
+        self.assertTrue(all(row["complete"] for row in coverage["categories"].values()))
         self.assertTrue(source.PUBLIC_PERSON_REDIRECTS)
         for ident, row in source.PUBLIC_PEOPLE_CATALOGUE.items():
             self.assertFalse(row["is_idolmaster"])
@@ -132,6 +135,16 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, alias))
             self.assertTrue(self.registry[ident]["image_url"].startswith("https://storage.moegirl.org.cn/"))
         self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, expected), [])
+
+    async def test_directory_discovered_people_can_be_added_queried_and_removed(self):
+        names = ['伊东歌词太郎', 'C418']
+        expected = [next(ident for ident, row in self.registry.items() if row['name'] == name) for name in names]
+        self.assertIn('添加成功', await self.plugin._change_tantou(self.event, '加推', ' '.join(names)))
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user], expected)
+        for name in names:
+            self.assertIn('本群 1人', await self.plugin._tantou_followers(self.event, name))
+        self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, expected), [])
+        self.assertEqual(await self.plugin._change_tantou(self.event, '减推', ' '.join(names)), '成功减推了：伊东歌词太郎、C418')
 
     async def test_plain_add_remove_query_and_typed_names_use_the_separate_catalogues(self):
         reply = await self.plugin._change_tantou(self.event, "加推", "田中 秀和 まふまふ そらる")

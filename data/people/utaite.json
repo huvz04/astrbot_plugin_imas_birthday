@@ -5,6 +5,2161 @@
   "scanned": 3000,
   "records": [
     {
+      "id": "ut:moegirl:132189",
+      "name": "排骨教主",
+      "directory": "moegirl",
+      "aliases": [
+        "排骨教主"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%8E%92%E9%AA%A8%E6%95%99%E4%B8%BB"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "10-09",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%8E%92%E9%AA%A8%E6%95%99%E4%B8%BB",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4e/Paigu.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%8E%92%E9%AA%A8%E6%95%99%E4%B8%BB",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%8E%92%E9%AA%A8%E6%95%99%E4%B8%BB",
+        "title": "排骨教主",
+        "pageid": 132189,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4e/Paigu.jpg!/fw/640",
+        "revision": 8359957,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:15822",
+      "name": "爱原圭织",
+      "directory": "moegirl",
+      "aliases": [
+        "爱原圭织"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%88%B1%E5%8E%9F%E5%9C%AD%E7%BB%87"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bf/Vvkaorinvv01.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%88%B1%E5%8E%9F%E5%9C%AD%E7%BB%87",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%88%B1%E5%8E%9F%E5%9C%AD%E7%BB%87",
+        "title": "爱原圭织",
+        "pageid": 15822,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bf/Vvkaorinvv01.png!/fw/640",
+        "revision": 3461568,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:178794",
+      "name": "醋醋",
+      "directory": "moegirl",
+      "aliases": [
+        "醋醋",
+        "文晓依"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E9%86%8B%E9%86%8B"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "01-16",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%86%8B%E9%86%8B",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/5d/%E9%86%8B%E9%86%8Bcucu.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E9%86%8B%E9%86%8B",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%86%8B%E9%86%8B",
+        "title": "醋醋",
+        "pageid": 178794,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/5d/%E9%86%8B%E9%86%8Bcucu.jpg!/fw/640",
+        "revision": 8754112,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:178907",
+      "name": "鬼月",
+      "directory": "moegirl",
+      "aliases": [
+        "鬼月",
+        "祝俊"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E9%AC%BC%E6%9C%88"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-20",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%AC%BC%E6%9C%88",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/13/%E9%AC%BC%E6%9C%8802.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E9%AC%BC%E6%9C%88",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%AC%BC%E6%9C%88",
+        "title": "鬼月",
+        "pageid": 178907,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/13/%E9%AC%BC%E6%9C%8802.jpeg!/fw/640",
+        "revision": 8115058,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:179336",
+      "name": "龟娘",
+      "directory": "moegirl",
+      "aliases": [
+        "龟娘",
+        "杜晴晴"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E9%BE%9F%E5%A8%98"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "04-01",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%BE%9F%E5%A8%98",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/11/Duqingqing.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E9%BE%9F%E5%A8%98",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%BE%9F%E5%A8%98",
+        "title": "龟娘",
+        "pageid": 179336,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/11/Duqingqing.png!/fw/640",
+        "revision": 8751357,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:185534",
+      "name": "Uzakin",
+      "directory": "moegirl",
+      "aliases": [
+        "Uzakin"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Uzakin"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/72/Uzakin.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Uzakin",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Uzakin",
+        "title": "Uzakin",
+        "pageid": 185534,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/72/Uzakin.jpg!/fw/640",
+        "revision": 6531666,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:19313",
+      "name": "晚香玉",
+      "directory": "moegirl",
+      "aliases": [
+        "晚香玉",
+        "喵喵子"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%99%9A%E9%A6%99%E7%8E%89"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-01",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%99%9A%E9%A6%99%E7%8E%89",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b7/Nikohime2.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%99%9A%E9%A6%99%E7%8E%89",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%99%9A%E9%A6%99%E7%8E%89",
+        "title": "晚香玉",
+        "pageid": 19313,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b7/Nikohime2.jpg!/fw/640",
+        "revision": 8415192,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:200650",
+      "name": "Nameless(唱见)",
+      "directory": "moegirl",
+      "aliases": [
+        "Nameless(唱见)"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Nameless%28%E5%94%B1%E8%A7%81%29"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "10-11",
+      "birthday_source": "https://zh.moegirl.org.cn/Nameless%28%E5%94%B1%E8%A7%81%29",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b1/Nameless.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Nameless%28%E5%94%B1%E8%A7%81%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Nameless%28%E5%94%B1%E8%A7%81%29",
+        "title": "Nameless(唱见)",
+        "pageid": 200650,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b1/Nameless.jpg!/fw/640",
+        "revision": 7167127,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:205961",
+      "name": "伊东歌词太郎",
+      "directory": "moegirl",
+      "aliases": [
+        "伊东歌词太郎",
+        "Weezer",
+        "ふわもこP"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E4%BC%8A%E4%B8%9C%E6%AD%8C%E8%AF%8D%E5%A4%AA%E9%83%8E"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "07-25",
+      "birthday_source": "https://zh.moegirl.org.cn/%E4%BC%8A%E4%B8%9C%E6%AD%8C%E8%AF%8D%E5%A4%AA%E9%83%8E",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8e/%E4%BC%8A%E4%B8%9C%E6%AD%8C%E8%AF%8D%E5%A4%AA%E9%83%8E.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E4%BC%8A%E4%B8%9C%E6%AD%8C%E8%AF%8D%E5%A4%AA%E9%83%8E",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E4%BC%8A%E4%B8%9C%E6%AD%8C%E8%AF%8D%E5%A4%AA%E9%83%8E",
+        "title": "伊东歌词太郎",
+        "pageid": 205961,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8e/%E4%BC%8A%E4%B8%9C%E6%AD%8C%E8%AF%8D%E5%A4%AA%E9%83%8E.jpg!/fw/640",
+        "revision": 8722173,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:211195",
+      "name": "薛南",
+      "directory": "moegirl",
+      "aliases": [
+        "薛南",
+        "Setsunann"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%96%9B%E5%8D%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-01",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%96%9B%E5%8D%97",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/08/Setusnann.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%96%9B%E5%8D%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%96%9B%E5%8D%97",
+        "title": "薛南",
+        "pageid": 211195,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/08/Setusnann.jpg!/fw/640",
+        "revision": 8416929,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:213077",
+      "name": "Meramipop",
+      "directory": "moegirl",
+      "aliases": [
+        "Meramipop",
+        "めらみぽっぷ"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Meramipop"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "10-27",
+      "birthday_source": "https://zh.moegirl.org.cn/Meramipop",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/74/Merami.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Meramipop",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Meramipop",
+        "title": "Meramipop",
+        "pageid": 213077,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/74/Merami.jpg!/fw/640",
+        "revision": 8641131,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:215583",
+      "name": "伯毅Dontaye",
+      "directory": "moegirl",
+      "aliases": [
+        "伯毅Dontaye"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E4%BC%AF%E6%AF%85Dontaye"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-17",
+      "birthday_source": "https://zh.moegirl.org.cn/%E4%BC%AF%E6%AF%85Dontaye",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/1f/DF20E684-14D4-4313-B3B5-A4312BCD7734.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E4%BC%AF%E6%AF%85Dontaye",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E4%BC%AF%E6%AF%85Dontaye",
+        "title": "伯毅Dontaye",
+        "pageid": 215583,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/1f/DF20E684-14D4-4313-B3B5-A4312BCD7734.jpg!/fw/640",
+        "revision": 8041622,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:241197",
+      "name": "三无Marblue",
+      "directory": "moegirl",
+      "aliases": [
+        "三无Marblue"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E4%B8%89%E6%97%A0Marblue"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-06",
+      "birthday_source": "https://zh.moegirl.org.cn/%E4%B8%89%E6%97%A0Marblue",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/66/%E4%B8%89%E6%97%A0Marblue.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E4%B8%89%E6%97%A0Marblue",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E4%B8%89%E6%97%A0Marblue",
+        "title": "三无Marblue",
+        "pageid": 241197,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/66/%E4%B8%89%E6%97%A0Marblue.jpg!/fw/640",
+        "revision": 8655622,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:287700",
+      "name": "圈9",
+      "directory": "moegirl",
+      "aliases": [
+        "圈9",
+        "圈住那个9"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%9C%889"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "02-25",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%9C%889",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d0/%E5%9C%889_20211130.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%9C%889",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%9C%889",
+        "title": "圈9",
+        "pageid": 287700,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d0/%E5%9C%889_20211130.jpg!/fw/640",
+        "revision": 7313821,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:28867",
+      "name": "委员长(唱见)",
+      "directory": "moegirl",
+      "aliases": [
+        "委员长(唱见)"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%A7%94%E5%91%98%E9%95%BF%28%E5%94%B1%E8%A7%81%29"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a1/1144489.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%A7%94%E5%91%98%E9%95%BF%28%E5%94%B1%E8%A7%81%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%A7%94%E5%91%98%E9%95%BF%28%E5%94%B1%E8%A7%81%29",
+        "title": "委员长(唱见)",
+        "pageid": 28867,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a1/1144489.jpg!/fw/640",
+        "revision": 8134270,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:291200",
+      "name": "内绪妹",
+      "directory": "moegirl",
+      "aliases": [
+        "内绪妹"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%86%85%E7%BB%AA%E5%A6%B9"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e4/Co4441.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%86%85%E7%BB%AA%E5%A6%B9",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%86%85%E7%BB%AA%E5%A6%B9",
+        "title": "内绪妹",
+        "pageid": 291200,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e4/Co4441.jpg!/fw/640",
+        "revision": 6286931,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:295336",
+      "name": "腹话",
+      "directory": "moegirl",
+      "aliases": [
+        "腹话"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%85%B9%E8%AF%9D"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2c/21043428_p0.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%85%B9%E8%AF%9D",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%85%B9%E8%AF%9D",
+        "title": "腹话",
+        "pageid": 295336,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2c/21043428_p0.jpg!/fw/640",
+        "revision": 7083602,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:302660",
+      "name": "翘课迟到少恭桑",
+      "directory": "moegirl",
+      "aliases": [
+        "翘课迟到少恭桑",
+        "少恭"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%BF%98%E8%AF%BE%E8%BF%9F%E5%88%B0%E5%B0%91%E6%81%AD%E6%A1%91"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "11-18",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%BF%98%E8%AF%BE%E8%BF%9F%E5%88%B0%E5%B0%91%E6%81%AD%E6%A1%91",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/da/Shaogong.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%BF%98%E8%AF%BE%E8%BF%9F%E5%88%B0%E5%B0%91%E6%81%AD%E6%A1%91",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%BF%98%E8%AF%BE%E8%BF%9F%E5%88%B0%E5%B0%91%E6%81%AD%E6%A1%91",
+        "title": "翘课迟到少恭桑",
+        "pageid": 302660,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/da/Shaogong.jpg!/fw/640",
+        "revision": 8359986,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:303258",
+      "name": "养乐多的CB菌",
+      "directory": "moegirl",
+      "aliases": [
+        "养乐多的CB菌"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%85%BB%E4%B9%90%E5%A4%9A%E7%9A%84CB%E8%8F%8C"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b1/CByakult.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%85%BB%E4%B9%90%E5%A4%9A%E7%9A%84CB%E8%8F%8C",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%85%BB%E4%B9%90%E5%A4%9A%E7%9A%84CB%E8%8F%8C",
+        "title": "养乐多的CB菌",
+        "pageid": 303258,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b1/CByakult.jpg!/fw/640",
+        "revision": 8142041,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:304490",
+      "name": "音频怪物",
+      "directory": "moegirl",
+      "aliases": [
+        "音频怪物"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E9%9F%B3%E9%A2%91%E6%80%AA%E7%89%A9"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-12",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%9F%B3%E9%A2%91%E6%80%AA%E7%89%A9",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a0/67f63p.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E9%9F%B3%E9%A2%91%E6%80%AA%E7%89%A9",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%9F%B3%E9%A2%91%E6%80%AA%E7%89%A9",
+        "title": "音频怪物",
+        "pageid": 304490,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a0/67f63p.jpg!/fw/640",
+        "revision": 6898895,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:307374",
+      "name": "冯提莫",
+      "directory": "moegirl",
+      "aliases": [
+        "冯提莫"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%86%AF%E6%8F%90%E8%8E%AB"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-19",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%86%AF%E6%8F%90%E8%8E%AB",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/cd/Ftm%28.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%86%AF%E6%8F%90%E8%8E%AB",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%86%AF%E6%8F%90%E8%8E%AB",
+        "title": "冯提莫",
+        "pageid": 307374,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/cd/Ftm%28.jpg!/fw/640",
+        "revision": 8437217,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:310802",
+      "name": "王文仪",
+      "directory": "moegirl",
+      "aliases": [
+        "王文仪"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%8E%8B%E6%96%87%E4%BB%AA"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/62/%E7%8E%8B%E6%96%87%E5%84%80new.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%8E%8B%E6%96%87%E4%BB%AA",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%8E%8B%E6%96%87%E4%BB%AA",
+        "title": "王文仪",
+        "pageid": 310802,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/62/%E7%8E%8B%E6%96%87%E5%84%80new.jpg!/fw/640",
+        "revision": 8257977,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:314732",
+      "name": "抽风的小婳妹纸",
+      "directory": "moegirl",
+      "aliases": [
+        "抽风的小婳妹纸",
+        "小婳"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%8A%BD%E9%A3%8E%E7%9A%84%E5%B0%8F%E5%A9%B3%E5%A6%B9%E7%BA%B8"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-23",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%8A%BD%E9%A3%8E%E7%9A%84%E5%B0%8F%E5%A9%B3%E5%A6%B9%E7%BA%B8",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bb/%E5%B0%8F%E5%A9%B3%E5%BE%AE%E5%8D%9A.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%8A%BD%E9%A3%8E%E7%9A%84%E5%B0%8F%E5%A9%B3%E5%A6%B9%E7%BA%B8",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%8A%BD%E9%A3%8E%E7%9A%84%E5%B0%8F%E5%A9%B3%E5%A6%B9%E7%BA%B8",
+        "title": "抽风的小婳妹纸",
+        "pageid": 314732,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bb/%E5%B0%8F%E5%A9%B3%E5%BE%AE%E5%8D%9A.jpeg!/fw/640",
+        "revision": 6322383,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:317222",
+      "name": "萌饭君",
+      "directory": "moegirl",
+      "aliases": [
+        "萌饭君"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%90%8C%E9%A5%AD%E5%90%9B"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "10-18",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%90%8C%E9%A5%AD%E5%90%9B",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b1/Mengfanjun.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%90%8C%E9%A5%AD%E5%90%9B",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%90%8C%E9%A5%AD%E5%90%9B",
+        "title": "萌饭君",
+        "pageid": 317222,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b1/Mengfanjun.jpeg!/fw/640",
+        "revision": 5628027,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:32492",
+      "name": "赤九玖",
+      "directory": "moegirl",
+      "aliases": [
+        "赤九玖"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%B5%A4%E4%B9%9D%E7%8E%96"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "02-20",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%B5%A4%E4%B9%9D%E7%8E%96",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/ee/Chijiujiu.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%B5%A4%E4%B9%9D%E7%8E%96",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%B5%A4%E4%B9%9D%E7%8E%96",
+        "title": "赤九玖",
+        "pageid": 32492,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/ee/Chijiujiu.jpg!/fw/640",
+        "revision": 7147181,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:330254",
+      "name": "Akie秋绘",
+      "directory": "moegirl",
+      "aliases": [
+        "Akie秋绘",
+        "Akie",
+        "秋绘"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Akie%E7%A7%8B%E7%BB%98"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "01-26",
+      "birthday_source": "https://zh.moegirl.org.cn/Akie%E7%A7%8B%E7%BB%98",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/47/Akie0126.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Akie%E7%A7%8B%E7%BB%98",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Akie%E7%A7%8B%E7%BB%98",
+        "title": "Akie秋绘",
+        "pageid": 330254,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/47/Akie0126.jpg!/fw/640",
+        "revision": 8488178,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:333596",
+      "name": "Eve(唱见)",
+      "directory": "moegirl",
+      "aliases": [
+        "Eve(唱见)"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Eve%28%E5%94%B1%E8%A7%81%29"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "05-23",
+      "birthday_source": "https://zh.moegirl.org.cn/Eve%28%E5%94%B1%E8%A7%81%29",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a0/P%E4%B8%BBEve.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Eve%28%E5%94%B1%E8%A7%81%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Eve%28%E5%94%B1%E8%A7%81%29",
+        "title": "Eve(唱见)",
+        "pageid": 333596,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a0/P%E4%B8%BBEve.jpg!/fw/640",
+        "revision": 8727564,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:333888",
+      "name": "封茗囧菌",
+      "directory": "moegirl",
+      "aliases": [
+        "封茗囧菌",
+        "Mandi Sa",
+        "Mandy Sa",
+        "囧茵",
+        "囧菌",
+        "封茗囧茵",
+        "撒曼迪"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%B0%81%E8%8C%97%E5%9B%A7%E8%8F%8C"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-07",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%B0%81%E8%8C%97%E5%9B%A7%E8%8F%8C",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/7a/%E5%B0%81%E8%8C%97%E5%9B%A7%E8%8F%8C2021%E5%B9%B4%E5%90%AF%E7%94%A8%E7%9A%84%E4%BA%BA%E8%AE%BE%E6%AD%A3%E6%96%B9%E5%BD%A2%E7%89%88.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%B0%81%E8%8C%97%E5%9B%A7%E8%8F%8C",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%B0%81%E8%8C%97%E5%9B%A7%E8%8F%8C",
+        "title": "封茗囧菌",
+        "pageid": 333888,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/7a/%E5%B0%81%E8%8C%97%E5%9B%A7%E8%8F%8C2021%E5%B9%B4%E5%90%AF%E7%94%A8%E7%9A%84%E4%BA%BA%E8%AE%BE%E6%AD%A3%E6%96%B9%E5%BD%A2%E7%89%88.jpeg!/fw/640",
+        "revision": 8465222,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:333918",
+      "name": "双笙",
+      "directory": "moegirl",
+      "aliases": [
+        "双笙",
+        "双笙子",
+        "陈元汐"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8F%8C%E7%AC%99"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-13",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%8F%8C%E7%AC%99",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3c/%E5%8F%8C%E7%AC%992021.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8F%8C%E7%AC%99",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8F%8C%E7%AC%99",
+        "title": "双笙",
+        "pageid": 333918,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3c/%E5%8F%8C%E7%AC%992021.jpg!/fw/640",
+        "revision": 8067455,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:339090",
+      "name": "肥皂菌",
+      "directory": "moegirl",
+      "aliases": [
+        "肥皂菌"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%82%A5%E7%9A%82%E8%8F%8C"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-27",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%82%A5%E7%9A%82%E8%8F%8C",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bd/Feizaojun.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%82%A5%E7%9A%82%E8%8F%8C",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%82%A5%E7%9A%82%E8%8F%8C",
+        "title": "肥皂菌",
+        "pageid": 339090,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bd/Feizaojun.jpg!/fw/640",
+        "revision": 8110495,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:339274",
+      "name": "三畿道",
+      "directory": "moegirl",
+      "aliases": [
+        "三畿道"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E4%B8%89%E7%95%BF%E9%81%93"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-05",
+      "birthday_source": "https://zh.moegirl.org.cn/%E4%B8%89%E7%95%BF%E9%81%93",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/eb/%E4%B8%89%E7%95%BF%E9%81%93.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E4%B8%89%E7%95%BF%E9%81%93",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E4%B8%89%E7%95%BF%E9%81%93",
+        "title": "三畿道",
+        "pageid": 339274,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/eb/%E4%B8%89%E7%95%BF%E9%81%93.jpg!/fw/640",
+        "revision": 7130871,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:342732",
+      "name": "卦者灵风",
+      "directory": "moegirl",
+      "aliases": [
+        "卦者灵风",
+        "卦者那啥子灵风"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8D%A6%E8%80%85%E7%81%B5%E9%A3%8E"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "10-24",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%8D%A6%E8%80%85%E7%81%B5%E9%A3%8E",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6c/%E5%8D%A6%E8%80%85%E7%81%B5%E9%A3%8E.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8D%A6%E8%80%85%E7%81%B5%E9%A3%8E",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8D%A6%E8%80%85%E7%81%B5%E9%A3%8E",
+        "title": "卦者灵风",
+        "pageid": 342732,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6c/%E5%8D%A6%E8%80%85%E7%81%B5%E9%A3%8E.jpg!/fw/640",
+        "revision": 8752734,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:350290",
+      "name": "东京塔子",
+      "directory": "moegirl",
+      "aliases": [
+        "东京塔子"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E4%B8%9C%E4%BA%AC%E5%A1%94%E5%AD%90"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-28",
+      "birthday_source": "https://zh.moegirl.org.cn/%E4%B8%9C%E4%BA%AC%E5%A1%94%E5%AD%90",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/19/400px_%E4%B8%9C%E4%BA%AC%E5%A1%94%E5%AD%90photo.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E4%B8%9C%E4%BA%AC%E5%A1%94%E5%AD%90",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E4%B8%9C%E4%BA%AC%E5%A1%94%E5%AD%90",
+        "title": "东京塔子",
+        "pageid": 350290,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/19/400px_%E4%B8%9C%E4%BA%AC%E5%A1%94%E5%AD%90photo.jpg!/fw/640",
+        "revision": 8590903,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:352928",
+      "name": "刹那骑悧斗",
+      "directory": "moegirl",
+      "aliases": [
+        "刹那骑悧斗"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%88%B9%E9%82%A3%E9%AA%91%E6%82%A7%E6%96%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "02-08",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%88%B9%E9%82%A3%E9%AA%91%E6%82%A7%E6%96%97",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8a/%E5%88%B9%E9%82%A3%E9%A8%8E%E6%82%A7%E6%96%97.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%88%B9%E9%82%A3%E9%AA%91%E6%82%A7%E6%96%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%88%B9%E9%82%A3%E9%AA%91%E6%82%A7%E6%96%97",
+        "title": "刹那骑悧斗",
+        "pageid": 352928,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8a/%E5%88%B9%E9%82%A3%E9%A8%8E%E6%82%A7%E6%96%97.jpg!/fw/640",
+        "revision": 8578923,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:360648",
+      "name": "Warma",
+      "directory": "moegirl",
+      "aliases": [
+        "Warma",
+        "沃玛"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Warma"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "10-26",
+      "birthday_source": "https://zh.moegirl.org.cn/Warma",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/44/Warma.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Warma",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Warma",
+        "title": "Warma",
+        "pageid": 360648,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/44/Warma.jpg!/fw/640",
+        "revision": 8688432,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:364058",
+      "name": "叶月由罗",
+      "directory": "moegirl",
+      "aliases": [
+        "叶月由罗",
+        "葉月ゆら"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8F%B6%E6%9C%88%E7%94%B1%E7%BD%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "09-17",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%8F%B6%E6%9C%88%E7%94%B1%E7%BD%97",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/40/%E5%A4%A9%E4%B8%8A%E5%A4%A9%E4%B8%8B%E5%94%AF%E6%88%91love_song.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8F%B6%E6%9C%88%E7%94%B1%E7%BD%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8F%B6%E6%9C%88%E7%94%B1%E7%BD%97",
+        "title": "叶月由罗",
+        "pageid": 364058,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/40/%E5%A4%A9%E4%B8%8A%E5%A4%A9%E4%B8%8B%E5%94%AF%E6%88%91love_song.jpg!/fw/640",
+        "revision": 8747051,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:366684",
+      "name": "西瓜JUN",
+      "directory": "moegirl",
+      "aliases": [
+        "西瓜JUN"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%A5%BF%E7%93%9CJUN"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "01-23",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%A5%BF%E7%93%9CJUN",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/31/Jun.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%A5%BF%E7%93%9CJUN",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%A5%BF%E7%93%9CJUN",
+        "title": "西瓜JUN",
+        "pageid": 366684,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/31/Jun.jpg!/fw/640",
+        "revision": 6823847,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:374754",
+      "name": "绯村柯北",
+      "directory": "moegirl",
+      "aliases": [
+        "绯村柯北"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%BB%AF%E6%9D%91%E6%9F%AF%E5%8C%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/44/%E7%BB%AF%E6%9D%91%E6%9F%AF%E5%8C%97.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%BB%AF%E6%9D%91%E6%9F%AF%E5%8C%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%BB%AF%E6%9D%91%E6%9F%AF%E5%8C%97",
+        "title": "绯村柯北",
+        "pageid": 374754,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/44/%E7%BB%AF%E6%9D%91%E6%9F%AF%E5%8C%97.jpg!/fw/640",
+        "revision": 7309878,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:382522",
+      "name": "神威鬼鸣",
+      "directory": "moegirl",
+      "aliases": [
+        "神威鬼鸣"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%A5%9E%E5%A8%81%E9%AC%BC%E9%B8%A3"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/47/%E9%AC%BC%E5%8F%94.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%A5%9E%E5%A8%81%E9%AC%BC%E9%B8%A3",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%A5%9E%E5%A8%81%E9%AC%BC%E9%B8%A3",
+        "title": "神威鬼鸣",
+        "pageid": 382522,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/47/%E9%AC%BC%E5%8F%94.jpg!/fw/640",
+        "revision": 8514092,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:396996",
+      "name": "纱由",
+      "directory": "moegirl",
+      "aliases": [
+        "纱由"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%BA%B1%E7%94%B1"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-23",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%BA%B1%E7%94%B1",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/fa/%E7%B4%97%E7%94%B1.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%BA%B1%E7%94%B1",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%BA%B1%E7%94%B1",
+        "title": "纱由",
+        "pageid": 396996,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/fa/%E7%B4%97%E7%94%B1.jpg!/fw/640",
+        "revision": 8049978,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:397778",
+      "name": "白羽Shiraha",
+      "directory": "moegirl",
+      "aliases": [
+        "白羽Shiraha",
+        "白羽しらは"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%99%BD%E7%BE%BDShiraha"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-23",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%99%BD%E7%BE%BDShiraha",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/15/Image0.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%99%BD%E7%BE%BDShiraha",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%99%BD%E7%BE%BDShiraha",
+        "title": "白羽Shiraha",
+        "pageid": 397778,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/15/Image0.png!/fw/640",
+        "revision": 8049791,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:41073",
+      "name": "岚aya",
+      "directory": "moegirl",
+      "aliases": [
+        "岚aya"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%B2%9Aaya"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "08-02",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%B2%9Aaya",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/69/%E5%B2%9Aaya.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%B2%9Aaya",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%B2%9Aaya",
+        "title": "岚aya",
+        "pageid": 41073,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/69/%E5%B2%9Aaya.jpg!/fw/640",
+        "revision": 7602961,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:423263",
+      "name": "哦漏",
+      "directory": "moegirl",
+      "aliases": [
+        "哦漏",
+        "哦漏QAQ"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%93%A6%E6%BC%8F"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e5/%E5%93%A6%E6%BC%8F%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%93%A6%E6%BC%8F",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%93%A6%E6%BC%8F",
+        "title": "哦漏",
+        "pageid": 423263,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e5/%E5%93%A6%E6%BC%8F%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+        "revision": 8453431,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:426567",
+      "name": "宫下游",
+      "directory": "moegirl",
+      "aliases": [
+        "宫下游"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%AE%AB%E4%B8%8B%E6%B8%B8"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "12-18",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%AE%AB%E4%B8%8B%E6%B8%B8",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d2/%E5%AE%AB%E4%B8%8B%E6%B8%B8.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%AE%AB%E4%B8%8B%E6%B8%B8",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%AE%AB%E4%B8%8B%E6%B8%B8",
+        "title": "宫下游",
+        "pageid": 426567,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d2/%E5%AE%AB%E4%B8%8B%E6%B8%B8.png!/fw/640",
+        "revision": 8693044,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:427457",
+      "name": "松下(歌手)",
+      "directory": "moegirl",
+      "aliases": [
+        "松下(歌手)"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%9D%BE%E4%B8%8B%28%E6%AD%8C%E6%89%8B%29"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "01-31",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%9D%BE%E4%B8%8B%28%E6%AD%8C%E6%89%8B%29",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/37/%E6%9D%BE%E4%B8%8B%28%E6%AD%8C%E6%89%8B%29.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%9D%BE%E4%B8%8B%28%E6%AD%8C%E6%89%8B%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%9D%BE%E4%B8%8B%28%E6%AD%8C%E6%89%8B%29",
+        "title": "松下(歌手)",
+        "pageid": 427457,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/37/%E6%9D%BE%E4%B8%8B%28%E6%AD%8C%E6%89%8B%29.png!/fw/640",
+        "revision": 8521891,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:42848",
+      "name": "Vip店长",
+      "directory": "moegirl",
+      "aliases": [
+        "Vip店长"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Vip%E5%BA%97%E9%95%BF"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "07-14",
+      "birthday_source": "https://zh.moegirl.org.cn/Vip%E5%BA%97%E9%95%BF",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/05/24336682.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Vip%E5%BA%97%E9%95%BF",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Vip%E5%BA%97%E9%95%BF",
+        "title": "Vip店长",
+        "pageid": 42848,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/05/24336682.jpg!/fw/640",
+        "revision": 6291654,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:434784",
+      "name": "真栗",
+      "directory": "moegirl",
+      "aliases": [
+        "真栗",
+        "真栗栗"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%9C%9F%E6%A0%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "07-31",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%9C%9F%E6%A0%97",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4e/%E7%9C%9F%E6%A0%97%282021.3.19%E8%B5%B7%29.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%9C%9F%E6%A0%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%9C%9F%E6%A0%97",
+        "title": "真栗",
+        "pageid": 434784,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4e/%E7%9C%9F%E6%A0%97%282021.3.19%E8%B5%B7%29.jpg!/fw/640",
+        "revision": 8724101,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:436278",
+      "name": "千璃Senri",
+      "directory": "moegirl",
+      "aliases": [
+        "千璃Senri"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8D%83%E7%92%83Senri"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/28/%E5%8D%83%E7%92%83Senri%E7%AB%8B%E7%BB%98.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8D%83%E7%92%83Senri",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8D%83%E7%92%83Senri",
+        "title": "千璃Senri",
+        "pageid": 436278,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/28/%E5%8D%83%E7%92%83Senri%E7%AB%8B%E7%BB%98.jpeg!/fw/640",
+        "revision": 8142899,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:450024",
+      "name": "冥月",
+      "directory": "moegirl",
+      "aliases": [
+        "冥月",
+        "冥月の翼"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%86%A5%E6%9C%88"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-14",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%86%A5%E6%9C%88",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8a/%E5%86%A5%E6%9C%88-5sing%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%86%A5%E6%9C%88",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%86%A5%E6%9C%88",
+        "title": "冥月",
+        "pageid": 450024,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8a/%E5%86%A5%E6%9C%88-5sing%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+        "revision": 7699186,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:450031",
+      "name": "Madotsuki",
+      "directory": "moegirl",
+      "aliases": [
+        "Madotsuki",
+        "窓付き@"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Madotsuki"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e7/Madotsuki.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Madotsuki",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Madotsuki",
+        "title": "Madotsuki",
+        "pageid": 450031,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e7/Madotsuki.jpg!/fw/640",
+        "revision": 6344719,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:452361",
+      "name": "洛少爷",
+      "directory": "moegirl",
+      "aliases": [
+        "洛少爷"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%B4%9B%E5%B0%91%E7%88%B7"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "08-12",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%B4%9B%E5%B0%91%E7%88%B7",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/06/%E6%B4%9B%E5%B0%91%E7%88%B7.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%B4%9B%E5%B0%91%E7%88%B7",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%B4%9B%E5%B0%91%E7%88%B7",
+        "title": "洛少爷",
+        "pageid": 452361,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/06/%E6%B4%9B%E5%B0%91%E7%88%B7.jpg!/fw/640",
+        "revision": 8614098,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:453465",
+      "name": "蚀血之暗",
+      "directory": "moegirl",
+      "aliases": [
+        "蚀血之暗"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%9A%80%E8%A1%80%E4%B9%8B%E6%9A%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-21",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%9A%80%E8%A1%80%E4%B9%8B%E6%9A%97",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d5/%E8%9A%80%E8%A1%80%E4%B9%8B%E6%9A%97TX.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%9A%80%E8%A1%80%E4%B9%8B%E6%9A%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%9A%80%E8%A1%80%E4%B9%8B%E6%9A%97",
+        "title": "蚀血之暗",
+        "pageid": 453465,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d5/%E8%9A%80%E8%A1%80%E4%B9%8B%E6%9A%97TX.jpg!/fw/640",
+        "revision": 7148728,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:45549",
+      "name": "咬人猫",
+      "directory": "moegirl",
+      "aliases": [
+        "咬人猫"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%92%AC%E4%BA%BA%E7%8C%AB"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/74/%E5%92%AC%E4%BA%BA%E7%8C%AB-%E5%8B%BE%E6%8C%87%E8%B5%B7%E8%AA%93-248603624901297403-%E5%9B%BE2.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%92%AC%E4%BA%BA%E7%8C%AB",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%92%AC%E4%BA%BA%E7%8C%AB",
+        "title": "咬人猫",
+        "pageid": 45549,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/74/%E5%92%AC%E4%BA%BA%E7%8C%AB-%E5%8B%BE%E6%8C%87%E8%B5%B7%E8%AA%93-248603624901297403-%E5%9B%BE2.jpeg!/fw/640",
+        "revision": 8496104,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:456512",
+      "name": "SING女团",
+      "directory": "moegirl",
+      "aliases": [
+        "SING女团"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/SING%E5%A5%B3%E5%9B%A2"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4c/SING%E5%A5%B3%E5%9B%A2-2021%E4%BA%94%E4%BA%BA.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/SING%E5%A5%B3%E5%9B%A2",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/SING%E5%A5%B3%E5%9B%A2",
+        "title": "SING女团",
+        "pageid": 456512,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4c/SING%E5%A5%B3%E5%9B%A2-2021%E4%BA%94%E4%BA%BA.jpg!/fw/640",
+        "revision": 7130353,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:458644",
+      "name": "辽辽",
+      "directory": "moegirl",
+      "aliases": [
+        "辽辽",
+        "Loin",
+        "ルワン",
+        "陆万"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%BE%BD%E8%BE%BD"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/ff/Loin.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%BE%BD%E8%BE%BD",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%BE%BD%E8%BE%BD",
+        "title": "辽辽",
+        "pageid": 458644,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/ff/Loin.jpg!/fw/640",
+        "revision": 8514948,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:470355",
+      "name": "凑诗",
+      "directory": "moegirl",
+      "aliases": [
+        "凑诗",
+        "张佩怡"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%87%91%E8%AF%97"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "11-23",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%87%91%E8%AF%97",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2f/%E5%87%91%E8%AF%97.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%87%91%E8%AF%97",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%87%91%E8%AF%97",
+        "title": "凑诗",
+        "pageid": 470355,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2f/%E5%87%91%E8%AF%97.jpg!/fw/640",
+        "revision": 6965124,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:470494",
+      "name": "Stack",
+      "directory": "moegirl",
+      "aliases": [
+        "Stack"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Stack"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9f/Stack.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Stack",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Stack",
+        "title": "Stack",
+        "pageid": 470494,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9f/Stack.png!/fw/640",
+        "revision": 7829102,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:474077",
+      "name": "艾辰",
+      "directory": "moegirl",
+      "aliases": [
+        "艾辰"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%89%BE%E8%BE%B0"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-18",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%89%BE%E8%BE%B0",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/79/B%E7%AB%99%E8%89%BE%E8%BE%B0.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%89%BE%E8%BE%B0",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%89%BE%E8%BE%B0",
+        "title": "艾辰",
+        "pageid": 474077,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/79/B%E7%AB%99%E8%89%BE%E8%BE%B0.jpg!/fw/640",
+        "revision": 8042782,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:490242",
+      "name": "可可Aletta",
+      "directory": "moegirl",
+      "aliases": [
+        "可可Aletta"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8F%AF%E5%8F%AFAletta"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "11-06",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%8F%AF%E5%8F%AFAletta",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/47/%E5%8F%AF%E5%8F%AFAletta-2.PNG!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8F%AF%E5%8F%AFAletta",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8F%AF%E5%8F%AFAletta",
+        "title": "可可Aletta",
+        "pageid": 490242,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/47/%E5%8F%AF%E5%8F%AFAletta-2.PNG!/fw/640",
+        "revision": 8386506,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:509348",
+      "name": "叶洛洛",
+      "directory": "moegirl",
+      "aliases": [
+        "叶洛洛"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8F%B6%E6%B4%9B%E6%B4%9B"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-02",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%8F%B6%E6%B4%9B%E6%B4%9B",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/99/%E5%8F%B6%E6%B4%9B%E6%B4%9B%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8F%B6%E6%B4%9B%E6%B4%9B",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8F%B6%E6%B4%9B%E6%B4%9B",
+        "title": "叶洛洛",
+        "pageid": 509348,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/99/%E5%8F%B6%E6%B4%9B%E6%B4%9B%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+        "revision": 8161969,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:509409",
+      "name": "奇然",
+      "directory": "moegirl",
+      "aliases": [
+        "奇然",
+        "奇然liya"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%A5%87%E7%84%B6"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "08-11",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%A5%87%E7%84%B6",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/71/%E5%A5%87%E7%84%B6%E5%A4%B4.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%A5%87%E7%84%B6",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%A5%87%E7%84%B6",
+        "title": "奇然",
+        "pageid": 509409,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/71/%E5%A5%87%E7%84%B6%E5%A4%B4.jpg!/fw/640",
+        "revision": 8761909,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:512094",
+      "name": "Saya(歌手)",
+      "directory": "moegirl",
+      "aliases": [
+        "Saya(歌手)",
+        "38番"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Saya%28%E6%AD%8C%E6%89%8B%29"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/ef/3number8_Saya.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Saya%28%E6%AD%8C%E6%89%8B%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Saya%28%E6%AD%8C%E6%89%8B%29",
+        "title": "Saya(歌手)",
+        "pageid": 512094,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/ef/3number8_Saya.jpg!/fw/640",
+        "revision": 8419609,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:512588",
+      "name": "河图",
+      "directory": "moegirl",
+      "aliases": [
+        "河图"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%B2%B3%E5%9B%BE"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "10-31",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%B2%B3%E5%9B%BE",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/59/%E6%B2%B3%E5%9B%BE.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%B2%B3%E5%9B%BE",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%B2%B3%E5%9B%BE",
+        "title": "河图",
+        "pageid": 512588,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/59/%E6%B2%B3%E5%9B%BE.jpg!/fw/640",
+        "revision": 8465291,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:513066",
+      "name": "茶太",
+      "directory": "moegirl",
+      "aliases": [
+        "茶太"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%8C%B6%E5%A4%AA"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "11-21",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%8C%B6%E5%A4%AA",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9a/%E8%8C%B6%E5%A4%AA1.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%8C%B6%E5%A4%AA",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%8C%B6%E5%A4%AA",
+        "title": "茶太",
+        "pageid": 513066,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9a/%E8%8C%B6%E5%A4%AA1.png!/fw/640",
+        "revision": 8744463,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:524804",
+      "name": "ClessS",
+      "directory": "moegirl",
+      "aliases": [
+        "ClessS",
+        "Ndwd",
+        "克勾",
+        "克狗",
+        "内德维德"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/ClessS"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "01-19",
+      "birthday_source": "https://zh.moegirl.org.cn/ClessS",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6f/%E5%86%85%E5%BE%B7%E7%BB%B4%E5%BE%B7%EF%BC%88%E6%A1%8C%E5%AE%A0%E5%BD%A2%E8%B1%A1-%E8%A1%A8%E6%83%85%E5%B7%AE%E5%88%86%EF%BC%89.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/ClessS",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/ClessS",
+        "title": "ClessS",
+        "pageid": 524804,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6f/%E5%86%85%E5%BE%B7%E7%BB%B4%E5%BE%B7%EF%BC%88%E6%A1%8C%E5%AE%A0%E5%BD%A2%E8%B1%A1-%E8%A1%A8%E6%83%85%E5%B7%AE%E5%88%86%EF%BC%89.png!/fw/640",
+        "revision": 8671569,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:526565",
+      "name": "菠萝赛东",
+      "directory": "moegirl",
+      "aliases": [
+        "菠萝赛东"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E8%8F%A0%E8%90%9D%E8%B5%9B%E4%B8%9C"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "10-29",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%8F%A0%E8%90%9D%E8%B5%9B%E4%B8%9C",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/84/%E8%8F%A0%E8%90%9D%E8%B5%9B%E4%B8%9C%E5%8D%A1%E9%80%9A%E5%BD%A2%E8%B1%A1.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E8%8F%A0%E8%90%9D%E8%B5%9B%E4%B8%9C",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%8F%A0%E8%90%9D%E8%B5%9B%E4%B8%9C",
+        "title": "菠萝赛东",
+        "pageid": 526565,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/84/%E8%8F%A0%E8%90%9D%E8%B5%9B%E4%B8%9C%E5%8D%A1%E9%80%9A%E5%BD%A2%E8%B1%A1.jpg!/fw/640",
+        "revision": 8265845,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:535414",
+      "name": "Cuta库塔",
+      "directory": "moegirl",
+      "aliases": [
+        "Cuta库塔"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Cuta%E5%BA%93%E5%A1%94"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "06-24",
+      "birthday_source": "https://zh.moegirl.org.cn/Cuta%E5%BA%93%E5%A1%94",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/81/Cuta.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Cuta%E5%BA%93%E5%A1%94",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Cuta%E5%BA%93%E5%A1%94",
+        "title": "Cuta库塔",
+        "pageid": 535414,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/81/Cuta.jpeg!/fw/640",
+        "revision": 8162673,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:536687",
+      "name": "志麻(唱见)",
+      "directory": "moegirl",
+      "aliases": [
+        "志麻(唱见)",
+        "Shima",
+        "月崎志麻"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%BF%97%E9%BA%BB%28%E5%94%B1%E8%A7%81%29"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-01",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%BF%97%E9%BA%BB%28%E5%94%B1%E8%A7%81%29",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2f/Shima_2024_Summer_Icon.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%BF%97%E9%BA%BB%28%E5%94%B1%E8%A7%81%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%BF%97%E9%BA%BB%28%E5%94%B1%E8%A7%81%29",
+        "title": "志麻(唱见)",
+        "pageid": 536687,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2f/Shima_2024_Summer_Icon.jpg!/fw/640",
+        "revision": 7543211,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:545373",
+      "name": "牵零ganna",
+      "directory": "moegirl",
+      "aliases": [
+        "牵零ganna",
+        "牵零零零"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%89%B5%E9%9B%B6ganna"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "07-14",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%89%B5%E9%9B%B6ganna",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a7/%E7%89%B5%E9%9B%B62.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%89%B5%E9%9B%B6ganna",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%89%B5%E9%9B%B6ganna",
+        "title": "牵零ganna",
+        "pageid": 545373,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a7/%E7%89%B5%E9%9B%B62.jpg!/fw/640",
+        "revision": 8288289,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:552951",
+      "name": "狂风桑",
+      "directory": "moegirl",
+      "aliases": [
+        "狂风桑"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%8B%82%E9%A3%8E%E6%A1%91"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/0b/%E7%8B%82%E9%A3%8E%E6%A1%91.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%8B%82%E9%A3%8E%E6%A1%91",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%8B%82%E9%A3%8E%E6%A1%91",
+        "title": "狂风桑",
+        "pageid": 552951,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/0b/%E7%8B%82%E9%A3%8E%E6%A1%91.jpg!/fw/640",
+        "revision": 6628713,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:553666",
+      "name": "糖醋里脊(配音演员)",
+      "directory": "moegirl",
+      "aliases": [
+        "糖醋里脊(配音演员)",
+        "嘉祺",
+        "张嘉祺"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%B3%96%E9%86%8B%E9%87%8C%E8%84%8A%28%E9%85%8D%E9%9F%B3%E6%BC%94%E5%91%98%29"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-13",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%B3%96%E9%86%8B%E9%87%8C%E8%84%8A%28%E9%85%8D%E9%9F%B3%E6%BC%94%E5%91%98%29",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3b/%E7%B3%96%E9%86%8B%E9%87%8C%E8%84%8A%28%E9%85%8D%E9%9F%B3%E6%BC%94%E5%91%98%29.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%B3%96%E9%86%8B%E9%87%8C%E8%84%8A%28%E9%85%8D%E9%9F%B3%E6%BC%94%E5%91%98%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%B3%96%E9%86%8B%E9%87%8C%E8%84%8A%28%E9%85%8D%E9%9F%B3%E6%BC%94%E5%91%98%29",
+        "title": "糖醋里脊(配音演员)",
+        "pageid": 553666,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3b/%E7%B3%96%E9%86%8B%E9%87%8C%E8%84%8A%28%E9%85%8D%E9%9F%B3%E6%BC%94%E5%91%98%29.jpg!/fw/640",
+        "revision": 8466001,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:55425",
+      "name": "括号君",
+      "directory": "moegirl",
+      "aliases": [
+        "括号君"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%8B%AC%E5%8F%B7%E5%90%9B"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "10-05",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%8B%AC%E5%8F%B7%E5%90%9B",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/03/Eggeg.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%8B%AC%E5%8F%B7%E5%90%9B",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%8B%AC%E5%8F%B7%E5%90%9B",
+        "title": "括号君",
+        "pageid": 55425,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/03/Eggeg.jpg!/fw/640",
+        "revision": 7408574,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:561799",
+      "name": "司夏",
+      "directory": "moegirl",
+      "aliases": [
+        "司夏",
+        "西国の海妖",
+        "西国之海妖",
+        "西国海妖",
+        "西国的海妖"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%8F%B8%E5%A4%8F"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "05-06",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%8F%B8%E5%A4%8F",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/42/%E5%8F%B8%E5%A4%8F.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%8F%B8%E5%A4%8F",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%8F%B8%E5%A4%8F",
+        "title": "司夏",
+        "pageid": 561799,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/42/%E5%8F%B8%E5%A4%8F.jpg!/fw/640",
+        "revision": 7418984,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:562711",
+      "name": "祈哀",
+      "directory": "moegirl",
+      "aliases": [
+        "祈哀"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%A5%88%E5%93%80"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "07-02",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%A5%88%E5%93%80",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/59/SekaiKaimetsu.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%A5%88%E5%93%80",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%A5%88%E5%93%80",
+        "title": "祈哀",
+        "pageid": 562711,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/59/SekaiKaimetsu.jpg!/fw/640",
+        "revision": 8739964,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:618003",
+      "name": "水槽(歌手)",
+      "directory": "moegirl",
+      "aliases": [
+        "水槽(歌手)"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E6%B0%B4%E6%A7%BD%28%E6%AD%8C%E6%89%8B%29"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bb/%E6%B0%B4%E6%A7%BD_suisoh.JPG!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E6%B0%B4%E6%A7%BD%28%E6%AD%8C%E6%89%8B%29",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%B0%B4%E6%A7%BD%28%E6%AD%8C%E6%89%8B%29",
+        "title": "水槽(歌手)",
+        "pageid": 618003,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bb/%E6%B0%B4%E6%A7%BD_suisoh.JPG!/fw/640",
+        "revision": 8733519,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:631851",
+      "name": "吉乃",
+      "directory": "moegirl",
+      "aliases": [
+        "吉乃"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%90%89%E4%B9%83"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "01-22",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%90%89%E4%B9%83",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/aa/%E5%90%89%E4%B9%83.png!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%90%89%E4%B9%83",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%90%89%E4%B9%83",
+        "title": "吉乃",
+        "pageid": 631851,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/aa/%E5%90%89%E4%B9%83.png!/fw/640",
+        "revision": 8740044,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:656882",
+      "name": "Ruru",
+      "directory": "moegirl",
+      "aliases": [
+        "Ruru"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Ruru"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/0c/Ruru-%E5%A4%B4%E5%9B%BE.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Ruru",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Ruru",
+        "title": "Ruru",
+        "pageid": 656882,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/0c/Ruru-%E5%A4%B4%E5%9B%BE.jpg!/fw/640",
+        "revision": 8706043,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:662342",
+      "name": "Migu",
+      "directory": "moegirl",
+      "aliases": [
+        "Migu",
+        "十六夜tsukimi",
+        "月宫翔瑠"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Migu"
+      ],
+      "roles": [
+        "music_creator",
+        "utaite"
+      ],
+      "birthday": "11-01",
+      "birthday_source": "https://zh.moegirl.org.cn/Migu",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/cc/Migu.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Migu",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Migu",
+        "title": "Migu",
+        "pageid": 662342,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/cc/Migu.jpg!/fw/640",
+        "revision": 8663624,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:70819",
+      "name": "祈Inory",
+      "directory": "moegirl",
+      "aliases": [
+        "祈Inory",
+        "祈inory"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E7%A5%88Inory"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "11-02",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%A5%88Inory",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/5b/Inory.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E7%A5%88Inory",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%A5%88Inory",
+        "title": "祈Inory",
+        "pageid": 70819,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/5/5b/Inory.jpg!/fw/640",
+        "revision": 8671106,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:72917",
+      "name": "锁那",
+      "directory": "moegirl",
+      "aliases": [
+        "锁那"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E9%94%81%E9%82%A3"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "03-22",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%94%81%E9%82%A3",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/dc/14581957.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E9%94%81%E9%82%A3",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%94%81%E9%82%A3",
+        "title": "锁那",
+        "pageid": 72917,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/dc/14581957.jpg!/fw/640",
+        "revision": 8431448,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:85907",
+      "name": "小缘",
+      "directory": "moegirl",
+      "aliases": [
+        "小缘"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/%E5%B0%8F%E7%BC%98"
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "08-31",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%B0%8F%E7%BC%98",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3f/%E5%B0%8F%E7%BC%98_%E3%80%8A%E6%97%B6%E9%92%88%E3%80%8B%E5%B0%81%E9%9D%A2.jpeg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/%E5%B0%8F%E7%BC%98",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%B0%8F%E7%BC%98",
+        "title": "小缘",
+        "pageid": 85907,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3f/%E5%B0%8F%E7%BC%98_%E3%80%8A%E6%97%B6%E9%92%88%E3%80%8B%E5%B0%81%E9%9D%A2.jpeg!/fw/640",
+        "revision": 8740726,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:moegirl:94319",
+      "name": "Arufakyun.",
+      "directory": "moegirl",
+      "aliases": [
+        "Arufakyun.",
+        "+α",
+        "Arufakyun",
+        "あるふぁきゅん"
+      ],
+      "sources": [
+        "https://zh.moegirl.org.cn/Arufakyun."
+      ],
+      "roles": [
+        "utaite"
+      ],
+      "birthday": "12-21",
+      "birthday_source": "https://zh.moegirl.org.cn/Arufakyun.",
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d4/Arufakyun%E4%B8%93%E8%BE%91%E5%B0%81%E9%9D%A2.jpg!/fw/640",
+      "image_source": "https://zh.moegirl.org.cn/Arufakyun.",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Arufakyun.",
+        "title": "Arufakyun.",
+        "pageid": 94319,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d4/Arufakyun%E4%B8%93%E8%BE%91%E5%B0%81%E9%9D%A2.jpg!/fw/640",
+        "revision": 8280599,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
       "id": "ut:utaitedb:1029",
       "name": "柿チョコ",
       "aliases": [
@@ -12,7 +2167,10 @@
         "Kakichoco",
         "Choco",
         "葉月透子",
-        "Hazuki Toko"
+        "Hazuki Toko",
+        "Kakichoko",
+        "柿Choco",
+        "柿子巧克力"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1029.png?v=12",
       "sources": [
@@ -31,17 +2189,21 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E6%9F%BFChoco",
         "title": "柿Choco",
+        "pageid": 94308,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9f/20140808142535-776148161.jpg!/fw/640",
         "revision": 7721828,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1034",
       "name": "Reol",
       "aliases": [
-        "れをる",
         "Reol",
+        "れをる",
         "シェリー"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1034.jpg?v=17",
@@ -60,11 +2222,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Reol",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Reol",
-        "title": "れをる",
+        "title": "Reol",
+        "pageid": 135277,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/16/11099999.png!/fw/640",
         "revision": 8698382,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1039",
@@ -90,17 +2256,23 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E7%81%AF%E6%B2%B9",
         "title": "灯油",
+        "pageid": 531465,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2f/%E7%81%AF%E6%B2%B9.jpeg!/fw/640",
         "revision": 8514822,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator",
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1043",
       "name": "りぶ",
       "aliases": [
         "りぶ",
-        "Rib"
+        "Rib",
+        "Ribu"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1043.png?v=10",
       "sources": [
@@ -118,11 +2290,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Rib",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Rib",
-        "title": "りぶ（rib）",
+        "title": "Rib",
+        "pageid": 309566,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ac/Rib.jpeg!/fw/640",
         "revision": 8247311,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1083",
@@ -150,11 +2326,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Nanahira",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Nanahira",
-        "title": "ななひら",
+        "title": "Nanahira",
+        "pageid": 290938,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/95/67092355_p0.png!/fw/640",
         "revision": 8698401,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1084",
@@ -166,7 +2346,8 @@
         "くろねこ",
         "Kuroneko",
         "響希ナツメ",
-        "Hibiki Natsume"
+        "Hibiki Natsume",
+        "96neko"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1084.jpg?v=27",
       "sources": [
@@ -185,10 +2366,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/96%E7%8C%AB",
         "title": "96猫",
+        "pageid": 200738,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/45/96.jpg!/fw/640",
         "revision": 7963440,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1085",
@@ -218,11 +2403,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Soraru",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Soraru",
-        "title": "そらる",
+        "title": "Soraru",
+        "pageid": 209535,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e6/Soraru.jpg!/fw/640",
         "revision": 8750215,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1097",
@@ -230,7 +2419,8 @@
       "aliases": [
         "まふまふ",
         "Mafumafu",
-        "마후마후"
+        "마후마후",
+        "镜见失神P"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1097.jpg?v=24",
       "sources": [
@@ -248,15 +2438,16 @@
       "source_status": "Finished",
       "directory": "utaitedb",
       "roles": [
-        "utaite",
-        "music_creator"
+        "music_creator",
+        "utaite"
       ],
       "last_seen_on": "2026-11-17",
       "birthday": "10-18",
       "birthday_source": "https://zh.moegirl.org.cn/Mafumafu",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Mafumafu",
-        "title": "まふまふ",
+        "title": "Mafumafu",
+        "pageid": 278302,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3d/Mafumafu.jpg!/fw/640",
         "revision": 8701033,
         "retrieved_on": "2026-11-17"
@@ -283,11 +2474,15 @@
       "last_seen_on": "2026-11-17",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Nobunaga",
-        "title": "のぶなが",
+        "title": "Nobunaga",
+        "pageid": 92349,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e4/%E3%81%AE%E3%81%B6%E3%81%AA%E3%81%8C02.png!/fw/640",
         "revision": 6984199,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1109",
@@ -299,7 +2494,9 @@
         "YURiCa",
         "夢璃花",
         "Yurika",
-        "KOHANA"
+        "KOHANA",
+        "YURiCaHANATAN",
+        "花碳"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1109.jpg?v=18",
       "sources": [
@@ -318,10 +2515,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E8%8A%B1%E7%A2%B3",
         "title": "花碳",
+        "pageid": 209731,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4e/%E8%8A%B1%E7%A2%B3%E8%8A%B1%E7%A2%B3%E8%8A%B1.jpg!/fw/640",
         "revision": 8459466,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1122",
@@ -344,10 +2545,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Panaman",
         "title": "Panaman",
+        "pageid": 620270,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/26/Panaman1.jpg!/fw/640",
         "revision": 8165035,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1130",
@@ -375,9 +2580,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E9%B9%BF%E4%B9%83",
         "title": "鹿乃",
-        "retrieved_on": "2026-11-17",
-        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/43/%E9%B9%BF%E4%B9%83artist.jpg!/fw/640"
-      }
+        "pageid": 202723,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/43/%E9%B9%BF%E4%B9%83artist.jpg!/fw/640",
+        "revision": 8741271,
+        "retrieved_on": "2026-11-17"
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1144",
@@ -403,10 +2613,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Wotamin",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Wotamin",
-        "title": "ヲタみん",
-        "retrieved_on": "2026-11-17",
-        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d5/23469949.jpg!/fw/640"
-      }
+        "title": "Wotamin",
+        "pageid": 46698,
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d5/23469949.jpg!/fw/640",
+        "revision": 4845725,
+        "retrieved_on": "2026-11-17"
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1192",
@@ -416,7 +2631,8 @@
         "メイリア",
         "水橋舞",
         "Mizuhashi Mai",
-        "美依礼芽"
+        "美依礼芽",
+        "水桥舞"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1192.png?v=9",
       "sources": [
@@ -435,10 +2651,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E7%BE%8E%E4%BE%9D%E7%A4%BC%E8%8A%BD",
         "title": "美依礼芽",
+        "pageid": 563490,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/42/MARiA.jpg!/fw/640",
         "revision": 8681053,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     },
     {
       "id": "ut:utaitedb:1204",
@@ -466,10 +2686,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Lon",
         "title": "Lon",
+        "pageid": 34661,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b0/34365080.jpg!/fw/640",
         "revision": 6727745,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1258",
@@ -499,8 +2723,8 @@
       "source_status": "Finished",
       "directory": "utaitedb",
       "roles": [
-        "utaite",
-        "music_creator"
+        "music_creator",
+        "utaite"
       ],
       "last_seen_on": "2026-11-17",
       "birthday": "02-25",
@@ -508,6 +2732,7 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E5%A4%8F%E4%BB%A3%E5%AD%9D%E6%98%8E",
         "title": "夏代孝明",
+        "pageid": 527211,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/cb/NatsushiroTakaaki.jpg!/fw/640",
         "revision": 8513650,
         "retrieved_on": "2026-11-17"
@@ -520,7 +2745,8 @@
         "nqrse",
         "なるせ",
         "naruse",
-        "成瀬"
+        "成瀬",
+        "Nqrse"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1309.png?v=19",
       "sources": [
@@ -538,20 +2764,25 @@
       "birthday_source": "https://zh.moegirl.org.cn/Nqrse",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Nqrse",
-        "title": "なるせ",
+        "title": "Nqrse",
+        "pageid": 303902,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a1/Nqrse.jpg!/fw/640",
         "revision": 7650859,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1324",
       "name": "luz",
       "aliases": [
-        "ルス",
         "luz",
+        "ルス",
         "帯刀光司",
-        "Tatewaki Kouji"
+        "Tatewaki Kouji",
+        "Luz"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1324.png?v=16",
       "sources": [
@@ -570,10 +2801,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Luz",
         "title": "Luz",
+        "pageid": 283108,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/97/Luz.jpg!/fw/640",
         "revision": 8123242,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1375",
@@ -585,7 +2820,9 @@
         "Urata",
         "浦田わたる",
         "Urata Wataru",
-        "Wataru Urata"
+        "Wataru Urata",
+        "浦田涉",
+        "高桥涉"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1375.png?v=13",
       "sources": [
@@ -603,10 +2840,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E6%B5%A6%E7%94%B0%E6%B6%89",
         "title": "浦田涉",
+        "pageid": 325166,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/84/Uratanuki_2024_Oneman_Icon.jpg!/fw/640",
         "revision": 8589167,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1423",
@@ -614,7 +2855,8 @@
       "aliases": [
         "センラ",
         "Senra",
-        "折原センラ"
+        "折原センラ",
+        "胸毛P"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1423.png?v=9",
       "sources": [
@@ -632,11 +2874,16 @@
       "birthday_source": "https://zh.moegirl.org.cn/Senra",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Senra",
-        "title": "センラ",
+        "title": "Senra",
+        "pageid": 537353,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d8/Senra_2024_Summer_Icon.jpg!/fw/640",
         "revision": 7543187,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator",
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1447",
@@ -671,11 +2918,13 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1",
         "title": "柊优花",
+        "pageid": 316266,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/27/Yoshioka_Misaki.jpg!/fw/640",
         "revision": 8749037,
         "retrieved_on": "2026-11-17"
       },
-      "music_identity_source": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1"
+      "music_identity_source": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1",
+      "roles": []
     },
     {
       "id": "ut:utaitedb:1493",
@@ -685,7 +2934,9 @@
         "kyaami",
         "シリア",
         "harumia",
-        "Micaela"
+        "Micaela",
+        "Cillia",
+        "Kyaami"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1493.jpg?v=12",
       "sources": [
@@ -703,13 +2954,14 @@
       "source_status": "Approved",
       "directory": "utaitedb",
       "roles": [
-        "utaite",
-        "music_creator"
+        "music_creator",
+        "utaite"
       ],
       "last_seen_on": "2026-11-17",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Cillia",
         "title": "Cillia",
+        "pageid": 339960,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ae/Cillia.jpg!/fw/640",
         "revision": 8489007,
         "retrieved_on": "2026-11-17"
@@ -742,10 +2994,15 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85",
         "title": "佐香智久",
+        "pageid": 309386,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bb/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85%E5%85%AC%E5%BC%8F.jpg!/fw/640",
         "revision": 8505373,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator",
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1587",
@@ -772,11 +3029,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/%E5%A4%A9%E6%9C%88",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E5%A4%A9%E6%9C%88",
-        "title": "天月-あまつき-",
+        "title": "天月",
+        "pageid": 298272,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ae/Amatsuki.jpg!/fw/640",
         "revision": 8513697,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:17118",
@@ -810,11 +3071,13 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99",
         "title": "蓝月奈久留",
+        "pageid": 433831,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6d/AitsukiIcon2.jpg!/fw/640",
         "revision": 8363203,
         "retrieved_on": "2026-11-17"
       },
-      "music_identity_source": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99"
+      "music_identity_source": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99",
+      "roles": []
     },
     {
       "id": "ut:utaitedb:17176",
@@ -840,10 +3103,15 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E9%93%B6%E4%B8%B4",
         "title": "银临",
+        "pageid": 314208,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/97/Zhenzhu.jpg!/fw/640",
         "revision": 7741847,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator",
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1938",
@@ -866,10 +3134,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Yorukichi",
         "title": "Yorukichi",
+        "pageid": 445831,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/17/Yorukichi.jpg!/fw/640",
         "revision": 6344695,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:1948",
@@ -877,7 +3149,8 @@
       "aliases": [
         "赤ティン",
         "Akatin",
-        "red tin"
+        "red tin",
+        "红婷婷"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/1948.jpg?v=16",
       "sources": [
@@ -895,11 +3168,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Akatin",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Akatin",
-        "title": "赤ティン",
+        "title": "Akatin",
+        "pageid": 278406,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8a/Akatindayon.jpg!/fw/640",
         "revision": 6772345,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:2064",
@@ -911,7 +3188,9 @@
         "Kurosawa Madoka",
         "黒澤マドカ",
         "쿠로사와 마도카",
-        "남동생의 누나"
+        "남동생의 누나",
+        "弟之姐",
+        "黑泽圆"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/2064.jpg?v=11",
       "sources": [
@@ -927,8 +3206,8 @@
       "source_status": "Finished",
       "directory": "utaitedb",
       "roles": [
-        "utaite",
-        "music_creator"
+        "music_creator",
+        "utaite"
       ],
       "last_seen_on": "2026-11-17",
       "birthday": "09-06",
@@ -936,6 +3215,7 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E5%BC%9F%E4%B9%8B%E5%A7%90",
         "title": "弟之姐",
+        "pageid": 443736,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a8/Kurosawamadoka.jpg!/fw/640",
         "revision": 7182858,
         "retrieved_on": "2026-11-17"
@@ -946,7 +3226,8 @@
       "name": "DAOKO",
       "aliases": [
         "DAOKO",
-        "だをこ"
+        "だをこ",
+        "Daoko"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/21480.jpg?v=4",
       "sources": [
@@ -964,10 +3245,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/DAOKO",
         "title": "DAOKO",
+        "pageid": 277266,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ae/DAOKO.jpg!/fw/640",
         "revision": 8743579,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     },
     {
       "id": "ut:utaitedb:23212",
@@ -990,16 +3275,22 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/EMA",
         "title": "EMA",
+        "pageid": 387656,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/88/EMA.jpg!/fw/640",
         "revision": 8142653,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     },
     {
       "id": "ut:utaitedb:23389",
       "name": "Risa Yuzuki",
       "aliases": [
-        "Risa Yuzuki"
+        "Risa Yuzuki",
+        "Yuzuki Risa",
+        "柚木梨沙"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23389.png?v=8",
       "sources": [
@@ -1017,17 +3308,21 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E6%9F%9A%E6%9C%A8%E6%A2%A8%E6%B2%99",
         "title": "柚木梨沙",
+        "pageid": 559909,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/78/Risa_Yuzuki_2024.jpg!/fw/640",
         "revision": 8689433,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     },
     {
       "id": "ut:utaitedb:23501",
       "name": "Ado",
       "aliases": [
-        "あど",
         "Ado",
+        "あど",
         "アド"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23501.jpg?v=12",
@@ -1047,17 +3342,21 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Ado",
         "title": "Ado",
+        "pageid": 492811,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/fe/Ado.jpg!/fw/640",
         "revision": 8761332,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:24",
       "name": "nayuta",
       "aliases": [
-        "なゆた",
         "nayuta",
+        "なゆた",
         "葉月奈乃",
         "葉月なの",
         "Hadzuki Nano",
@@ -1066,7 +3365,8 @@
         "NANO",
         "奶油糖",
         "なゆたん",
-        "叶月奈乃"
+        "叶月奈乃",
+        "Nayuta"
       ],
       "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9e/Nayuta%E6%96%B0%E8%A7%86%E8%A7%89%E5%9B%BE.jpeg!/fw/640",
       "sources": [
@@ -1086,20 +3386,23 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Nayuta",
         "title": "Nayuta",
+        "pageid": 408712,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9e/Nayuta%E6%96%B0%E8%A7%86%E8%A7%89%E5%9B%BE.jpeg!/fw/640",
         "revision": 8459002,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": []
     },
     {
       "id": "ut:utaitedb:25",
       "name": "halyosy",
       "aliases": [
-        "ハルヨシ",
         "halyosy",
+        "ハルヨシ",
         "森晴義",
         "Mori Haruyoshi",
-        "하루요시"
+        "하루요시",
+        "Halyosy"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25.png?v=9",
       "sources": [
@@ -1119,14 +3422,15 @@
       "source_status": "Finished",
       "directory": "utaitedb",
       "roles": [
-        "utaite",
-        "music_creator"
+        "music_creator",
+        "utaite"
       ],
       "last_seen_on": "2026-11-17",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Halyosy",
         "title": "Halyosy",
-        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/c4/Job_I.jpeg!/fw/640",
+        "pageid": 604636,
+        "image_url": "",
         "revision": 8717445,
         "retrieved_on": "2026-11-17"
       },
@@ -1141,7 +3445,11 @@
         "P-Maru Sama",
         "P-Maru-sama",
         "PMaru-sama",
-        "PMarusama"
+        "PMarusama",
+        "P-Maru Sama。",
+        "Pmaru",
+        "P丸",
+        "P丸样。"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25332.png?v=6",
       "sources": [
@@ -1159,10 +3467,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/P-Maru_Sama%E3%80%82",
         "title": "P-Maru Sama。",
+        "pageid": 479146,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a8/P-MARU.jpg!/fw/640",
         "revision": 8596238,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:31199",
@@ -1184,11 +3496,15 @@
       "last_seen_on": "2026-11-17",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Shiyui",
-        "title": "シユイ",
+        "title": "Shiyui",
+        "pageid": 573928,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bf/Shiyui.jpg!/fw/640",
         "revision": 8696579,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:31422",
@@ -1217,10 +3533,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E7%86%8A%E5%AD%90",
         "title": "熊子",
+        "pageid": 449247,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b9/%E7%86%8A%E5%AD%90B%E7%AB%99.jpg!/fw/640",
         "revision": 8126320,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:3322",
@@ -1231,7 +3551,12 @@
         "あほの坂田",
         "Aho no Sakata",
         "坂田明",
-        "Sakata Akira"
+        "Sakata Akira",
+        "あほの坂田。",
+        "アホの坂田",
+        "笨蛋坂田",
+        "隔壁的坂田",
+        "隔壁的坂田。"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/3322.jpg?v=13",
       "sources": [
@@ -1250,17 +3575,22 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E9%9A%94%E5%A3%81%E7%9A%84%E5%9D%82%E7%94%B0%E3%80%82",
         "title": "隔壁的坂田。",
+        "pageid": 536367,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e7/Tonari_no_Sakata_2024_Summer_Icon.jpg!/fw/640",
         "revision": 7543644,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:3862",
       "name": "茶理理",
       "aliases": [
         "茶理理",
-        "Chalili"
+        "Chalili",
+        "茶理理理子"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/3862.jpg?v=7",
       "sources": [
@@ -1278,10 +3608,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E8%8C%B6%E7%90%86%E7%90%86",
         "title": "茶理理",
+        "pageid": 86270,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/7a/%E8%8C%B6%E7%90%86%E7%90%86%E5%A4%B4%E5%83%8F.jpg!/fw/640",
         "revision": 8655459,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:43546",
@@ -1309,10 +3643,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/UiNA",
         "title": "UiNA",
+        "pageid": 549280,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b7/UiNA.jpg!/fw/640",
         "revision": 8139178,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     },
     {
       "id": "ut:utaitedb:5193",
@@ -1337,17 +3675,22 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Sou",
         "title": "Sou",
+        "pageid": 203886,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/18/Sou%E3%81%8F%E3%82%93.jpg!/fw/640",
         "revision": 8687184,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:7638",
       "name": "めありー",
       "aliases": [
         "めありー",
-        "Mary"
+        "Mary",
+        "Meari"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/7638.jpg?v=6",
       "sources": [
@@ -1366,10 +3709,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Meari",
         "title": "Meari",
+        "pageid": 529281,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/07/Meari.jpg!/fw/640",
         "revision": 8526015,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:7774",
@@ -1395,10 +3742,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Sennzai",
         "title": "Sennzai",
+        "pageid": 409344,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/69/Sennzai_moe.png!/fw/640",
         "revision": 8584292,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:8169",
@@ -1421,10 +3772,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/%E6%A1%83%E7%AE%B1",
         "title": "桃箱",
+        "pageid": 15724,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/73/29280597_big_p2.png!/fw/640",
         "revision": 8054571,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:8279",
@@ -1433,7 +3788,9 @@
         "ウォルピスカーター",
         "Wolpis Carter",
         "Wolpis Kater",
-        "ウォルピス社"
+        "ウォルピス社",
+        "Wolpis kater",
+        "牛奶盒社长"
       ],
       "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/8279.png?v=13",
       "sources": [
@@ -1451,11 +3808,15 @@
       "birthday_source": "https://zh.moegirl.org.cn/Wolpis_Carter",
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Wolpis_Carter",
-        "title": "ウォルピスカーター",
+        "title": "Wolpis Carter",
+        "pageid": 513508,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/79/Wolpis_Carter.webp!/fw/640",
         "revision": 7387566,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "utaite"
+      ]
     },
     {
       "id": "ut:utaitedb:8455",
@@ -1480,10 +3841,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/YUC%27e",
         "title": "YUC'e",
+        "pageid": 494252,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/ca/YUC%27e.png!/fw/640",
         "revision": 8709776,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     },
     {
       "id": "ut:utaitedb:9682",
@@ -1505,10 +3870,14 @@
       "moegirl": {
         "url": "https://zh.moegirl.org.cn/Ryuu",
         "title": "Ryuu",
+        "pageid": 36040,
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/48/6059caeb702b580.jpg!/fw/640",
         "revision": 8590777,
         "retrieved_on": "2026-11-17"
-      }
+      },
+      "roles": [
+        "music_creator"
+      ]
     }
   ],
   "manual_records": [],
@@ -4261,5 +6630,124 @@
     "retrieved_on": "2026-11-17",
     "scope": "existing singers and music creators only"
   },
-  "moegirl_only": true
+  "moegirl_only": true,
+  "directory_scan": {
+    "retrieved_on": "2026-11-17T10:04:48.665979+00:00",
+    "categories": {
+      "网络歌手": {
+        "pages": 1,
+        "discovered": 134,
+        "reported_total": 134,
+        "source": "https://zh.moegirl.org.cn/Category:%E7%BD%91%E7%BB%9C%E6%AD%8C%E6%89%8B",
+        "errors": [],
+        "complete": true
+      },
+      "歌手": {
+        "source": "https://zh.moegirl.org.cn/Category:%E6%AD%8C%E6%89%8B",
+        "read_via": "authenticated_browser",
+        "pages": 4,
+        "discovered": 608,
+        "reported_total": 608,
+        "boundary_titles": [
+          "久川绫",
+          "佐藤明日香",
+          "神田沙也加"
+        ],
+        "errors": [],
+        "complete": true
+      },
+      "音乐人": {
+        "source": "https://zh.moegirl.org.cn/Category:%E9%9F%B3%E4%B9%90%E4%BA%BA",
+        "read_via": "authenticated_browser",
+        "pages": 2,
+        "discovered": 204,
+        "reported_total": 204,
+        "boundary_titles": [
+          "竹下智博"
+        ],
+        "errors": [],
+        "complete": true
+      },
+      "作曲家": {
+        "pages": 1,
+        "discovered": 115,
+        "reported_total": 115,
+        "source": "https://zh.moegirl.org.cn/Category:%E4%BD%9C%E6%9B%B2%E5%AE%B6",
+        "errors": [],
+        "complete": true
+      },
+      "作词家": {
+        "pages": 1,
+        "discovered": 74,
+        "reported_total": 74,
+        "source": "https://zh.moegirl.org.cn/Category:%E4%BD%9C%E8%AF%8D%E5%AE%B6",
+        "errors": [],
+        "complete": true
+      },
+      "编曲家": {
+        "pages": 1,
+        "discovered": 1,
+        "reported_total": null,
+        "source": "https://zh.moegirl.org.cn/Category:%E7%BC%96%E6%9B%B2%E5%AE%B6",
+        "errors": [],
+        "complete": true
+      },
+      "VOCALOID职人": {
+        "source": "https://zh.moegirl.org.cn/Category:VOCALOID%E8%81%8C%E4%BA%BA",
+        "read_via": "authenticated_browser",
+        "pages": 3,
+        "discovered": 578,
+        "reported_total": 578,
+        "boundary_titles": [
+          "失量中子弹"
+        ],
+        "errors": [],
+        "complete": true
+      },
+      "吉他手": {
+        "pages": 1,
+        "discovered": 10,
+        "reported_total": 10,
+        "source": "https://zh.moegirl.org.cn/Category:%E5%90%89%E4%BB%96%E6%89%8B",
+        "errors": [],
+        "complete": true
+      },
+      "贝斯手": {
+        "pages": 1,
+        "discovered": 8,
+        "reported_total": 8,
+        "source": "https://zh.moegirl.org.cn/Category:%E8%B4%9D%E6%96%AF%E6%89%8B",
+        "errors": [],
+        "complete": true
+      },
+      "钢琴家": {
+        "pages": 1,
+        "discovered": 3,
+        "reported_total": 3,
+        "source": "https://zh.moegirl.org.cn/Category:%E9%92%A2%E7%90%B4%E5%AE%B6",
+        "errors": [],
+        "complete": true
+      },
+      "音乐游戏曲师": {
+        "pages": 1,
+        "discovered": 53,
+        "reported_total": 53,
+        "source": "https://zh.moegirl.org.cn/Category:%E9%9F%B3%E4%B9%90%E6%B8%B8%E6%88%8F%E6%9B%B2%E5%B8%88",
+        "errors": [],
+        "complete": true
+      },
+      "鼓手": {
+        "pages": 1,
+        "discovered": 3,
+        "reported_total": 3,
+        "source": "https://zh.moegirl.org.cn/Category:%E9%BC%93%E6%89%8B",
+        "errors": [],
+        "complete": true
+      }
+    },
+    "discovered_titles": 1469,
+    "queried_titles": 1532,
+    "resolved_pages": 1484,
+    "complete": true
+  }
 }

@@ -359,7 +359,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 唱见与 P 主／曲师分别保存在 `data/people/utaite.json`、`data/people/music_creators.json`，继续直接使用 `加推 まふまふ`、`加推 田中秀和`，可用 `唱见:`、`P主:`、`曲师:` 限定同名人物。这些人物参与担当总览、担当查询、跨群同步与总榜／DD 排行，不计入偶像排行和企划占比，也不会作为偶像大师角色或声优。
 
-当前仅保留 **301 位**已核对到萌娘百科条目的唱见与音乐创作者（48 位唱见、253 位音乐创作者），其中 **191 位**有明确生日，**297 位**提供萌百头像。一般保留原目录头像，管理页面可载入萌百备选图后保存；藍月なくる、nayuta、柊優花及田中秀和默认使用萌百人物图。
+当前仅保留 **930 位**已核对到萌娘百科条目的唱见与音乐创作者（130 位唱见、800 位音乐创作者），其中 **656 位**有明确生日，**923 位**提供萌百头像。一般保留原目录头像，管理页面可载入萌百备选图后保存；藍月なくる、nayuta、柊優花及田中秀和默认使用萌百人物图。
 
 已核对「蓝月／藍月」「优花／優花」等常用别名。部分唱见的萌百条目只归类为声优，或同时包含虚拟主播分类；仅对已逐条核实音乐身份、记录 `music_identity_source` 来源的条目保留唱见身份，不恢复管人目录。
 
@@ -367,7 +367,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 0.1.105 起移除 VTuber 目录与对应别名，不再抓取管人名录。旧担当中的 `vt:` 编号及已核对的管人旧编号会在读取时移除；清理前保存本群原记录到 `tantou_before_vtuber_removal_v1:<群UMO>`，其他担当顺序与昵称保持不变。原图片文件不删除，旧版本遗留的 `vtubers.json` 不再加载。
 
-基础目录仍来自 UtaiteDB／VocaDB 的公开唱见和 Producer 目录，保留稳定来源编号、官方链接及已核对的唱见／曲师互链。新增萌娘百科补充层：仅按现有艺名、明确重定向或官方公开账号对应人物，不按相似名字猜测身份；生日只记录明确的月日，未知、冲突或非公开的日期留空。每条记录保留 `birthday_source`、`image_source` 和 `moegirl` 的页面、图片、修订编号及读取日期。生日目前用于独立资料管理，不混入偶像大师每日生日公告。
+0.1.109 起，基础采集改为直接遍历萌百的网络歌手、歌手、音乐人、作曲家、作词家、编曲家分类及适用子分类，跟随全部分页；不再受第三方前 3,000 条或“仅补已收录名字”的限制。歌手大分类中的新人需另外核对唱见／同人歌手身份，普通商业歌手不因在歌手分类就自动加入；已有声优不重复建立身份。新增人物使用萌百页面编号，已有 UtaiteDB／VocaDB 编号保留。按明确重定向、已核对来源关联人物，不按相似名字猜测身份；生日只记录明确的月日，未知、冲突或非公开的日期留空。每条记录保留 `birthday_source`、`image_source` 和 `moegirl` 的页面、图片、修订编号及读取日期。生日目前用于独立资料管理，不混入偶像大师每日生日公告。
 
 在插件详情的 Pages 中打开唯一的 **「图片与资料管理」**，切换到 **「唱见／P主」** 模块：
 
@@ -378,7 +378,9 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 手动资料保存在插件外的 `AstrBot/data/imas_birthday_assets/people/utaite.json`、`music_creators.json` 的 `overrides`；上传图和裁切副本保存在同目录的 `editor/originals`、`editor/renders`。请备份整个 `people` 目录。自动目录更新不覆盖手动设置，修改生日不会主动向群发送消息。
 
-维护者可运行 `python tools/sync_public_people.py --max-artists 3000` 更新原目录，再运行 `python tools/enrich_music_people.py` 按已收录名字补充萌百公开资料。后者需要 `pip install -r tools/requirements-public-people.txt`，插件运行无需 BeautifulSoup。两个工具均使用请求间隔和插件外缓存；不会在机器人运行时全量爬取。同步会保留旧编号、手动层、萌百补充以及已移除编号，避免再次导入管人条目。
+维护者先安装 `tools/requirements-public-people.txt`，运行 `python tools/sync_moegirl_music.py` 检查覆盖报告，再加 `--apply` 写入数据。分类分页需要登录时，可用 `--browser-categories <公开分类页面导出.json>` 导入已登录浏览器中读取的名单；导出文件只含公开目录，不含账号、密码或 Cookie。工具校验目录总数、分页边界与 API 续页；有缺页默认拒绝发布，同名身份冲突也会停止写入。新增条目要求萌百可核验身份及图片，不批量加入无头像占位；无法确认的生日留空。
+
+`data/people/music_catalogue_coverage.json` 记录本次目录覆盖、更新／新增条目及排除原因。`sync_public_people.py` 和 `enrich_music_people.py` 仅用于维护旧来源资料，不能代表全目录采集。所有采集在维护时进行，机器人运行时不会全量爬取；不会覆盖用户手动设置或删除上传图片。
 
 资料与来源说明：[UtaiteDB](https://utaitedb.net/)、[VocaDB](https://vocadb.net/)、[萌娘百科](https://zh.moegirl.org.cn/)、[VocaDB Public API](https://wiki.vocadb.net/docs/public-api)、[VocaDB 数据许可](https://wiki.vocadb.net/docs/license)。图片权利属于原作者，回源链接保留在人物资料中。
 
@@ -416,7 +418,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.108 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.109 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 
