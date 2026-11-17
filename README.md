@@ -267,7 +267,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 整批名字全部匹配后才会保存，按照用户输入的顺序追加，已有担当保留原位置。简称或错字会列出候选，找不到的名字也会保留原位置等待修正，期间这批中的完整名字同样不会提前登记。例如 `加推 花海佑芽 手毬 一ノ瀬 志希`，直接发送 `1`（也可用 `加推确认 1` 或 `加推确认 月村 手毬`）后，按 `花海佑芽 → 月村手毬 → 一之濑志希` 的顺序一次保存。多个待修正名字按提示顺序填写候选序号或完整名字，`0` 表示明确跳过；没有候选时可填写修正后的完整名字。确认仅对原发送者、原群有效，5 分钟后过期；新的加推或减推会取消上次待确认，重载后需要重新发起确认，也可以直接重新发送修正后的整批加推。
 
-候选规则覆盖整个已安装角色库：先找完整名字和已有名字／别名的片段，在同等匹配下优先偶像大师角色，再列声优；直接匹配到片段时，不混入低相似度的错字猜测。例如 `加推 橘` 先列「橘 ありす（角色）」「橘 志狼（角色）」，`加推 二宫` 先列「二宮 飛鳥（角色）」。中文／日文姓氏、名字片段和已有简称共用这条规则，官网目录同步的新角色也自动适用。简称有歧义时继续确认；完整声优名字和明确的检索别名可直接登记。候选统一标明「角色」或「声优」，避免混淆身份。社区绰号如尚未收录且与已有名字无对应片段，仍需补充明确别名。
+候选规则覆盖整个已安装角色库：先找完整名字和已有名字／别名的片段，在同等匹配下优先偶像大师角色，再列声优；直接匹配到片段时，不混入低相似度的错字猜测。例如 `加推 橘` 先列「橘 ありす（角色）」「橘 志狼（角色）」，`加推 二宫` 先列「二宮 飛鳥（角色）」。中文／日文姓氏、名字片段和已有简称共用这条规则，官网目录同步的新角色也自动适用。简称有歧义时继续确认；完整声优名字和明确的检索别名可直接登记。每个名字最多预览 10 个候选，可直接回复 `10` 选择第十项；候选统一标明「角色」或「声优」，避免混淆身份。社区绰号如尚未收录且与已有名字无对应片段，仍需补充明确别名。
 
 罗马音检索直接复用官方目录的 `idol_code`，当前覆盖 341 位角色，可按姓、名、完整姓名正反顺序、去元音缩写或姓名首字母检索，大小写及全角字母统一处理。例如 `momoka` 对应櫻井桃華，`Kousaka Umi` 对应高坂海美；`kaka`／`卡卡` 按用户指定的社区叫法关联天海春香。`umi` 同时命中高坂海美和杉坂海，`mmk` 同时命中櫻井桃華和周防桃子，会优先列出海美／桃華并等待选择，避免缩写加错人。生成的缩写只按完整词匹配，不把无关长词中的两三个字母当作角色。新同步角色自动参与；角色显示名继续沿用官网日文名。
 
@@ -414,7 +414,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.103 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.104 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 
@@ -472,7 +472,7 @@ from data.plugins.astrbot_plugin_imas_birthday.main import call_imasbd_api
 result = await call_imasbd_api("profile", query="天海真香")
 ```
 
-返回值是 `dict`，常用字段包括 `ok`、`action`、`date_key`、`entry`、`message`、`card_path`、`error`。`render_card=False` 可以只取文本和生日数据，避免 LLM 查询时生成图片；`find` 会额外返回 `best_match` 和最多 5 条 `matches`；`profile` 会返回单个角色的 `profile`，包括 `name`、`birthday`、`brand`、`brand_label`、`color`、`summary`、`introduction`、`cv`、`age`、`height`、`weight`、`birthday_text`、`blood_type`、`hometown`、`hobby`、`specialty`、`agency`、`image_path`、`portrait_path`、`source_url` 和 `raw`。官网目录中收录的角色还提供 `official_name_jp`、`official_kana`、`official_code`、`official_id` 和 `official_profile_url`；`find` 与 `profile` 都支持官网日文名。
+返回值是 `dict`，常用字段包括 `ok`、`action`、`date_key`、`entry`、`message`、`card_path`、`error`。`render_card=False` 可以只取文本和生日数据，避免 LLM 查询时生成图片；`find` 会额外返回 `best_match` 和最多 10 条 `matches`；`profile` 会返回单个角色的 `profile`，包括 `name`、`birthday`、`brand`、`brand_label`、`color`、`summary`、`introduction`、`cv`、`age`、`height`、`weight`、`birthday_text`、`blood_type`、`hometown`、`hobby`、`specialty`、`agency`、`image_path`、`portrait_path`、`source_url` 和 `raw`。官网目录中收录的角色还提供 `official_name_jp`、`official_kana`、`official_code`、`official_id` 和 `official_profile_url`；`find` 与 `profile` 都支持官网日文名。
 
 `birthday_send_mode` 可选：
 

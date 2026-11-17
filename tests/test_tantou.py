@@ -395,6 +395,28 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.follows(), ["橘爱丽丝"])
         self.assertIn("橘 ありす", await self.plugin._tantou_followers(self.event, "爱丽丝"))
 
+    async def test_ten_candidates_are_visible_queryable_and_tenth_choice_can_be_confirmed(self):
+        reply = await self.plugin._change_tantou(self.event, "加推", "田中")
+        pending = self.plugin._tantou_pending[(self.event.unified_msg_origin, self.event.user)]
+        candidates = pending["items"][0]["candidates"]
+        self.assertEqual(len(candidates), 10)
+        tenth = candidates[9]
+        self.assertIn("10. " + self.plugin._tantou_candidate_label(tenth), reply)
+        self.assertIn(self.plugin._tantou_candidate_label(tenth), await self.plugin._tantou_followers(self.event, "田中"))
+        self.assertIn("添加成功", await self.plugin._tantou_numeric_reply(Event(text="10")))
+        self.assertEqual(await self.follows(), [tenth])
+
+    async def test_character_previews_and_profile_api_show_ten_matches_and_correct_remainder(self):
+        names = list(self.plugin._idol_catalogue)[:12]
+        matches = [(0.9, {"name": name, "date_key": "01-01", "brand_label": "测试"}) for name in names]
+        self.plugin._find_character_matches = AsyncMock(return_value=("测试", matches, ""))
+        text = await self.plugin._find_character_text("测试")
+        self.assertEqual(text.count("匹配度"), 10)
+        self.assertIn("还有 2 个", text)
+        profile = await self.plugin._build_character_profile_result("测试")
+        self.assertEqual(len(profile["matches"]), 10)
+        self.assertEqual(profile["matches"][-1]["name"], names[9])
+
     async def test_romanized_names_full_order_and_community_nicknames_keep_character_identity(self):
         result = await self.plugin._change_tantou(self.event, "加推", "momoka KAKA 卡卡 Haruka Amami Kousaka Umi")
         self.assertIn("添加成功", result)

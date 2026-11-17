@@ -46,6 +46,7 @@ SOURCE_URL = (
     "%E5%81%B6%E5%83%8F%E5%A4%A7%E5%B8%88%E7%B3%BB%E5%88%97/"
     "%E7%9B%B8%E5%85%B3%E4%BA%BA%E5%A3%AB%E7%94%9F%E6%97%A5%E4%BF%A1%E6%81%AF"
 )
+MATCH_PREVIEW_LIMIT = 10
 
 MONTH_NAMES = {
     1: "一月",
@@ -1581,7 +1582,7 @@ class ImasBirthdayPlugin(Star):
         abbreviations = set(character_romanized_abbreviations(self._idol_catalogue.get(name, {}).get("idol_code", "")))
         return aliases, aliases - abbreviations
 
-    def _tantou_candidates(self, query: str, records: list[str], limit: int = 5) -> list[str]:
+    def _tantou_candidates(self, query: str, records: list[str], limit: int = MATCH_PREVIEW_LIMIT) -> list[str]:
         key = self._normalize_character_query(query)
         if not key:
             return []
@@ -1890,7 +1891,7 @@ class ImasBirthdayPlugin(Star):
                 if len(partial) == 1:
                     name = partial[0]
                 else:
-                    choices = self._tantou_candidates(query, records)
+                    choices = self._tantou_candidates(query, [*records, *VOICE_ACTOR_CATALOGUE, *PUBLIC_PEOPLE_CATALOGUE])
                     if not partial:
                         actor_partial = [item for item in [*VOICE_ACTOR_CATALOGUE, *PUBLIC_PEOPLE_CATALOGUE] if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item))]
                         if len(actor_partial) == 1:
@@ -1900,8 +1901,8 @@ class ImasBirthdayPlugin(Star):
                             if len(choices) == 1:
                                 name = choices[0]
                     if not name:
-                        labels = [self._tantou_candidate_label(item) for item in choices[:5]]
-                        if labels and any(self._lookup_character_profile(item).get("display_name") for item in choices[:5]):
+                        labels = [self._tantou_candidate_label(item) for item in choices[:MATCH_PREVIEW_LIMIT]]
+                        if labels and any(self._lookup_character_profile(item).get("display_name") for item in choices[:MATCH_PREVIEW_LIMIT]):
                             return "是否在找：\n" + "\n".join(f"{index}. {label}" for index, label in enumerate(labels, 1)) + "\n请填写完整名字。"
                         return "请填写完整名字：" + "、".join(labels) if labels else f"没找到「{query}」。"
         async with self._tantou_lock:
@@ -2367,14 +2368,14 @@ class ImasBirthdayPlugin(Star):
         else:
             lines.append(f"找到：{best['name']}")
 
-        for score, record in matches[:5]:
+        for score, record in matches[:MATCH_PREVIEW_LIMIT]:
             marker = "★ " if record is best else "  "
             lines.append(
                 f"{marker}{record['name']}：{self._format_date_key(record['date_key'])}"
                 f"（{record['brand_label']}，匹配度 {score:.2f}）"
             )
-        if len(matches) > 5:
-            lines.append(f"还有 {len(matches) - 5} 个相近结果，换更完整的名字可以缩小范围。")
+        if len(matches) > MATCH_PREVIEW_LIMIT:
+            lines.append(f"还有 {len(matches) - MATCH_PREVIEW_LIMIT} 个相近结果，换更完整的名字可以缩小范围。")
         return "\n".join(lines)
 
     async def imasbd_api(
@@ -2522,7 +2523,7 @@ class ImasBirthdayPlugin(Star):
                     "brand_label": record["brand_label"],
                     "score": score,
                 }
-                for score, record in matches[:5]
+                for score, record in matches[:MATCH_PREVIEW_LIMIT]
             ],
             "error": "",
         }
@@ -2736,7 +2737,7 @@ class ImasBirthdayPlugin(Star):
                     "brand_label": record["brand_label"],
                     "score": score,
                 }
-                for score, record in matches[:5]
+                for score, record in matches[:MATCH_PREVIEW_LIMIT]
             ]
         return result
 
