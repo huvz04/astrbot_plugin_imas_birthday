@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from PIL import Image, ImageOps
 
@@ -49,6 +50,12 @@ def decode_image(data):
 
 def crop_image(image, size, crop):
     width, height = image.size
+    if crop.get("fit") == "contain":
+        scale = min(size[0] / width, size[1] / height) * crop["zoom"]
+        resized = image.resize((max(1, round(width * scale)), max(1, round(height * scale))), Image.Resampling.LANCZOS)
+        result = Image.new("RGBA", size, "#f3f5f8")
+        result.paste(resized, (round((size[0] - resized.width) * crop["x"]), round((size[1] - resized.height) * crop["y"])), resized)
+        return result
     ratio = size[0] / size[1]
     crop_width = min(width, height * ratio) / crop["zoom"]
     crop_height = crop_width / ratio
@@ -58,6 +65,9 @@ def crop_image(image, size, crop):
 
 
 class AssetEditor:
+    api_prefix = "editor"
+    page_label = "角色图片与资料管理"
+    actions = ("list", "detail", "upload", "save", "preview")
     def __init__(self, plugin, root, brands, base_profiles):
         self.plugin, self.root = plugin, Path(root)
         self.brands, self.base_profiles = brands, base_profiles
@@ -112,6 +122,8 @@ class AssetEditor:
                         result = await asyncio.to_thread(self.import_image, data)
                     elif action == "save":
                         result = await self.save(await request.json(default={}))
+                    elif action == "source":
+                        result = await self.load_source(request.query.get("name", ""))
                     else:
                         result = await self.preview(request.query.get("name", ""), request.query.get("columns", "1"))
                     return json_response(result)
@@ -119,10 +131,10 @@ class AssetEditor:
                     return error_response(str(exc), status_code=400)
             return view
 
-        for action in ("list", "detail", "upload", "save", "preview"):
+        for action in self.actions:
             context.register_web_api(
-                f"/astrbot_plugin_imas_birthday/editor/{action}", handler(action),
-                ["POST" if action in {"upload", "save"} else "GET"], "角色图片与资料管理",
+                f"/astrbot_plugin_imas_birthday/{self.api_prefix}/{action}", handler(action),
+                ["POST" if action in {"upload", "save"} else "GET"], self.page_label,
             )
         return True
 
@@ -263,7 +275,7 @@ class AssetEditor:
                 public_records = self.plugin._public_people_records()
                 public_aliases = self.plugin._tantou_alias_index(public_records)
                 if self.plugin._public_person_id(name) or self.plugin._exact_name_key(name) in public_aliases:
-                    raise ValueError("此人物属于独立人物库，请编辑 imas_birthday_assets/people 中对应的 JSON，不要新增为偶像大师角色。")
+                    raise ValueError("此人物属于独立人物库，请进入「唱见与P主图片资料」页面编辑。")
                 aliases = self.plugin._tantou_alias_index(known)
                 if self.plugin._exact_name_key(name) in aliases:
                     raise ValueError("这个名字已对应现有角色，请搜索并编辑原角色。")
@@ -370,4 +382,195 @@ class AssetEditor:
                 for path in paths:
                     if path.is_file():
                         path.unlink()
+        return await asyncio.to_thread(render)
+
+
+class PeopleEditor(AssetEditor):
+    """A separate page and separate JSON overlays for singers and music creators."""
+    api_prefix = "people"
+    page_label = "唱见与P主图片资料管理"
+    actions = (*AssetEditor.actions, "source")
+    filenames = {"utaite": "utaite.json", "music_creator": "music_creators.json"}
+
+    def __init__(self, plugin, root, catalogue):
+        self.plugin, self.catalogue = plugin, catalogue
+        self.people_root = Path(root)
+        self.root = self.people_root / "editor"
+        self.lock = asyncio.Lock()
+        self.records, self.base = {}, {}
+        for kind, filename in self.filenames.items():
+            payload = json.loads((plugin.plugin_dir / "data" / "people" / filename).read_text(encoding="utf-8"))
+            for row in [*payload.get("records", []), *payload.get("manual_records", [])]:
+                self.base[row["id"]] = {**row, "kind": kind}
+            path = self.people_root / filename
+            if path.exists():
+                custom = json.loads(path.read_text(encoding="utf-8"))
+                if custom.get("schema") != 1 or custom.get("kind") != kind:
+                    raise ValueError("独立人物编辑数据格式无效。")
+                for row in custom.get("manual_records", []):
+                    self.base[row["id"]] = {**row, "kind": kind}
+                self.records.update(custom.get("overrides", {}))
+
+    def identity(self, ident):
+        if not isinstance(ident, str) or ident not in self.catalogue:
+            raise ValueError("没有找到这位唱见或音乐创作者，请刷新目录。")
+        return ident
+
+    def current_image(self, name, kind):
+        return self.plugin._tantou_icon_path(name)
+
+    def render_image(self, name, kind, size=None):
+        try:
+            return super().render_image(name, kind, size)
+        except (ValueError, OSError, KeyError):
+            # An absent manual original must remain repairable from the page.
+            return None
+
+    async def list_records(self):
+        return {"people": [{"id": ident, "name": row["name"], "kind": row["kind"],
+                            "birthday": row.get("birthday", ""), "aliases": row.get("aliases", []),
+                            "has_image": self.has_image(ident, "tantou"),
+                            "has_source_image": bool(row.get("image_url")),
+                            "custom": bool(self.records.get(ident))}
+                           for ident, row in self.catalogue.items()], "storage": str(self.people_root)}
+
+    async def detail(self, name):
+        name = self.identity(name)
+        settings = self.records.get(name, {}).get("images", {}).get("tantou")
+        if not settings and not self.current_image(name, "tantou"):
+            await self.plugin._prepare_tantou_icons([name])
+        try:
+            path = self.source_path(settings["source"]) if settings else self.current_image(name, "tantou")
+        except (ValueError, KeyError):
+            path = self.current_image(name, "tantou")
+        image = ""
+        if path and path.is_file():
+            with Image.open(path) as source:
+                image = image_uri(source.convert("RGBA"))
+        row = self.catalogue[name]
+        base = self.base.get(name, row)
+        return {"id": name, "name": row["name"], "kind": row["kind"], "birthday": row.get("birthday", ""),
+                "aliases": row.get("aliases", []), "base_birthday": base.get("birthday", ""),
+                "base_name": base["name"], "sources": row.get("sources", []),
+                "birthday_source": row.get("birthday_source", ""), "image_source": row.get("image_source", ""),
+                "has_moegirl_image": bool(row.get("moegirl", {}).get("image_url")),
+                "record": copy.deepcopy(self.records.get(name, {})),
+                "image": {"image": image, "source": settings.get("source", "") if settings else "",
+                          "x": settings.get("x", .5) if settings else .5,
+                          "y": settings.get("y", .5) if settings else .5,
+                          "zoom": settings.get("zoom", 1) if settings else .72,
+                          "fit": settings.get("fit", "cover") if settings else "contain", "custom": bool(settings)}}
+
+    async def save(self, payload):
+        if not isinstance(payload, dict):
+            raise ValueError("提交内容无效。")
+        ident = self.identity(payload.get("id"))
+        async with self.lock:
+            previous = self.records.get(ident, {})
+            if payload.get("revision", "") != previous.get("revision", ""):
+                raise ValueError("资料已被其他页面修改，请重新选择人物。")
+            record = copy.deepcopy(previous)
+            name = payload.get("name", "")
+            if not isinstance(name, str) or not name.strip() or len(name) > 100 or any(ord(c) < 32 for c in name):
+                raise ValueError("显示名字需为 1—100 个字符。")
+            record["name"] = name.strip()
+            aliases = payload.get("aliases", [])
+            if not isinstance(aliases, list) or len(aliases) > 100 or any(not isinstance(x, str) or not x.strip() or len(x) > 150 or any(ord(c) < 32 for c in x) for x in aliases):
+                raise ValueError("别名最多 100 个，每个最多 150 字。")
+            record["aliases"] = list(dict.fromkeys(x.strip() for x in aliases))
+            birthday = payload.get("birthday")
+            if birthday is None:
+                record.pop("birthday", None)
+                record.pop("birthday_source", None)
+            else:
+                if not isinstance(birthday, str) or (birthday and not re.fullmatch(r"\d{2}-\d{2}", birthday)):
+                    raise ValueError("生日格式为 MM-DD，例如 10-18。")
+                if birthday:
+                    try:
+                        datetime.strptime("2000-" + birthday, "%Y-%m-%d")
+                    except ValueError as exc:
+                        raise ValueError("生日日期无效。") from exc
+                record["birthday"] = birthday
+                record["birthday_source"] = "手动设置"
+            note = payload.get("source_note", "")
+            if not isinstance(note, str) or len(note) > 500:
+                raise ValueError("备注最多 500 字。")
+            record["source_note"] = note
+            if "image" in payload:
+                settings = payload["image"]
+                if settings is None:
+                    record.pop("images", None)
+                else:
+                    if not isinstance(settings, dict):
+                        raise ValueError("裁切参数无效。")
+                    crop = {}
+                    for field, low, high in (("x", 0, 1), ("y", 0, 1), ("zoom", .25, 4)):
+                        value = settings.get(field)
+                        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not low <= value <= high:
+                            raise ValueError("图片位置或缩放超出范围。")
+                        crop[field] = value
+                    fit = settings.get("fit", "cover")
+                    if fit not in {"cover", "contain"}:
+                        raise ValueError("图片填充模式无效。")
+                    if fit == "cover" and crop["zoom"] < 1:
+                        raise ValueError("铺满模式的缩放不能小于 1。")
+                    crop["fit"] = fit
+                    token = settings.get("source")
+                    if not token:
+                        path = self.current_image(ident, "tantou")
+                        if not path:
+                            raise ValueError("请先上传图片。")
+                        token = self.import_image(path.read_bytes())["source"]
+                    self.source_path(token)
+                    record["images"] = {"tantou": {"source": token, **crop}}
+            record["revision"] = uuid.uuid4().hex
+            kind = self.catalogue[ident]["kind"]
+            path = self.people_root / self.filenames[kind]
+            saved = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"schema": 1, "kind": kind}
+            saved["overrides"] = {**saved.get("overrides", {}), ident: record}
+            self.people_root.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.people_root, suffix=".json", delete=False) as stream:
+                json.dump(saved, stream, ensure_ascii=False, indent=2)
+                temporary = Path(stream.name)
+            try:
+                temporary.replace(path)
+            finally:
+                temporary.unlink(missing_ok=True)
+            self.records[ident] = record
+            base = self.base[ident]
+            self.catalogue[ident] = {**base, **record, "kind": kind, "is_idolmaster": False,
+                                     "aliases": list(dict.fromkeys([record["name"], base["name"], *base.get("aliases", []), *record["aliases"]]))}
+            self.plugin._public_person_search_keys.cache_clear()
+        return {"saved": True, "id": ident, "revision": record["revision"]}
+
+    async def load_source(self, name):
+        import httpx
+        name = self.identity(name)
+        url = self.catalogue[name].get("moegirl", {}).get("image_url", "")
+        parts = urlsplit(url)
+        if parts.scheme != "https" or parts.hostname != "storage.moegirl.org.cn" or parts.port not in (None, 443) or parts.username or parts.password:
+            raise ValueError("这位人物没有可用的萌百图片，请上传图片。")
+        try:
+            async with httpx.AsyncClient(timeout=12, follow_redirects=False) as client:
+                data = bytearray()
+                async with client.stream("GET", url) as response:
+                    response.raise_for_status()
+                    async for chunk in response.aiter_bytes():
+                        data.extend(chunk)
+                        if len(data) > 2_000_000:
+                            raise ValueError("来源图片超过 2 MB，请下载缩小后手动上传。")
+            return await asyncio.to_thread(self.import_image, bytes(data))
+        except httpx.HTTPError as exc:
+            raise ValueError("萌百图片暂时无法读取，请稍后再试或手动上传。") from exc
+
+    async def preview(self, name, columns=1):
+        name = self.identity(name)
+        await self.plugin._prepare_tantou_icons([name])
+        def render():
+            paths = self.plugin._render_tantou_cards("预览", [name])
+            try:
+                return {"tantou": self.plugin._image_data_uri(Path(paths[0]))}
+            finally:
+                for path in paths:
+                    Path(path).unlink(missing_ok=True)
         return await asyncio.to_thread(render)

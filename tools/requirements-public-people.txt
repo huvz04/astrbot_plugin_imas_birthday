@@ -1,2 +1,2 @@
-# Optional dependency for tools/sync_public_people.py, not plugin runtime.
+# Optional dependency for tools/enrich_music_people.py, not plugin runtime.
 beautifulsoup4>=4.12.0

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>唱见与P主图片资料</title><link rel="stylesheet" href="./style.css"></head>
+<body>
+<img id="mask" src="./assets/tantou-mask.png" alt="" hidden>
+<header><div><span class="eyebrow">MUSIC · 素材工作室</span><h1>唱见与P主图片资料</h1><p>整理名字与生日，调整担当名片里的头像。</p></div></header>
+<div id="status" role="status" aria-live="polite">正在连接 AstrBot…</div>
+<div class="workspace">
+<aside><label for="search">人物目录</label><input id="search" type="search" placeholder="搜索名字、罗马音或别名">
+<select id="kind" aria-label="人物类别"><option value="">全部</option><option value="utaite">唱见</option><option value="music_creator">P主／音乐创作者</option></select>
+<div class="filters"><label><input id="missing" type="checkbox"> 缺图片</label><label><input id="no-birthday" type="checkbox"> 未登记生日</label></div>
+<small id="count"></small><nav id="list" aria-label="人物列表"></nav><div class="paging"><button id="previous" type="button">上一页</button><span id="page"></span><button id="next" type="button">下一页</button></div></aside>
+<main><div id="empty">从左侧选择一位唱见或音乐创作者。</div>
+<form id="form" hidden><fieldset id="fields"><div class="heading"><h2 id="title"></h2><span id="badge"></span></div>
+<div class="profile-grid"><label>显示名字<input id="name" required maxlength="100"><small id="base-name"></small></label>
+<label>补充别名<textarea id="aliases" rows="3" placeholder="用逗号或换行分隔"></textarea><small>原目录中的名字和别名会继续保留。</small></label>
+<label>生日来源<select id="birthday-mode"><option value="inherit">沿用基础资料</option><option value="custom">手动设置</option><option value="none">不登记生日</option></select></label>
+<label>生日<input id="birthday" placeholder="MM-DD，例如 10-18" maxlength="5"><small id="base-birthday"></small></label>
+<label class="wide">来源说明或备注<input id="note" maxlength="500"></label></div>
+<div class="artwork"><section><h2>担当头像</h2><div class="stage"><canvas id="canvas" width="600" height="540" aria-label="拖动调整头像位置"></canvas></div>
+<input id="upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><small>支持 PNG / JPEG / WebP / GIF，最大 10 MB。</small></section>
+<section class="controls"><label>填充方式<select id="fit"><option value="contain">完整显示</option><option value="cover">铺满头像框</option></select></label>
+<label>缩放<input id="zoom" type="range" min="0.25" max="4" step="0.01"></label>
+<label>水平位置<input id="x" type="range" min="0" max="1" step="0.001"></label>
+<label>垂直位置<input id="y" type="range" min="0" max="1" step="0.001"></label>
+<div class="buttons"><button id="center" type="button">居中</button><button id="moegirl-image" type="button" hidden>载入萌百图片</button><button id="restore" type="button">恢复来源图片</button></div><small id="image-note"></small></section></div>
+<div class="actions"><small id="dirty">修改后点击保存生效</small><button id="discard" type="button">撤销未保存修改</button><button type="submit" class="primary">保存修改</button></div>
+</fieldset></form>
+<section id="preview-area" hidden><div class="heading"><h2>实际名片</h2><button id="preview" type="button">预览已保存的名片</button></div><img id="preview-image" alt="担当名片预览" hidden></section>
+<details id="source-area" hidden><summary>资料来源</summary><div id="sources"></div></details>
+</main></div><footer><p>这里只管理唱见和音乐创作者，与偶像大师角色资料分开保存。未公开的生日保留为空。</p><p id="storage"></p></footer>
+<script type="module" src="./app.js"></script></body></html>

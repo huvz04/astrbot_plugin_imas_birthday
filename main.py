@@ -449,6 +449,7 @@ PUBLIC_PEOPLE_CATALOGUE = _PUBLIC_PEOPLE.get("records", {})
 PUBLIC_PERSON_REDIRECTS = _PUBLIC_PEOPLE.get("redirects", {})
 PUBLIC_PERSON_LABELS = _PUBLIC_PEOPLE.get("kind_labels", {})
 PUBLIC_IMAGE_HOSTS = _PUBLIC_PEOPLE.get("image_hosts", {})
+REMOVED_PUBLIC_PERSON_IDS = _PUBLIC_PEOPLE.get("removed_ids", {})
 
 KR_CHARACTER_NAMES = {
     "Mint",
@@ -680,6 +681,12 @@ class ImasBirthdayPlugin(Star):
         editor_spec.loader.exec_module(editor_module)
         editor_root = (self.plugin_dir.parent.parent if self.plugin_dir.parent.name == "plugins" else self.plugin_dir.parent) / "imas_birthday_assets" / "editor"
         self.editor = editor_module.AssetEditor(self, editor_root, BRAND_LABELS, CHARACTER_PROFILES)
+        self.people_editor = None
+        try:
+            self.people_editor = editor_module.PeopleEditor(self, editor_root.parent / "people", PUBLIC_PEOPLE_CATALOGUE)
+            self.people_editor.register(context)
+        except (ValueError, OSError, KeyError) as exc:
+            logger.warning(f"唱见与P主编辑页暂不可用，请检查独立人物覆盖文件：{type(exc).__name__}")
         if not self.editor.register(context):
             logger.info("当前 AstrBot 不支持插件页面；角色编辑页面需要 AstrBot 4.27.3 或更新版本。")
         with contextlib.suppress(RuntimeError):
@@ -941,7 +948,7 @@ class ImasBirthdayPlugin(Star):
             raise ValueError("这份担当记录格式异常，未同步。")
         await self._load_idol_catalogue()
         aliases = self._tantou_alias_index(set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS))
-        return list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names))
+        return list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names if not self._removed_public_person(name)))
 
     async def _tantou_sync_members(self, event: AstrMessageEvent, names: list[str]) -> tuple[dict[str, dict[str, Any]], list[str]]:
         ids = [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)]
@@ -1040,7 +1047,8 @@ class ImasBirthdayPlugin(Star):
                     source_prefix, source_marker, group_id = source.partition(":GroupMessage:")
                     names = group.get(user_id, [])
                     if (source != umo and source_marker and source_prefix == prefix and group_id
-                            and isinstance(names, list) and names and all(isinstance(name, str) and name.strip() for name in names)):
+                            and isinstance(names, list) and names and all(isinstance(name, str) and name.strip() for name in names)
+                            and any(not self._removed_public_person(name) for name in names)):
                         origins.append((source, group_id))
                 if not origins:
                     if self._tantou_sync_pending.get(key) is request:
@@ -1417,8 +1425,12 @@ class ImasBirthdayPlugin(Star):
         if not isinstance(value, dict):
             return {}
         aliases = self._tantou_alias_index(set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS))
-        normalized = {user_id: list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names)) for user_id, names in value.items()}
+        normalized = {user_id: list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names if not self._removed_public_person(name))) for user_id, names in value.items()}
         if normalized != value:
+            if any(self._removed_public_person(name) for names in value.values() for name in names):
+                backup_key = f"tantou_before_vtuber_removal_v1:{umo}"
+                if await self.get_kv_data(backup_key, None) is None:
+                    await self.put_kv_data(backup_key, value)
             await self.put_kv_data(f"tantou_v1:{umo}", normalized)
         return normalized
 
@@ -1487,6 +1499,10 @@ class ImasBirthdayPlugin(Star):
         return name if name in PUBLIC_PEOPLE_CATALOGUE else ""
 
     @staticmethod
+    def _removed_public_person(name: str) -> bool:
+        return name.startswith("vt:") or name in REMOVED_PUBLIC_PERSON_IDS
+
+    @staticmethod
     def _public_people_records() -> list[str]:
         return list(PUBLIC_PEOPLE_CATALOGUE)
 
@@ -1523,7 +1539,7 @@ class ImasBirthdayPlugin(Star):
         if ident:
             row = PUBLIC_PEOPLE_CATALOGUE[ident]
             types = {row["kind"], *row.get("roles", [])}
-            prefix_map = {"vtuber": ("VTuber", "管人"), "utaite": ("唱见",), "music_creator": ("曲师", "P主")}
+            prefix_map = {"utaite": ("唱见",), "music_creator": ("曲师", "P主")}
             prefixes = [prefix for kind, values in prefix_map.items() if kind in types for prefix in values]
             aliases = row["aliases"]
             return [*aliases, *(prefix + ":" + alias for prefix in prefixes for alias in aliases)]
@@ -2662,6 +2678,9 @@ class ImasBirthdayPlugin(Star):
         return editor.records.get(name, {})
 
     def _editor_image(self, character: str, kind: str, size=None) -> Path | None:
+        if self._public_person_id(character):
+            people_editor = getattr(self, "people_editor", None)
+            return people_editor.render_image(self._public_person_id(character), kind, size) if people_editor else None
         editor = getattr(self, "editor", None)
         if not editor:
             return None

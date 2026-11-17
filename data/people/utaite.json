@@ -132,11 +132,21 @@
         "http://ameblo.jp/pinkcat0427/",
         "http://com.nicovideo.jp/community/co86904",
         "http://www.nicovideo.jp/mylist/14842980",
-        "http://vocadb.net/Ar/1791"
+        "http://vocadb.net/Ar/1791",
+        "https://zh.moegirl.org.cn/%E6%9F%BFChoco"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "04-27",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%9F%BFChoco",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%9F%BFChoco",
+        "title": "柿Choco",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9f/20140808142535-776148161.jpg!/fw/640",
+        "revision": 7721828,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1030",
@@ -250,11 +260,21 @@
         "http://www.nicovideo.jp/mylist/32224898",
         "http://com.nicovideo.jp/community/co1971241",
         "https://twitter.com/RRReol",
-        "http://vocadb.net/Ar/7437"
+        "http://vocadb.net/Ar/7437",
+        "https://zh.moegirl.org.cn/Reol"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "11-09",
+      "birthday_source": "https://zh.moegirl.org.cn/Reol",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Reol",
+        "title": "れをる",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/16/11099999.png!/fw/640",
+        "revision": 8698382,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1035",
@@ -424,11 +444,21 @@
         "http://www.nicovideo.jp/mylist/15840603",
         "http://www.nicovideo.jp/mylist/23534179",
         "https://twitter.com/touyukan",
-        "https://vocadb.net/Ar/1841"
+        "https://vocadb.net/Ar/1841",
+        "https://zh.moegirl.org.cn/%E7%81%AF%E6%B2%B9"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "01-10",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%81%AF%E6%B2%B9",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%81%AF%E6%B2%B9",
+        "title": "灯油",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/2f/%E7%81%AF%E6%B2%B9.jpeg!/fw/640",
+        "revision": 8514822,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1040",
@@ -501,11 +531,21 @@
         "http://com.nicovideo.jp/community/co380436",
         "https://twitter.com/singing_rib",
         "http://ameblo.jp/singing-rib/",
-        "http://vocadb.net/Ar/1686"
+        "http://vocadb.net/Ar/1686",
+        "https://zh.moegirl.org.cn/Rib"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "06-15",
+      "birthday_source": "https://zh.moegirl.org.cn/Rib",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Rib",
+        "title": "りぶ（rib）",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ac/Rib.jpeg!/fw/640",
+        "revision": 8247311,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1045",
@@ -676,11 +716,21 @@
         "http://www.nicovideo.jp/user/2524526",
         "http://www.nicovideo.jp/mylist/9043846",
         "http://www.nicovideo.jp/mylist/14030981",
-        "http://vocadb.net/Ar/2050"
+        "http://vocadb.net/Ar/2050",
+        "https://zh.moegirl.org.cn/Nanahira"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "08-31",
+      "birthday_source": "https://zh.moegirl.org.cn/Nanahira",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Nanahira",
+        "title": "ななひら",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/95/67092355_p0.png!/fw/640",
+        "revision": 8698401,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1084",
@@ -700,11 +750,21 @@
         "http://www.nicovideo.jp/mylist/15614906",
         "https://twitter.com/96__neko",
         "https://www.facebook.com/96猫-550261221715876/",
-        "http://vocadb.net/Ar/1817"
+        "http://vocadb.net/Ar/1817",
+        "https://zh.moegirl.org.cn/96%E7%8C%AB"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "03-30",
+      "birthday_source": "https://zh.moegirl.org.cn/96%E7%8C%AB",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/96%E7%8C%AB",
+        "title": "96猫",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/45/96.jpg!/fw/640",
+        "revision": 7963440,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1085",
@@ -724,11 +784,21 @@
         "http://soraruru.jp/",
         "https://twitter.com/soraruru",
         "http://ameblo.jp/soraruraso/",
-        "http://vocadb.net/Ar/1844"
+        "http://vocadb.net/Ar/1844",
+        "https://zh.moegirl.org.cn/Soraru"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "11-03",
+      "birthday_source": "https://zh.moegirl.org.cn/Soraru",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Soraru",
+        "title": "そらる",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e6/Soraru.jpg!/fw/640",
+        "revision": 8750215,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1097",
@@ -748,7 +818,8 @@
         "http://vocadb.net/Ar/1459",
         "https://vocadb.net/Ar/1459",
         "http://profile.ameba.jp/uni-mafumafu",
-        "http://utaitedb.net/Ar/1097"
+        "http://utaitedb.net/Ar/1097",
+        "https://zh.moegirl.org.cn/Mafumafu"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -756,7 +827,16 @@
         "utaite",
         "music_creator"
       ],
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "10-18",
+      "birthday_source": "https://zh.moegirl.org.cn/Mafumafu",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Mafumafu",
+        "title": "まふまふ",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/3/3d/Mafumafu.jpg!/fw/640",
+        "revision": 8701033,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1106",
@@ -791,11 +871,19 @@
         "https://utaitedb.net/Ar/1107",
         "http://www.nicovideo.jp/mylist/19301721",
         "http://com.nicovideo.jp/community/co390149",
-        "http://www.nicovideo.jp/user/17061475"
+        "http://www.nicovideo.jp/user/17061475",
+        "https://zh.moegirl.org.cn/Nobunaga"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Nobunaga",
+        "title": "のぶなが",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e4/%E3%81%AE%E3%81%B6%E3%81%AA%E3%81%8C02.png!/fw/640",
+        "revision": 6984199,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1109",
@@ -815,11 +903,21 @@
         "http://www.nicovideo.jp/mylist/5227160",
         "http://twitter.com/cordelia_YURiCa",
         "http://hanathan-niconico.seesaa.net/",
-        "http://vocadb.net/Ar/572"
+        "http://vocadb.net/Ar/572",
+        "https://zh.moegirl.org.cn/%E8%8A%B1%E7%A2%B3"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "01-18",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%8A%B1%E7%A2%B3",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%8A%B1%E7%A2%B3",
+        "title": "花碳",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/4e/%E8%8A%B1%E7%A2%B3%E8%8A%B1%E7%A2%B3%E8%8A%B1.jpg!/fw/640",
+        "revision": 8459466,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1113",
@@ -924,11 +1022,19 @@
         "https://utaitedb.net/Ar/1122",
         "https://twitter.com/pana_pana_man",
         "http://www.nicovideo.jp/mylist/27542460",
-        "http://ch.nicovideo.jp/penemensun/blomaga/"
+        "http://ch.nicovideo.jp/penemensun/blomaga/",
+        "https://zh.moegirl.org.cn/Panaman"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Panaman",
+        "title": "Panaman",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/26/Panaman1.jpg!/fw/640",
+        "revision": 8165035,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1123",
@@ -1000,11 +1106,20 @@
         "https://twitter.com/kano_2525",
         "http://www.nicovideo.jp/mylist/16997570",
         "http://ameblo.jp/kano-2525/ ",
-        "http://vocadb.net/Ar/436"
+        "http://vocadb.net/Ar/436",
+        "https://zh.moegirl.org.cn/%E9%B9%BF%E4%B9%83"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "12-24",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%B9%BF%E4%B9%83",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%B9%BF%E4%B9%83",
+        "title": "鹿乃",
+        "retrieved_on": "2026-11-17",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/43/%E9%B9%BF%E4%B9%83artist.jpg!/fw/640"
+      }
     },
     {
       "id": "ut:utaitedb:1134",
@@ -1076,11 +1191,20 @@
         "http://www.nicovideo.jp/mylist/6512041",
         "https://twitter.com/wotamin25",
         "http://www.nicovideo.jp/mylist/21774453",
-        "http://vocadb.net/Ar/722"
+        "http://vocadb.net/Ar/722",
+        "https://zh.moegirl.org.cn/Wotamin"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "04-20",
+      "birthday_source": "https://zh.moegirl.org.cn/Wotamin",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Wotamin",
+        "title": "ヲタみん",
+        "retrieved_on": "2026-11-17",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d5/23469949.jpg!/fw/640"
+      }
     },
     {
       "id": "ut:utaitedb:1145",
@@ -1410,11 +1534,21 @@
         "http://www.nicovideo.jp/mylist/19335447",
         "https://twitter.com/MARiA_GRND",
         "http://ameblo.jp/maria-grnd/",
-        "http://vocadb.net/Ar/608"
+        "http://vocadb.net/Ar/608",
+        "https://zh.moegirl.org.cn/%E7%BE%8E%E4%BE%9D%E7%A4%BC%E8%8A%BD"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "01-31",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%BE%8E%E4%BE%9D%E7%A4%BC%E8%8A%BD",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%BE%8E%E4%BE%9D%E7%A4%BC%E8%8A%BD",
+        "title": "美依礼芽",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/42/MARiA.jpg!/fw/640",
+        "revision": 8681053,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:11923",
@@ -1614,11 +1748,19 @@
         "http://www.nicovideo.jp/mylist/8580209",
         "https://twitter.com/LOOON4",
         "http://www.nicovideo.jp/user/6906844",
-        "http://vocadb.net/Ar/1512"
+        "http://vocadb.net/Ar/1512",
+        "https://zh.moegirl.org.cn/Lon"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Lon",
+        "title": "Lon",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b0/34365080.jpg!/fw/640",
+        "revision": 6727745,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:12043",
@@ -1916,7 +2058,8 @@
         "https://vocadb.net/Ar/10057",
         "https://twitter.com/_natsushiro_",
         "http://utaitedb.net/Ar/1258",
-        "http://www5.atwiki.jp/hmiku/pages/36130.html"
+        "http://www5.atwiki.jp/hmiku/pages/36130.html",
+        "https://zh.moegirl.org.cn/%E5%A4%8F%E4%BB%A3%E5%AD%9D%E6%98%8E"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -1924,7 +2067,16 @@
         "utaite",
         "music_creator"
       ],
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "02-25",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%A4%8F%E4%BB%A3%E5%AD%9D%E6%98%8E",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%A4%8F%E4%BB%A3%E5%AD%9D%E6%98%8E",
+        "title": "夏代孝明",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/cb/NatsushiroTakaaki.jpg!/fw/640",
+        "revision": 8513650,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1268",
@@ -2066,11 +2218,21 @@
         "http://www.nicovideo.jp/mylist/36400349",
         "https://twitter.com/nqrse",
         "http://ameblo.jp/nqrse/",
-        "http://vocadb.net/Ar/23715"
+        "http://vocadb.net/Ar/23715",
+        "https://zh.moegirl.org.cn/Nqrse"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "01-13",
+      "birthday_source": "https://zh.moegirl.org.cn/Nqrse",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Nqrse",
+        "title": "なるせ",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a1/Nqrse.jpg!/fw/640",
+        "revision": 7650859,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:13193",
@@ -2153,11 +2315,21 @@
         "http://www.nicovideo.jp/mylist/22400954",
         "http://www.nicovideo.jp/mylist/35553707",
         "https://twitter.com/luzabs",
-        "http://vocadb.net/Ar/11726"
+        "http://vocadb.net/Ar/11726",
+        "https://zh.moegirl.org.cn/Luz"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "07-23",
+      "birthday_source": "https://zh.moegirl.org.cn/Luz",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Luz",
+        "title": "Luz",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/97/Luz.jpg!/fw/640",
+        "revision": 8123242,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1325",
@@ -2503,11 +2675,21 @@
         "https://utaitedb.net/Ar/1375",
         "http://www.nicovideo.jp/mylist/35789880",
         "https://twitter.com/uratasama",
-        "http://acherie.wix.com/uratasama"
+        "http://acherie.wix.com/uratasama",
+        "https://zh.moegirl.org.cn/%E6%B5%A6%E7%94%B0%E6%B6%89"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "08-09",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%B5%A6%E7%94%B0%E6%B6%89",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%B5%A6%E7%94%B0%E6%B6%89",
+        "title": "浦田涉",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/84/Uratanuki_2024_Oneman_Icon.jpg!/fw/640",
+        "revision": 8589167,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1379",
@@ -2755,11 +2937,21 @@
         "http://www.nicovideo.jp/mylist/5979643",
         "http://com.nicovideo.jp/community/co325225",
         "https://twitter.com/sen_sen_sen_sen",
-        "http://vocadb.net/Ar/29699"
+        "http://vocadb.net/Ar/29699",
+        "https://zh.moegirl.org.cn/Senra"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "10-03",
+      "birthday_source": "https://zh.moegirl.org.cn/Senra",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Senra",
+        "title": "センラ",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/d/d8/Senra_2024_Summer_Icon.jpg!/fw/640",
+        "revision": 7543187,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1425",
@@ -3082,7 +3274,8 @@
         "http://www5.atwiki.jp/hmiku/pages/29910.html",
         "https://vocadb.net/Ar/1870",
         "http://utautomi.weebly.com/index.html",
-        "http://utaitedb.net/Ar/1493"
+        "http://utaitedb.net/Ar/1493",
+        "https://zh.moegirl.org.cn/Cillia"
       ],
       "source_status": "Approved",
       "directory": "utaitedb",
@@ -3090,7 +3283,14 @@
         "utaite",
         "music_creator"
       ],
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Cillia",
+        "title": "Cillia",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ae/Cillia.jpg!/fw/640",
+        "revision": 8489007,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1496",
@@ -3352,23 +3552,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:15362",
-      "name": "hanser",
-      "aliases": [
-        "hanser"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/15362.png?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/15362",
-        "http://space.bilibili.com/11073",
-        "http://hanser.diandian.com/?from=inf&wvr=5&loc=infblog",
-        "https://weibo.com/hansersan"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:1541",
       "name": "調味料",
       "aliases": [
@@ -3470,11 +3653,21 @@
         "http://www.sakotomohisa.com/",
         "http://www.nicovideo.jp/mylist/15873112",
         "https://twitter.com/syounen_t/",
-        "http://vocadb.net/Ar/1571"
+        "http://vocadb.net/Ar/1571",
+        "https://zh.moegirl.org.cn/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "12-26",
+      "birthday_source": "https://zh.moegirl.org.cn/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85",
+        "title": "佐香智久",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bb/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85%E5%85%AC%E5%BC%8F.jpg!/fw/640",
+        "revision": 8505373,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1587",
@@ -3491,11 +3684,21 @@
         "http://www.nicovideo.jp/mylist/16016171",
         "https://twitter.com/_amatsuki_",
         "http://ameblo.jp/amatsuki2525/",
-        "http://vocadb.net/Ar/1855"
+        "http://vocadb.net/Ar/1855",
+        "https://zh.moegirl.org.cn/%E5%A4%A9%E6%9C%88"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "06-30",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%A4%A9%E6%9C%88",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%A4%A9%E6%9C%88",
+        "title": "天月-あまつき-",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ae/Amatsuki.jpg!/fw/640",
+        "revision": 8513697,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1604",
@@ -3886,11 +4089,21 @@
         "https://space.bilibili.com/2460656",
         "https://weibo.com/u/2266537042?is_all=1",
         "https://music.163.com/#/artist?id=188565",
-        "https://vocadb.net/Ar/51889"
+        "https://vocadb.net/Ar/51889",
+        "https://zh.moegirl.org.cn/%E9%93%B6%E4%B8%B4"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "12-11",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%93%B6%E4%B8%B4",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%93%B6%E4%B8%B4",
+        "title": "银临",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/97/Zhenzhu.jpg!/fw/640",
+        "revision": 7741847,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:17202",
@@ -4632,11 +4845,19 @@
         "https://utaitedb.net/Ar/1938",
         "http://www.nicovideo.jp/mylist/19784270",
         "https://twitter.com/yoru_kichi",
-        "http://ameblo.jp/yorukichi/"
+        "http://ameblo.jp/yorukichi/",
+        "https://zh.moegirl.org.cn/Yorukichi"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Yorukichi",
+        "title": "Yorukichi",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/17/Yorukichi.jpg!/fw/640",
+        "revision": 6344695,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1939",
@@ -4688,11 +4909,21 @@
         "https://twitter.com/akatibitintin",
         "http://www.nicovideo.jp/mylist/5307510",
         "http://com.nicovideo.jp/community/co236508",
-        "http://vocadb.net/Ar/7834"
+        "http://vocadb.net/Ar/7834",
+        "https://zh.moegirl.org.cn/Akatin"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "09-05",
+      "birthday_source": "https://zh.moegirl.org.cn/Akatin",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Akatin",
+        "title": "赤ティン",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/8a/Akatindayon.jpg!/fw/640",
+        "revision": 6772345,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:1949",
@@ -4987,7 +5218,8 @@
         "https://twitter.com/kurosawamadoka",
         "http://vocadb.net/Ar/5557",
         "https://vocadb.net/Ar/5557",
-        "http://web.archive.org/web/20191222153946/http://yaplog.jp/kurosawamadoka/"
+        "http://web.archive.org/web/20191222153946/http://yaplog.jp/kurosawamadoka/",
+        "https://zh.moegirl.org.cn/%E5%BC%9F%E4%B9%8B%E5%A7%90"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -4995,7 +5227,16 @@
         "utaite",
         "music_creator"
       ],
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "09-06",
+      "birthday_source": "https://zh.moegirl.org.cn/%E5%BC%9F%E4%B9%8B%E5%A7%90",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E5%BC%9F%E4%B9%8B%E5%A7%90",
+        "title": "弟之姐",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a8/Kurosawamadoka.jpg!/fw/640",
+        "revision": 7182858,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:20805",
@@ -5445,28 +5686,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:21285",
-      "name": "利香",
-      "aliases": [
-        "利香",
-        "Rika",
-        "Rica",
-        "花宮莉歌",
-        "Hanamiya Rica",
-        "Hanamiya Rika"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/21285.jpg?v=15",
-      "sources": [
-        "https://utaitedb.net/Ar/21285",
-        "http://www.nicovideo.jp/user/14752518",
-        "https://www.youtube.com/channel/UCz4jhqrCfthF8NnldZeK_rw",
-        "https://ch.nicovideo.jp/ch2639298"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:21287",
       "name": "莉犬",
       "aliases": [
@@ -5748,11 +5967,21 @@
         "https://utaitedb.net/Ar/21480",
         "https://twitter.com/daok0",
         "https://www.instagram.com/daoko_official/",
-        "https://twitter.com/DAOKO_staff"
+        "https://twitter.com/DAOKO_staff",
+        "https://zh.moegirl.org.cn/DAOKO"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "03-04",
+      "birthday_source": "https://zh.moegirl.org.cn/DAOKO",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/DAOKO",
+        "title": "DAOKO",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/ae/DAOKO.jpg!/fw/640",
+        "revision": 8743579,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:21522",
@@ -6709,59 +6938,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:23031",
-      "name": "YuNi",
-      "aliases": [
-        "YuNi"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23031.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/23031",
-        "https://www.youtube.com/channel/UCHTnX0CSX_KObo5I9WuZ64g",
-        "https://www.nicovideo.jp/user/82139390",
-        "https://twitter.com/_YuNiofficial_"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23055",
-      "name": "花鋏キョウ",
-      "aliases": [
-        "花鋏キョウ",
-        "Hanabasami Kyo",
-        "Kyo Hanabasami"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23055.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/23055",
-        "https://www.youtube.com/channel/UC4OeUf_KfYRrwksschtRYow",
-        "https://twitter.com/Kyo_Hanabasami"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23057",
-      "name": "獅子神レオナ",
-      "aliases": [
-        "獅子神レオナ",
-        "Shishigami Reona",
-        "Reona Shishigami"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23057.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/23057",
-        "https://www.youtube.com/channel/UCB1s_IdO-r0nUkY2mXeti-A",
-        "https://twitter.com/LeonaShishigami"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:23068",
       "name": "花譜",
       "aliases": [
@@ -6947,24 +7123,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:23207",
-      "name": "春猿火",
-      "aliases": [
-        "春猿火",
-        "Harusaruhi"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23207.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/23207",
-        "https://twitter.com/harusaruhi",
-        "https://www.youtube.com/channel/UCE7gtjLeZKNXLp5YURzYYeg",
-        "https://vocadb.net/Ar/112288"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:23211",
       "name": "はらもりよしな",
       "aliases": [
@@ -6996,50 +7154,19 @@
         "https://utaitedb.net/Ar/23212",
         "https://twitter.com/eumza1",
         "https://www.youtube.com/channel/UCkE97czy6qsA2e_4EHOK9Bw",
-        "https://www.instagram.com/301ye/"
+        "https://www.instagram.com/301ye/",
+        "https://zh.moegirl.org.cn/EMA"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23215",
-      "name": "ヰ世界情緒",
-      "aliases": [
-        "ヰ世界情緒",
-        "Isekaijoucho",
-        "이세계정서"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23215.jpg?v=9",
-      "sources": [
-        "https://utaitedb.net/Ar/23215",
-        "https://twitter.com/isekaijoucho",
-        "https://www.youtube.com/channel/UCah4_WVjmr8XA7i5aigwV-Q",
-        "https://www.youtube.com/@isekaijoucho",
-        "https://vocadb.net/Ar/99958"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23216",
-      "name": "理芽",
-      "aliases": [
-        "理芽",
-        "RIM",
-        "Rime"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23216.jpg?v=12",
-      "sources": [
-        "https://utaitedb.net/Ar/23216",
-        "https://twitter.com/RIM_virtual",
-        "https://www.youtube.com/channel/UCfBkUgaJ6eqYA9_TX2cmq9A",
-        "https://vocadb.net/Ar/105296"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/EMA",
+        "title": "EMA",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/8/88/EMA.jpg!/fw/640",
+        "revision": 8142653,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:23218",
@@ -7207,11 +7334,21 @@
         "https://utaitedb.net/Ar/23389",
         "https://www.youtube.com/channel/UC-paul1Nd8pnK2eAAtxAaYw",
         "https://twitter.com/yuzurisa15",
-        "https://www.yuzu-risa.com/"
+        "https://www.yuzu-risa.com/",
+        "https://zh.moegirl.org.cn/%E6%9F%9A%E6%9C%A8%E6%A2%A8%E6%B2%99"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "02-16",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%9F%9A%E6%9C%A8%E6%A2%A8%E6%B2%99",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%9F%9A%E6%9C%A8%E6%A2%A8%E6%B2%99",
+        "title": "柚木梨沙",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/78/Risa_Yuzuki_2024.jpg!/fw/640",
+        "revision": 8689433,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:23394",
@@ -7223,23 +7360,6 @@
       "sources": [
         "https://utaitedb.net/Ar/23394",
         "https://twitter.com/i_kotoba"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23444",
-      "name": "LITA",
-      "aliases": [
-        "LITA",
-        "KMNZ LITA"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23444.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/23444",
-        "https://twitter.com/kmnzlita",
-        "https://www.youtube.com/channel/UCwuS0uY-Z2Gr_5OV2oFybFA"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -7277,11 +7397,21 @@
         "https://twitter.com/ado1024imokenp",
         "https://www.youtube.com/channel/UCln9P4Qm3-EAY4aiEPmRwEA",
         "https://www.nicovideo.jp/mylist/58569901",
-        "https://vocadb.net/Ar/95738"
+        "https://vocadb.net/Ar/95738",
+        "https://zh.moegirl.org.cn/Ado"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "10-24",
+      "birthday_source": "https://zh.moegirl.org.cn/Ado",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Ado",
+        "title": "Ado",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/fe/Ado.jpg!/fw/640",
+        "revision": 8761332,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:23525",
@@ -7529,58 +7659,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:23741",
-      "name": "道明寺ここあ",
-      "aliases": [
-        "道明寺ここあ",
-        "Cocoa Domyoji",
-        "Cocoa Channel"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23741.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/23741",
-        "https://www.youtube.com/channel/UC5Xse6X7vB_nUL5HvEFVo_g",
-        "https://twitter.com/cocoa_domyoji",
-        "https://cocoa-domyoji.com/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23761",
-      "name": "朝ノ瑠璃",
-      "aliases": [
-        "朝ノ瑠璃",
-        "Asano Ruri"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23761.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/23761",
-        "https://twitter.com/asanoruri"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23767",
-      "name": "朝日南アカネ",
-      "aliases": [
-        "朝日南アカネ",
-        "Asahina Akane"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23767.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/23767",
-        "https://www.youtube.com/channel/UCe_p3YEuYJb8Np0Ip9dk-FQ",
-        "https://twitter.com/akane_asahina__"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:23803",
       "name": "Saw",
       "aliases": [
@@ -7689,24 +7767,6 @@
         "https://www.youtube.com/channel/UCt1q3ONDWaP-FzXnWKLmPew",
         "https://twitter.com/napi_dazo?s=20",
         "https://www.tiktok.com/@napi_dazo?source=h5_t"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:23959",
-      "name": "キズナアイ",
-      "aliases": [
-        "キズナアイ",
-        "Kizuna Ai"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/23959.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/23959",
-        "https://www.youtube.com/channel/UC4YaOt1yT-ZeyB0OmxHgolA",
-        "https://www.youtube.com/channel/UCArUdy5xj0i0cTuhPHRVMpw",
-        "https://www.youtube.com/channel/UCbFwe3COkDrbNsbMyGNCsDg"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -7843,23 +7903,6 @@
         "https://utaitedb.net/Ar/24097",
         "https://youtube.com/channel/UCXtQTtPJedfjqEPysorbsMg",
         "https://twitter.com/Qu_Qualia"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:24108",
-      "name": "月下カオル",
-      "aliases": [
-        "月下カオル",
-        "Tsukishita Kaoru"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/24108.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/24108",
-        "https://www.youtube.com/channel/UCsehvfwaWF6nWuFnXI0AqZQ",
-        "https://twitter.com/tsukishitakaoru"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -8013,7 +8056,8 @@
         "http://halyosy.com/",
         "http://piapro.jp/halyosy",
         "http://www.myspace.com/halyosy",
-        "http://utaitedb.net/Ar/25"
+        "http://utaitedb.net/Ar/25",
+        "https://zh.moegirl.org.cn/Halyosy"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -8021,7 +8065,16 @@
         "utaite",
         "music_creator"
       ],
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Halyosy",
+        "title": "Halyosy",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/c4/Job_I.jpeg!/fw/640",
+        "revision": 8717445,
+        "retrieved_on": "2026-11-17"
+      },
+      "birthday": "05-13",
+      "birthday_source": "https://zh.moegirl.org.cn/Halyosy"
     },
     {
       "id": "ut:utaitedb:25286",
@@ -8103,42 +8156,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:25297",
-      "name": "Mori Calliope",
-      "aliases": [
-        "森 カリオペ",
-        "Mori Calliope"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25297.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/25297",
-        "https://www.youtube.com/channel/UCL_qhgtOy0dy1Agp8vkySQg",
-        "https://twitter.com/moricalliope",
-        "https://soundcloud.com/user-694398002"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25298",
-      "name": "Takanashi Kiara",
-      "aliases": [
-        "小鳥遊キアラ",
-        "Takanashi Kiara",
-        "たかなしきあら"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25298.jpg?v=6",
-      "sources": [
-        "https://utaitedb.net/Ar/25298",
-        "https://www.youtube.com/channel/UCHsx4Hqa-1ORjQTh9TYDhww",
-        "https://twitter.com/takanashikiara"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:25300",
       "name": "鯨木",
       "aliases": [
@@ -8198,11 +8215,21 @@
         "https://utaitedb.net/Ar/25332",
         "https://www.youtube.com/channel/UCLqCmbd6bgcLaBVz3aA-68A",
         "https://twitter.com/p_ma_ru",
-        "https://pmarusama.com/"
+        "https://pmarusama.com/",
+        "https://zh.moegirl.org.cn/P-Maru_Sama%E3%80%82"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "09-30",
+      "birthday_source": "https://zh.moegirl.org.cn/P-Maru_Sama%E3%80%82",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/P-Maru_Sama%E3%80%82",
+        "title": "P-Maru Sama。",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/a8/P-MARU.jpg!/fw/640",
+        "revision": 8596238,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:25333",
@@ -8312,24 +8339,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:25372",
-      "name": "Finana Ryugu",
-      "aliases": [
-        "Finana Ryugu",
-        "フィナーナ 竜宮"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25372.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/25372",
-        "https://www.youtube.com/channel/UCu-J8uIXuLZh16gG-cT1naw",
-        "https://twitter.com/FinanaRyugu",
-        "https://www.reddit.com/user/Finana_Ryugu"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:25386",
       "name": "dear:",
       "aliases": [
@@ -8382,23 +8391,6 @@
         "https://www.nicovideo.jp/user/36347628",
         "https://twitter.com/chihiro_ishi",
         "https://vocadb.net/Ar/53358"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25499",
-      "name": "黛灰",
-      "aliases": [
-        "黛灰",
-        "Kai Mayuzumi"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25499.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/25499",
-        "https://www.youtube.com/channel/UCb5JxV6vKlYVknoJB8TnyYg",
-        "https://twitter.com/mayuzumi_X"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -8693,38 +8685,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:25692",
-      "name": "桃寝ちのい",
-      "aliases": [
-        "桃寝ちのい",
-        "Momone Chinoi",
-        "ちのい",
-        "Chinoi",
-        "momone chinoi",
-        "ul0ux",
-        "momosepu",
-        "Chinoi Momone",
-        "Togenkyoyasan"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25692.jpg?v=6",
-      "sources": [
-        "https://utaitedb.net/Ar/25692",
-        "https://www.youtube.com/channel/UC1QpNAV9xNS5P-yAwJLi07A",
-        "https://bowlroll.net/user/654800",
-        "https://lit.link/ul0ux",
-        "https://vocadb.net/Ar/95009",
-        "https://twitter.com/ul0ux",
-        "https://www.pixiv.net/users/67632764"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "roles": [
-        "utaite",
-        "music_creator"
-      ],
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:25693",
       "name": "レナ",
       "aliases": [
@@ -8795,25 +8755,6 @@
         "https://www.youtube.com/channel/UCWicIpAinE2yrWohpRuERZg",
         "https://twitter.com/sewnui",
         "https://www.tiktok.com/@sewnui"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25735",
-      "name": "somunia",
-      "aliases": [
-        "somunia",
-        "そむにあちゃん"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25735.jpg?v=6",
-      "sources": [
-        "https://utaitedb.net/Ar/25735",
-        "https://www.youtube.com/channel/UCqhnvjASWaS1eF_023Y--DQ",
-        "https://twitter.com/she_is_wired",
-        "https://www.pixiv.net/en/users/31380366",
-        "https://vocadb.net/Ar/79248"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -8932,25 +8873,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:25797",
-      "name": "幸祜",
-      "aliases": [
-        "幸祜",
-        "KOKO"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25797.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/25797",
-        "https://www.youtube.com/channel/UC7Gow-kNHq21oejSIDg9PAg",
-        "https://twitter.com/KOKO__virtual",
-        "https://www.tiktok.com/@koko_virtual",
-        "https://vocadb.net/Ar/110062"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:25823",
       "name": "フィロ",
       "aliases": [
@@ -9047,61 +8969,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:25873",
-      "name": "Luca Kaneshiro",
-      "aliases": [
-        "Luca Kaneshiro",
-        "ルカ・カネシロ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25873.jpg?v=7",
-      "sources": [
-        "https://utaitedb.net/Ar/25873",
-        "https://www.youtube.com/channel/UC7Gb7Uawe20QyFibhLl1lzA",
-        "https://www.twitch.tv/LucaKaneshiro",
-        "https://space.bilibili.com/1673137696"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25874",
-      "name": "Ike Eveland",
-      "aliases": [
-        "Ike Eveland",
-        "アイク・イーヴランド"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25874.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/25874",
-        "https://www.youtube.com/channel/UC4yNIKGvy-YUrwYupVdLDXA",
-        "https://space.bilibili.com/1921596130",
-        "https://www.nijisanji.jp/en/talents/l/ike-eveland"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25876",
-      "name": "存流",
-      "aliases": [
-        "存流",
-        "ARU",
-        "存流 -ᴀʀᴜ-"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25876.jpg?v=6",
-      "sources": [
-        "https://utaitedb.net/Ar/25876",
-        "https://www.youtube.com/channel/UC4mTp4T_DkmnFuhAlqNBnHA/",
-        "https://sinsekaistudio.jp/artist/aru/",
-        "https://twitter.com/ARU_virtual"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:25885",
       "name": "エヌ",
       "aliases": [
@@ -9116,24 +8983,6 @@
         "https://www.nicovideo.jp/user/99271582",
         "https://www.youtube.com/channel/UCFMddFVlWOt7LApoMMa3ciw",
         "https://twitter.com/noNo0mn?s=20"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25915",
-      "name": "Uki Violeta",
-      "aliases": [
-        "Uki Violeta",
-        "浮奇ヴィオレタ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25915.png?v=8",
-      "sources": [
-        "https://utaitedb.net/Ar/25915",
-        "https://www.nijisanji.jp/en/talents/l/uki-violeta",
-        "https://twitter.com/uki_violeta",
-        "https://www.youtube.com/channel/UChJ5FTsHOu72_5OVx0rvsvQ"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -9227,24 +9076,6 @@
         "https://www.youtube.com/channel/UCrdBHXDF5bre-aKRf_QcQ_A",
         "https://twitter.com/hamulive_bear",
         "https://www.nicovideo.jp/user/13989906"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:25951",
-      "name": "Maria Marionette",
-      "aliases": [
-        "マリア マリオネット",
-        "Maria Marionette"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/25951.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/25951",
-        "https://www.nijisanji.jp/en/members/maria-marionette",
-        "https://www.twitch.tv/MariaMarionette",
-        "https://space.bilibili.com/1217057066"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -9345,23 +9176,6 @@
         "https://twitter.com/Tokaku_Uta",
         "https://www.youtube.com/channel/UCUsjkwJc4mz5tR9xGE2Y2Hw",
         "https://www.nicovideo.jp/user/118273152"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:27165",
-      "name": "LOLUET",
-      "aliases": [
-        "LOLUET"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27165.png?v=10",
-      "sources": [
-        "https://utaitedb.net/Ar/27165",
-        "https://twitter.com/VXILXLIX",
-        "https://twitter.com/LOLUET_info",
-        "https://soundcloud.com/loluet"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -9499,24 +9313,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:27306",
-      "name": "明透",
-      "aliases": [
-        "明透",
-        "ASU"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27306.jpg?v=7",
-      "sources": [
-        "https://utaitedb.net/Ar/27306",
-        "https://www.youtube.com/channel/UCBLGjbYv6-xxju1i44RjnnA",
-        "https://twitter.com/ASU_virtual",
-        "https://kamitsubaki.jp/artist/asu/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:27307",
       "name": "姫仮倶錬",
       "aliases": [
@@ -9606,23 +9402,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:27495",
-      "name": "橘ひなの",
-      "aliases": [
-        "橘ひなの",
-        "Hinano Tachibana"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27495.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/27495",
-        "https://twitter.com/hinano_tachiba7",
-        "https://www.youtube.com/channel/UCvUc0m317LWTTPZoBQV479A"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:27559",
       "name": "幽凪こなた",
       "aliases": [
@@ -9698,24 +9477,6 @@
         "https://www.youtube.com/@ajisaiva",
         "https://twitter.com/AjisaiVA",
         "https://www.youtube.com/channel/UCLeIuICd4O8-4PnB0o4l99g"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:27605",
-      "name": "Shoto",
-      "aliases": [
-        "Shoto",
-        "Shxtou"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27605.jpg?v=8",
-      "sources": [
-        "https://utaitedb.net/Ar/27605",
-        "https://www.youtube.com/channel/UCgwJ4ReZqFOw_Y6eTEIunDQ",
-        "https://www.twitch.tv/shxtou",
-        "https://twitter.com/shxtou"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -9887,40 +9648,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:27853",
-      "name": "Ninomae Ina'nis",
-      "aliases": [
-        "Ninomae Ina'nis",
-        "一伊那尓栖"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27853.png?v=6",
-      "sources": [
-        "https://utaitedb.net/Ar/27853",
-        "https://www.youtube.com/channel/UCMwGHR0BTZuLsmjY_NT5Pwg",
-        "https://twitter.com/ninomaeinanis"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:27854",
-      "name": "Watson Amelia",
-      "aliases": [
-        "ワトソン・アメリア",
-        "Watson Amelia"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27854.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/27854",
-        "https://www.youtube.com/channel/UCyl1z3jo3XHR1riLFKG5UAg",
-        "https://twitter.com/watsonameliaEN"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:27897",
       "name": "犀羅",
       "aliases": [
@@ -9935,24 +9662,6 @@
         "https://www.instagram.com/xiluosaira/",
         "https://www.nicovideo.jp/user/56546396",
         "https://vocadb.net/Ar/107521"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:27975",
-      "name": "Nerissa Ravencroft",
-      "aliases": [
-        "ネリッサ・レイヴンクロフト",
-        "Nerissa Ravencroft"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27975.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/27975",
-        "https://www.youtube.com/@NerissaRavencroft",
-        "https://twitter.com/nerissa_en",
-        "https://hololive.hololivepro.com/en/talents/nerissa-ravencroft/"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -9980,60 +9689,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:27984",
-      "name": "Gawr Gura",
-      "aliases": [
-        "がうる・ぐら",
-        "Gawr Gura"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27984.png?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/27984",
-        "https://www.youtube.com/channel/UCoSrY_IQQVpmIRZ9Xf-y93g",
-        "https://www.twitch.tv/gawrgura/",
-        "https://www.twitter.com/gawrgura"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:27985",
-      "name": "Hakos Baelz",
-      "aliases": [
-        "ハコス・ベールズ",
-        "Hakos Baelz"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27985.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/27985",
-        "https://www.youtube.com/channel/UCgmPnx-EEeOrZSg5Tiw7ZRQ",
-        "https://twitter.com/hakosbaelz"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:27998",
-      "name": "カグラナナ",
-      "aliases": [
-        "カグラナナ",
-        "Kagura Nana",
-        "かぐらなな"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/27998.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/27998",
-        "https://www.youtube.com/channel/UCbfv8uuUXt3RSJGEwxny5Rw",
-        "https://twitter.com/nana_kaguraaa",
-        "https://space.bilibili.com/386900246"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:28005",
       "name": "SHIKI",
       "aliases": [
@@ -10049,27 +9704,6 @@
         "https://twitter.com/shikida_ya",
         "https://www.youtube.com/channel/UCY4UuRwpv225Sg30wB5c_HQ",
         "https://shikida0.fanbox.cc"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:28047",
-      "name": "犬山たまき",
-      "aliases": [
-        "犬山たまき",
-        "Inuyama Tamaki",
-        "佃煮のりお",
-        "Tsukudani Norio"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/28047.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/28047",
-        "https://www.youtube.com/@%E7%8A%AC%E5%B1%B1%E3%81%9F%E3%81%BE%E3%81%8D%E4%BD%83%E7%85%AE%E3%81%AE%E3%82%8A%E3%81%8A",
-        "https://twitter.com/norioo_",
-        "https://www.twitch.tv/noripro_",
-        "https://vocadb.net/Ar/137512"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -10336,40 +9970,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:28143",
-      "name": "Fuwawa Abyssgard",
-      "aliases": [
-        "フワワ・アビスガード",
-        "Fuwawa Abyssgard"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/28143.png?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/28143",
-        "https://hololive.hololivepro.com/en/talents/fuwawa-abyssgard/",
-        "https://vocadb.net/Ar/176310"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:28144",
-      "name": "Mococo Abyssgard",
-      "aliases": [
-        "モココ・アビスガード",
-        "Mococo Abyssgard"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/28144.png?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/28144",
-        "https://hololive.hololivepro.com/en/talents/mococo-abyssgard/",
-        "https://vocadb.net/Ar/176311"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:28149",
       "name": "お暇",
       "aliases": [
@@ -10400,199 +10000,6 @@
         "https://twitter.com/kasukaBe_nyoki",
         "https://www.nicovideo.jp/user/82495756",
         "https://vocadb.net/Ar/105182"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29183",
-      "name": "DELUTAYA",
-      "aliases": [
-        "DELUTAYA",
-        "Δ.",
-        "mgmgoi4"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29183.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/29183",
-        "https://www.youtube.com/@delutaya",
-        "https://twitter.com/mgmgoi4",
-        "https://www.twitch.tv/delutaya_ch"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29191",
-      "name": "仲町あられ",
-      "aliases": [
-        "仲町あられ",
-        "Nakamachi Arale"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29191.png?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/29191",
-        "https://youtube.com/channel/UCWfF0DB6m_t2CE3KcOOOX7g",
-        "https://twitter.com/arale_yumemita"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29192",
-      "name": "宮永ののか",
-      "aliases": [
-        "宮永ののか",
-        "Miyanagi Nonoka"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29192.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/29192",
-        "https://youtube.com/channel/UCGeCnpimiSN5rgiKbJzHd3A",
-        "https://twitter.com/nonoka_yumemita"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29193",
-      "name": "峰月律",
-      "aliases": [
-        "峰月律",
-        "Minetsuki Ritsu"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29193.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/29193",
-        "https://youtube.com/channel/UCxc0MrPoACKTFlV24GqX2sg",
-        "https://twitter.com/ritsu_yumemita"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29194",
-      "name": "藤都子",
-      "aliases": [
-        "藤都子",
-        "Fuji Miyako"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29194.png?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/29194",
-        "https://youtube.com/channel/UCZXxRYaP7mfuglPnptnBBCA",
-        "https://twitter.com/miyako_yumemita"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29195",
-      "name": "千石ユノ",
-      "aliases": [
-        "千石ユノ",
-        "Sengoku Yuno"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29195.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/29195",
-        "https://youtube.com/channel/UC99kOG6_9RD0mR3OG4EOfxw",
-        "https://twitter.com/yuno_yumemita"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29207",
-      "name": "Pavolia Reine",
-      "aliases": [
-        "Pavolia Reine",
-        "パヴォリア・レイネ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29207.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/29207",
-        "https://www.youtube.com/channel/UChgTyjG-pdNvxxhdsXfHQ5Q",
-        "https://www.twitter.com/pavoliareine",
-        "https://www.instagram.com/pavoliareine/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29211",
-      "name": "Kobo Kanaeru",
-      "aliases": [
-        "Kobo Kanaeru",
-        "こぼ・かなえる"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29211.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/29211",
-        "https://www.youtube.com/channel/UCjLEmnpCNeisMxy134KPwWw",
-        "https://twitter.com/kobokanaeru",
-        "https://tiktok.com/@kobokanaeru",
-        "https://vocadb.net/Ar/170037"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29215",
-      "name": "Ceres Fauna",
-      "aliases": [
-        "Ceres Fauna",
-        "セレス・ファウナ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29215.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/29215",
-        "https://www.youtube.com/channel/UCO_aKKYxn4tvrqPjcTzZ6EQ",
-        "https://twitter.com/ceresfauna"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29217",
-      "name": "Kureiji Ollie",
-      "aliases": [
-        "Kureiji Ollie",
-        "クレイジー・オリー"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29217.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/29217",
-        "https://www.youtube.com/channel/UCYz_5n-uDuChHtLo7My1HnQ",
-        "https://www.twitch.tv/kureijiollie/",
-        "https://www.twitter.com/kureijiollie"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29218",
-      "name": "Anya Melfissa",
-      "aliases": [
-        "Anya Melfissa",
-        "アーニャ・メルフィッサ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29218.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/29218",
-        "https://www.youtube.com/channel/UC727SQYUvx5pDDGQpTICNWg",
-        "https://twitter.com/anyamelfissa"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -10883,26 +10290,6 @@
         "https://lit.link/en/4neeen",
         "https://twitter.com/4neeen",
         "https://www.youtube.com/channel/UCKALce70SWqacA2yDvrRSsA"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:29516",
-      "name": "ころねぽち",
-      "aliases": [
-        "ころねぽち",
-        "Korone Pochi",
-        "PochiKorone",
-        "Pochi Korone"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/29516.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/29516",
-        "https://www.youtube.com/channel/UCv2byPgvl60Mh1vQBnXuksA",
-        "https://twitter.com/virtualcat_poch",
-        "https://koronepoti.fanbox.cc"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -11304,29 +10691,19 @@
         "https://utaitedb.net/Ar/31199",
         "http://shiyui.jp",
         "https://twitter.com/Shiyui_staff",
-        "https://www.nicovideo.jp/mylist/70320572"
+        "https://www.nicovideo.jp/mylist/70320572",
+        "https://zh.moegirl.org.cn/Shiyui"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:31238",
-      "name": "Banzoin Hakka",
-      "aliases": [
-        "Banzoin Hakka",
-        "万象院ハッカ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/31238.png?v=6",
-      "sources": [
-        "https://utaitedb.net/Ar/31238",
-        "https://www.youtube.com/@banzoinhakka",
-        "https://www.twitch.tv/banzoinhakka/",
-        "https://twitter.com/banzoinhakka"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Shiyui",
+        "title": "シユイ",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/bf/Shiyui.jpg!/fw/640",
+        "revision": 8696579,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:3128",
@@ -11400,11 +10777,21 @@
         "https://utaitedb.net/Ar/31422",
         "https://www.youtube.com/channel/UC4bI7JjAqE5UsuIqAcPzbBw",
         "https://space.bilibili.com/1701570",
-        "https://twitter.com/cream_kumako"
+        "https://twitter.com/cream_kumako",
+        "https://zh.moegirl.org.cn/%E7%86%8A%E5%AD%90"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "02-27",
+      "birthday_source": "https://zh.moegirl.org.cn/%E7%86%8A%E5%AD%90",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E7%86%8A%E5%AD%90",
+        "title": "熊子",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b9/%E7%86%8A%E5%AD%90B%E7%AB%99.jpg!/fw/640",
+        "revision": 8126320,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:31448",
@@ -11420,23 +10807,6 @@
         "https://www.instagram.com/sirasuunisava",
         "https://twitter.com/sirasuunisava",
         "https://vocadb.net/Ar/147052"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:31462",
-      "name": "Nanashi Mumei",
-      "aliases": [
-        "Nanashi Mumei",
-        "七詩ムメイ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/31462.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/31462",
-        "https://www.youtube.com/channel/UC3n5uGu18FoCy23ggWWp8tA",
-        "https://twitter.com/nanashimumei_en"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -11670,61 +11040,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:32586",
-      "name": "Shiori Novella",
-      "aliases": [
-        "Shiori Novella",
-        "シオリ・ノヴェラ",
-        "Shiorin"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32586.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/32586",
-        "https://www.youtube.com/@ShioriNovella",
-        "https://twitter.com/shiorinovella"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32587",
-      "name": "Koseki Bijou",
-      "aliases": [
-        "Koseki Bijou",
-        "古石ビジュー",
-        "Biboo"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32587.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/32587",
-        "https://www.youtube.com/@KosekiBijou",
-        "https://twitter.com/kosekibijou"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32592",
-      "name": "音ノ乃のの",
-      "aliases": [
-        "音ノ乃のの",
-        "Nonono Nono",
-        "NononoNono"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32592.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/32592",
-        "https://twitter.com/_nonono_nono",
-        "https://www.youtube.com/channel/UCqe0-vqZwAvZUb22wCMu1fA",
-        "https://www.youtube.com/@_nonono_nono"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:32609",
       "name": "ice",
       "aliases": [
@@ -11871,41 +11186,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:32841",
-      "name": "ironmouse",
-      "aliases": [
-        "ironmouse"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32841.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/32841",
-        "https://www.twitch.tv/ironmouse",
-        "https://www.tiktok.com/@ironmouse",
-        "https://twitter.com/ironmouse"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32842",
-      "name": "nyanners",
-      "aliases": [
-        "nyanners",
-        "Nyatasha Nyanners"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32842.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/32842",
-        "https://twitter.com/NyanNyanners",
-        "https://www.twitch.tv/nyanners",
-        "https://www.youtube.com/@Nyanners"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:32885",
       "name": "早瀬ノエル",
       "aliases": [
@@ -11920,111 +11200,6 @@
         "https://twitter.com/noel_fz1229",
         "https://www.instagram.com/noel_hayase/",
         "https://www.youtube.com/channel/UCRMZBDvn6YRX12YQb7NR59A"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32891",
-      "name": "Ouro Kronii",
-      "aliases": [
-        "Ouro Kronii",
-        "オーロ・クロニー"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32891.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/32891",
-        "https://www.youtube.com/@OuroKronii",
-        "https://twitter.com/ourokronii"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32894",
-      "name": "Ayunda Risu",
-      "aliases": [
-        "Ayunda Risu",
-        "アユンダ・リス"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32894.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/32894",
-        "https://www.youtube.com/channel/UCOyYb1c43VlX9rc_lT6NKQw",
-        "https://twitter.com/ayunda_risu",
-        "https://www.facebook.com/ayundarisuholoID/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32896",
-      "name": "Elizabeth Rose Bloodflame",
-      "aliases": [
-        "Elizabeth Rose Bloodflame",
-        "エリザベス・ローズ・ブラッドフレイム",
-        "ERB"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32896.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/32896",
-        "https://www.youtube.com/@holoen_erbloodflame",
-        "https://twitter.com/ERBloodflame"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32897",
-      "name": "Gigi Murin",
-      "aliases": [
-        "Gigi Murin",
-        "ジジ・ムリン"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32897.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/32897",
-        "https://www.youtube.com/@holoen_gigimurin",
-        "https://twitter.com/gigimurin"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32898",
-      "name": "Cecilia Immergreen",
-      "aliases": [
-        "Cecilia Immergreen",
-        "セシリア・イマーグリーン",
-        "Lilicia"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32898.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/32898",
-        "https://www.youtube.com/@holoen_ceciliaimmergreen",
-        "https://twitter.com/ceciliaimgreen"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:32899",
-      "name": "Raora Panthera",
-      "aliases": [
-        "Raora Panthera",
-        "ラオーラ・パンテーラ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/32899.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/32899",
-        "https://www.youtube.com/@holoen_raorapanthera",
-        "https://twitter.com/raorapanthera"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -12218,11 +11393,21 @@
         "https://twitter.com/sakatandao",
         "http://www.nicovideo.jp/mylist/34669838",
         "http://www.nicovideo.jp/mylist/15765952",
-        "http://vocadb.net/Ar/2009"
+        "http://vocadb.net/Ar/2009",
+        "https://zh.moegirl.org.cn/%E9%9A%94%E5%A3%81%E7%9A%84%E5%9D%82%E7%94%B0%E3%80%82"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "12-05",
+      "birthday_source": "https://zh.moegirl.org.cn/%E9%9A%94%E5%A3%81%E7%9A%84%E5%9D%82%E7%94%B0%E3%80%82",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E9%9A%94%E5%A3%81%E7%9A%84%E5%9D%82%E7%94%B0%E3%80%82",
+        "title": "隔壁的坂田。",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/e/e7/Tonari_no_Sakata_2024_Summer_Icon.jpg!/fw/640",
+        "revision": 7543644,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:33229",
@@ -12424,23 +11609,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:33512",
-      "name": "kahoca",
-      "aliases": [
-        "kahoca"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/33512.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/33512",
-        "https://www.youtube.com/channel/UC90WXRQaPjml9WRIxVi_74g",
-        "https://twitter.com/kahoca_23",
-        "https://www.instagram.com/kahoca_23/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:33532",
       "name": "horizon",
       "aliases": [
@@ -12470,23 +11638,6 @@
         "https://www.youtube.com/channel/UCw7iM67NS0RXhYHoxv-lpPg",
         "https://twitter.com/rayray_429",
         "https://www.nicovideo.jp/user/32546810"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:33655",
-      "name": "涼海ネモ",
-      "aliases": [
-        "涼海ネモ",
-        "Suzumi Nemo"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/33655.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/33655",
-        "https://youtube.com/@Nemo_Suzumi?si=mUdjIoIIPNOCwusE",
-        "https://x.com/Nemo_Suzumi"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -12800,21 +11951,6 @@
         "https://www.youtube.com/@rxri__",
         "https://www.twitch.tv/rxri__",
         "https://www.youtube.com/channel/UCDIjiyBzuQJg_UsuwhC3gQg"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:33932",
-      "name": "dooby",
-      "aliases": [
-        "dooby"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/33932.jpg?v=1",
-      "sources": [
-        "https://utaitedb.net/Ar/33932",
-        "https://www.youtube.com/channel/UC6T7TJZbW6nO-qsc5coo8Pg"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -13895,74 +13031,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:35852",
-      "name": "Octavio",
-      "aliases": [
-        "Octavio",
-        "オクタビオ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/35852.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/35852",
-        "https://www.youtube.com/@Octavio_en",
-        "https://x.com/octavio_holo"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:35855",
-      "name": "Machina X Flayon",
-      "aliases": [
-        "Machina X Flayon",
-        "マキナ・X・フレオン"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/35855.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/35855",
-        "https://www.youtube.com/@MachinaXFlayon",
-        "https://x.com/machinaxflayon"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:35858",
-      "name": "Gavis Bettel",
-      "aliases": [
-        "Gavis Bettel",
-        "ガビス・ベッテル"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/35858.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/35858",
-        "https://www.youtube.com/@GavisBettel",
-        "https://x.com/gavisbettel"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:35859",
-      "name": "Josuiji Shinri",
-      "aliases": [
-        "Josuiji Shinri",
-        "定水寺シンリ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/35859.jpg?v=5",
-      "sources": [
-        "https://utaitedb.net/Ar/35859",
-        "https://www.youtube.com/@JosuijiShinri/videos",
-        "https://x.com/josuijishinri"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:35861",
       "name": "儚世",
       "aliases": [
@@ -13974,38 +13042,6 @@
         "https://soundcloud.com/lupo-208469127",
         "https://instagram.com/hakana_se/",
         "https://x.com/hakana__se"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:35886",
-      "name": "Regis Altare",
-      "aliases": [
-        "Regis Altare",
-        "リージス・アルテア"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/35886.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/35886",
-        "https://www.youtube.com/@RegisAltare/videos",
-        "https://x.com/regisaltare"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:35934",
-      "name": "Alban Knox",
-      "aliases": [
-        "Alban Knox"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/35934.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/35934",
-        "https://www.youtube.com/@AlbanKnox"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -14150,37 +13186,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:36080",
-      "name": "Vox Akuma",
-      "aliases": [
-        "Vox Akuma"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36080.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/36080",
-        "https://www.youtube.com/@VoxAkuma"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36081",
-      "name": "Shu Yamino",
-      "aliases": [
-        "Shu Yamino",
-        "闇ノシュウ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36081.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/36081",
-        "https://www.youtube.com/@ShuYamino"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:36085",
       "name": "君河今日子",
       "aliases": [
@@ -14269,54 +13274,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:36289",
-      "name": "Sonny Brisko",
-      "aliases": [
-        "Sonny Brisko",
-        "サニー・ブリスコー"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36289.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/36289",
-        "https://www.youtube.com/@SonnyBrisko"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36290",
-      "name": "Aia Amare",
-      "aliases": [
-        "Aia Amare",
-        "アイア アマレ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36290.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/36290",
-        "https://www.youtube.com/@AiaAmare"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36291",
-      "name": "Ren Zotto",
-      "aliases": [
-        "Ren Zotto",
-        "レン ゾット"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36291.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/36291",
-        "https://www.youtube.com/@RenZotto"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:3631",
       "name": "Lizz Robinett",
       "aliases": [
@@ -14332,54 +13289,6 @@
         "http://instagram.com/raichubi",
         "https://www.facebook.com/lizzrobinett",
         "http://vocadb.net/Ar/39580"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36323",
-      "name": "Magni Dezmond",
-      "aliases": [
-        "Magni Dezmond",
-        "マグニ・デズモンド"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36323.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/36323",
-        "https://www.youtube.com/@MagniDezmond"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36324",
-      "name": "Noir Vesper",
-      "aliases": [
-        "Noir Vesper",
-        "ノワール・ヴェスパー"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36324.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/36324",
-        "https://www.youtube.com/@NoirVesper"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36325",
-      "name": "Axel Syrios",
-      "aliases": [
-        "Axel Syrios",
-        "アクセル・シリオス"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36325.jpg?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/36325",
-        "https://www.youtube.com/@AxelSyrios"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -14415,69 +13324,6 @@
         "https://utaitedb.net/Ar/36378",
         "https://soundcloud.com/18kkrstmymz7",
         "https://youtube.com/@liirn_03"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36414",
-      "name": "Rosemi Lovelock",
-      "aliases": [
-        "Rosemi Lovelock",
-        "ロゼミ ラブロック"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36414.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/36414",
-        "https://www.youtube.com/@Rosemi_Lovelock"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36419",
-      "name": "Scarle Yonaguni",
-      "aliases": [
-        "Scarle Yonaguni",
-        "スカーレ ヨナグニ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36419.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/36419",
-        "https://www.youtube.com/@ScarleYonaguni"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36421",
-      "name": "Doppio Dropscythe",
-      "aliases": [
-        "Doppio Dropscythe",
-        "ドッピオ ドロップサイト"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36421.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/36421",
-        "https://www.youtube.com/@DoppioDropscythe"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:36422",
-      "name": "Ver Vermillion",
-      "aliases": [
-        "Ver Vermillion"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/36422.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/36422",
-        "https://www.youtube.com/@VerVermillion"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -17233,25 +16079,6 @@
       "sources": [
         "https://utaitedb.net/Ar/37489",
         "https://space.bilibili.com/626143"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:37498",
-      "name": "琶舞",
-      "aliases": [
-        "琶舞",
-        "BEMA",
-        "BEMA_virtual"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/37498.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/37498",
-        "https://www.youtube.com/@virtual_BEMA",
-        "https://x.com/BEMA_virtual",
-        "https://www.tiktok.com/@bema_virtual"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -20111,24 +18938,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:38245",
-      "name": "鳳玲天々",
-      "aliases": [
-        "鳳玲天々",
-        "凤玲天天"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/38245.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/38245",
-        "https://twitter.com/hourei_1010",
-        "https://www.youtube.com/channel/UCw-jEa3_788VkvM2zHzrDnw",
-        "https://ch.nicovideo.jp/hourei-tenten"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:38255",
       "name": "まひる",
       "aliases": [
@@ -20265,24 +19074,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:38286",
-      "name": "甘葛すもあ",
-      "aliases": [
-        "甘葛すもあ",
-        "Amazura Sumoa"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/38286.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/38286",
-        "https://www.youtube.com/channel/UCAflRAT6B_7nvxAK72ztN3A",
-        "https://x.com/sumoa_meiwaku",
-        "https://lit.link/sumoa0928"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:38290",
       "name": "Minachu",
       "aliases": [
@@ -20364,11 +19155,21 @@
         "https://utaitedb.net/Ar/3862",
         "http://www.nicovideo.jp/mylist/42684281",
         "https://twitter.com/Chalilili",
-        "https://soundcloud.com/chalilili"
+        "https://soundcloud.com/chalilili",
+        "https://zh.moegirl.org.cn/%E8%8C%B6%E7%90%86%E7%90%86"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "07-03",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%8C%B6%E7%90%86%E7%90%86",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%8C%B6%E7%90%86%E7%90%86",
+        "title": "茶理理",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/7a/%E8%8C%B6%E7%90%86%E7%90%86%E5%A4%B4%E5%83%8F.jpg!/fw/640",
+        "revision": 8655459,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:3863",
@@ -20439,26 +19240,6 @@
         "https://www.youtube.com/user/MrHoowwl",
         "https://twitter.com/hoowwl",
         "https://soundcloud.com/hoowwl"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:3873",
-      "name": "しぐれうい",
-      "aliases": [
-        "しぐれうい",
-        "Shigure Ui",
-        "しぐれ うい"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/3873.png?v=4",
-      "sources": [
-        "https://utaitedb.net/Ar/3873",
-        "http://com.nicovideo.jp/community/co527891",
-        "http://www.nicovideo.jp/mylist/20902655",
-        "http://www.nicovideo.jp/user/13295646",
-        "http://vocadb.net/Ar/11649"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -20738,22 +19519,6 @@
         "https://www.youtube.com/@x_Kuri_x",
         "https://x.com/Kuri_Vtuber",
         "https://www.facebook.com/kuri.ch.767651/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:39364",
-      "name": "Zander Netherbrand",
-      "aliases": [
-        "Zander Netherbrand",
-        "ザンダー・ネザーブランド"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/39364.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/39364",
-        "https://www.youtube.com/@ZanderNetherbrand"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -21271,21 +20036,6 @@
         "https://www.youtube.com/@depth_vanta/videos",
         "https://x.com/depth_vanta",
         "https://www.youtube.com/channel/UC4rJq3VrnVGEqcD_SalgzNw"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:39750",
-      "name": "Sameko Saba",
-      "aliases": [
-        "Sameko Saba"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/39750.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/39750",
-        "https://www.youtube.com/@SamekoSaba"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -22202,23 +20952,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:40296",
-      "name": "楪帆波",
-      "aliases": [
-        "楪帆波"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40296.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/40296",
-        "https://www.youtube.com/@Yuzuriha_honami",
-        "https://x.com/Yuzuriha_honami",
-        "https://www.youtube.com/channel/UCqXvL55GYHtRZhBS03LVGnQ"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:40298",
       "name": "からん",
       "aliases": [
@@ -22237,23 +20970,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:40299",
-      "name": "阿梓Azusa",
-      "aliases": [
-        "阿梓Azusa"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40299.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/40299",
-        "https://www.youtube.com/channel/UCkdupjgKF8_fjUj4nSCr1jA",
-        "https://weibo.com/u/2203177060",
-        "https://space.bilibili.com/7706705"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:40301",
       "name": "繭糸",
       "aliases": [
@@ -22266,25 +20982,6 @@
         "https://www.youtube.com/@silk_mayui",
         "https://x.com/silk_mayui",
         "https://lit.link/silkmayui"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:40302",
-      "name": "艾因Eine",
-      "aliases": [
-        "艾因Eine",
-        "艾因",
-        "Eine"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40302.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/40302",
-        "https://space.bilibili.com/421267475",
-        "https://www.youtube.com/@Eine-VirtuaReal",
-        "https://x.com/VirtuaRealEine"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -22389,63 +21086,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:40350",
-      "name": "舒三妈Susam",
-      "aliases": [
-        "舒三妈Susam",
-        "舒三妈",
-        "Susam"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40350.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/40350",
-        "https://space.bilibili.com/6853766",
-        "https://www.youtube.com/@%E8%88%92%E4%B8%89%E5%A6%88Susam-k9b",
-        "https://v.douyin.com/iLDUQcAN/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:40351",
-      "name": "桃星Tocci",
-      "aliases": [
-        "桃星Tocci",
-        "桃星",
-        "Tocci"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40351.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/40351",
-        "https://space.bilibili.com/690608704",
-        "https://www.nijisanji.jp/talents/l/tocci",
-        "https://www.youtube.com/@%E6%A1%83%E6%98%9FTocci-b7o"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:40352",
-      "name": "尤格Yog",
-      "aliases": [
-        "尤格Yog",
-        "尤格",
-        "Yog"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40352.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/40352",
-        "https://space.bilibili.com/690608709",
-        "https://v.douyin.com/iLDyRCNy/",
-        "https://www.nijisanji.jp/talents/l/yog"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:40360",
       "name": "れん",
       "aliases": [
@@ -22528,25 +21168,6 @@
         "https://x.com/urayashikiZONTI",
         "https://x.com/kiyashikizonzon",
         "https://www.foriio.com/kiyashikizonzon"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:40415",
-      "name": "名取さな",
-      "aliases": [
-        "名取さな",
-        "Natori Sana"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40415.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/40415",
-        "http://www.youtube.com/@sana_natori",
-        "https://x.com/sana_natori",
-        "https://natorisana.com/",
-        "https://vocadb.net/Ar/176308"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -24528,23 +23149,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:40932",
-      "name": "巫てんり",
-      "aliases": [
-        "巫てんり",
-        "Kannagi Tenri"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40932.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/40932",
-        "https://www.youtube.com/channel/UCq7n-GF0SZ7Pt1NCVfTvIaQ",
-        "https://x.com/kannagi_tenri"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:40936",
       "name": "Emil!o",
       "aliases": [
@@ -24579,23 +23183,6 @@
         "https://x.com/haishinblue",
         "https://www.youtube.com/@Aokiro",
         "https://lit.link/Aokiro"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:40945",
-      "name": "猫宮ひなた",
-      "aliases": [
-        "猫宮ひなた",
-        "Nekomiya Hinata"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/40945.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/40945",
-        "https://x.com/Nekomiya_Hinata",
-        "http://www.youtube.com/@NekomiyaHinata"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -27000,22 +25587,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:41552",
-      "name": "宇推くりあ",
-      "aliases": [
-        "宇推くりあ",
-        "Clear Usui"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/41552.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/41552",
-        "https://www.youtube.com/channel/UCeHtsCKQaFyb6SQGfRp1_6Q"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:41553",
       "name": "心春なこvirtualカウンセラー",
       "aliases": [
@@ -27516,24 +26087,6 @@
         "https://x.com/zz823553",
         "https://yoruichi0720test.crd.co/",
         "https://www.youtube.com/playlist?list=PLFQQMfpZm3PVEh9JG0qkG6bQgEZKFwdeA"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:41668",
-      "name": "小雀とと",
-      "aliases": [
-        "小雀とと",
-        "Kogara Toto"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/41668.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/41668",
-        "https://x.com/toto_kogara",
-        "https://www.youtube.com/channel/UCgTzsBI0DIRopMylJEDqnog",
-        "https://www.youtube.com/@totokogara"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -30818,40 +29371,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:42485",
-      "name": "渚沢シチ",
-      "aliases": [
-        "渚沢シチ",
-        "Nagisawa Shichi"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/42485.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/42485",
-        "https://x.com/Mixst_Shichi",
-        "https://www.youtube.com/@Shichi_Mixstgirls"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:42491",
-      "name": "空奏イト",
-      "aliases": [
-        "空奏イト",
-        "Mixst_Ito"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/42491.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/42491",
-        "https://x.com/Mixst_Ito",
-        "https://www.youtube.com/@Ito_Mixstgirls"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:42500",
       "name": "voca",
       "aliases": [
@@ -31049,24 +29568,6 @@
         "https://x.com/AzumaSeren",
         "https://lit.link/azumaseren",
         "https://www.youtube.com/@SerenAzuma"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:42544",
-      "name": "星宮とと",
-      "aliases": [
-        "星宮とと",
-        "Hoshimiya Toto"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/42544.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/42544",
-        "https://www.youtube.com/@hoshimiyatoto",
-        "https://hoshimiyatoto.com/",
-        "https://x.com/hoshimiya_toto"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -31453,24 +29954,6 @@
         "https://www.youtube.com/@Xingyi_ch",
         "https://x.com/xingyi_en",
         "https://www.instagram.com/xingyi_ch"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:42668",
-      "name": "天羽しろっぷ",
-      "aliases": [
-        "天羽しろっぷ",
-        "Amau Syrup"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/42668.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/42668",
-        "https://www.youtube.com/channel/UCDxHeaaTTRVgb2Pa2rQXSPw",
-        "https://twitter.com/syrupchan0",
-        "https://lit.link/amau-syrup"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -33377,23 +31860,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:43273",
-      "name": "隠神こかげ",
-      "aliases": [
-        "隠神こかげ",
-        "Inugami Kokage"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/43273.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/43273",
-        "https://x.com/vd_inuko",
-        "https://www.youtube.com/channel/UCevD0wKzJFpfIkvHOiQsfLQ"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:43274",
       "name": "八尋けい",
       "aliases": [
@@ -34249,23 +32715,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:43400",
-      "name": "Michi Mochievee",
-      "aliases": [
-        "Michi Mochievee"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/43400.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/43400",
-        "https://x.com/MichiMochievee",
-        "https://www.twitch.tv/michimochievee",
-        "https://www.youtube.com/@MichiMochievee"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:43402",
       "name": "あん豆",
       "aliases": [
@@ -34962,11 +33411,21 @@
         "https://utaitedb.net/Ar/43546",
         "https://x.com/UINA_0308",
         "https://www.nicovideo.jp/user/4141905",
-        "https://www.nicovideo.jp/mylist/29973732"
+        "https://www.nicovideo.jp/mylist/29973732",
+        "https://zh.moegirl.org.cn/UiNA"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "03-08",
+      "birthday_source": "https://zh.moegirl.org.cn/UiNA",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/UiNA",
+        "title": "UiNA",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/b/b7/UiNA.jpg!/fw/640",
+        "revision": 8139178,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:43547",
@@ -35380,22 +33839,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:43643",
-      "name": "谷田透佳",
-      "aliases": [
-        "谷田透佳",
-        "Tanida Touka"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/43643.png?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/43643",
-        "https://x.com/Touka03mar"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:43644",
       "name": "立花鈴",
       "aliases": [
@@ -35560,22 +34003,6 @@
       "sources": [
         "https://utaitedb.net/Ar/43698",
         "https://www.instagram.com/hans.jp_"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:43699",
-      "name": "Hoshi",
-      "aliases": [
-        "Hoshi",
-        "Grant"
-      ],
-      "image_url": "",
-      "sources": [
-        "https://utaitedb.net/Ar/43699",
-        "https://www.instagram.com/grant_hoshi"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -35749,21 +34176,6 @@
       "sources": [
         "https://utaitedb.net/Ar/43737",
         "https://www.youtube.com/channel/UCSdJDdR45q8XI_bfxnausRA"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:43739",
-      "name": "小花衣ももみ",
-      "aliases": [
-        "小花衣ももみ"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/43739.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/43739",
-        "https://twitter.com/momomi_khni"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -36648,24 +35060,6 @@
         "https://www.youtube.com/channel/UCoHsW282iYqPmZZ5617cg2w",
         "https://lit.link/himenoaimu",
         "https://himenoaimu.fanbox.cc"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:44134",
-      "name": "鏡愛しゅくり",
-      "aliases": [
-        "鏡愛しゅくり",
-        "Kagamia Shukuri"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44134.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44134",
-        "https://www.youtube.com/channel/UCDeGFlzenOpI2aFDH0mry9A",
-        "https://twitter.com/kagamiasannn",
-        "https://www.tiktok.com/@kagamiasannn"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -38452,23 +36846,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:44652",
-      "name": "Jurard T Rexford",
-      "aliases": [
-        "Jurard T Rexford"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44652.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44652",
-        "https://x.com/jurardtrexford",
-        "https://www.youtube.com/@JurardTRexford",
-        "https://www.youtube.com/channel/UCTVSOgYuSWmNAt-lnJPkEEw"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:44655",
       "name": "새라새라",
       "aliases": [
@@ -38734,38 +37111,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:44717",
-      "name": "大代真白",
-      "aliases": [
-        "大代真白",
-        "Oshiro Mashiro"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44717.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44717",
-        "https://www.youtube.com/channel/UCFG6teapZaN6J1oVXl7MYPA"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:44719",
-      "name": "キミノミヤ",
-      "aliases": [
-        "キミノミヤ",
-        "Kimino Miya"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44719.webp?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44719",
-        "https://x.com/MIYA_KIMINO"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:44721",
       "name": "水瀬しあ",
       "aliases": [
@@ -38898,23 +37243,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:44730",
-      "name": "白百合リリィ",
-      "aliases": [
-        "白百合リリィ",
-        "Shirayuri Lily"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44730.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44730",
-        "https://www.youtube.com/channel/UCl-3q6t6zdZwgIsFZELb7Zg",
-        "https://x.com/SRYR_0"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:44731",
       "name": "眠河ゆめな",
       "aliases": [
@@ -38954,22 +37282,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:44734",
-      "name": "水科葵",
-      "aliases": [
-        "水科葵",
-        "Mizushina Aoi"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44734.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44734",
-        "https://x.com/Mizushina_Aoi"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:44735",
       "name": "ひなの羽衣",
       "aliases": [
@@ -38981,40 +37293,6 @@
         "https://utaitedb.net/Ar/44735",
         "https://www.youtube.com/c/HinanoUi",
         "https://x.com/HinanoUi"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:44736",
-      "name": "アズマリム",
-      "aliases": [
-        "アズマリム",
-        "Azuma Lim"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44736.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44736",
-        "https://www.youtube.com/c/Azumalim",
-        "https://x.com/azuma_lim?lang=ja"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:44746",
-      "name": "白瀬あおい",
-      "aliases": [
-        "白瀬あおい",
-        "Shirose Aoi"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44746.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44746",
-        "https://www.youtube.com/channel/UC4SUl-nTftCcl3t7NKPd0_Q",
-        "https://lit.link/Shiroseaoi"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -39067,41 +37345,6 @@
         "https://utaitedb.net/Ar/44750",
         "https://www.youtube.com/@AmahaneMiran",
         "https://x.com/AmahaneMiran"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:44751",
-      "name": "凪乃ましろ",
-      "aliases": [
-        "凪乃ましろ",
-        "Nagino Mashiro"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44751.jpg?v=3",
-      "sources": [
-        "https://utaitedb.net/Ar/44751",
-        "https://twitter.com/Nagino_Mashiro",
-        "https://lit.link/naginomashiro",
-        "https://www.youtube.com/channel/UCewRhO43UmIohSBzW2HMheA"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:44754",
-      "name": "斗和キセキ",
-      "aliases": [
-        "斗和キセキ",
-        "Towa Kiseki"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/44754.jpg?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/44754",
-        "https://www.youtube.com/channel/UCKYPwPHjmgLWrJwkcLhGvNg",
-        "https://x.com/towakisekiv?lang=ja"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -43289,22 +41532,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:45427",
-      "name": "佐久間ねむ",
-      "aliases": [
-        "佐久間ねむ",
-        "Nemu Sakuma"
-      ],
-      "image_url": "",
-      "sources": [
-        "https://utaitedb.net/Ar/45427",
-        "https://www.youtube.com/channel/UCtjxl1Uf9-Xk2XdpPdMrccQ"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:45430",
       "name": "依紡",
       "aliases": [
@@ -45929,24 +44156,6 @@
       "last_seen_on": "2026-11-17"
     },
     {
-      "id": "ut:utaitedb:50785",
-      "name": "花咲くれは",
-      "aliases": [
-        "花咲くれは",
-        "Hanasaki Kureha"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/50785.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/50785",
-        "https://www.youtube.com/channel/UCr0xKYKDzBa6w-AINmbDrHA",
-        "https://twitter.com/_KRHana",
-        "https://marshmallow-qa.com/lvw9buh8y9st0qb"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
       "id": "ut:utaitedb:50787",
       "name": "浠",
       "aliases": [
@@ -46205,24 +44414,6 @@
         "https://twitter.com/ayumi_hazuki",
         "https://lit.link/ayumi_hazuki",
         "https://www.showroom-live.com/room/profile?room_id=575000"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:51268",
-      "name": "海月シェル",
-      "aliases": [
-        "海月シェル",
-        "Umitsuki Shell"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/51268.png?v=2",
-      "sources": [
-        "https://utaitedb.net/Ar/51268",
-        "https://twitter.com/umitsukishell",
-        "https://www.youtube.com/channel/UCz1RAeb7dVaUcd-4rEgyxPw",
-        "https://shell.localinfo.jp"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -46804,11 +44995,21 @@
         "http://www.nicovideo.jp/mylist/35381695",
         "http://www.nicovideo.jp/user/25382626",
         "https://twitter.com/nico_nico_sou",
-        "https://vocadb.net/Ar/92120"
+        "https://vocadb.net/Ar/92120",
+        "https://zh.moegirl.org.cn/Sou"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "08-19",
+      "birthday_source": "https://zh.moegirl.org.cn/Sou",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Sou",
+        "title": "Sou",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/1/18/Sou%E3%81%8F%E3%82%93.jpg!/fw/640",
+        "revision": 8687184,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:5194",
@@ -47405,11 +45606,21 @@
         "https://twitter.com/memememememe28",
         "http://www.nicovideo.jp/mylist/35611439",
         "http://www.nicovideo.jp/user/8080989",
-        "https://vocadb.net/Ar/41851"
+        "https://vocadb.net/Ar/41851",
+        "https://zh.moegirl.org.cn/Meari"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "05-31",
+      "birthday_source": "https://zh.moegirl.org.cn/Meari",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Meari",
+        "title": "Meari",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/0/07/Meari.jpg!/fw/640",
+        "revision": 8526015,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:7642",
@@ -47652,11 +45863,21 @@
         "http://gairo4.blog133.fc2.com/%20%E3%80%80",
         "http://www.nicovideo.jp/user/15214842",
         "http://www.nicovideo.jp/mylist/16754507",
-        "http://vocadb.net/Ar/18627"
+        "http://vocadb.net/Ar/18627",
+        "https://zh.moegirl.org.cn/Sennzai"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "01-22",
+      "birthday_source": "https://zh.moegirl.org.cn/Sennzai",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Sennzai",
+        "title": "Sennzai",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/69/Sennzai_moe.png!/fw/640",
+        "revision": 8584292,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:7802",
@@ -47810,24 +46031,6 @@
         "https://www.facebook.com/kunjidokun",
         "https://twitter.com/Kunjidokun",
         "http://kunjidokun.deviantart.com/"
-      ],
-      "source_status": "Finished",
-      "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
-    },
-    {
-      "id": "ut:utaitedb:7876",
-      "name": "泠鸢yousa",
-      "aliases": [
-        "泠鸢yousa"
-      ],
-      "image_url": "https://static.utaitedb.net/img/Artist/mainThumb/7876.jpg?v=8",
-      "sources": [
-        "https://utaitedb.net/Ar/7876",
-        "http://space.bilibili.com/282994",
-        "http://5sing.kugou.com/yousa/default.html",
-        "http://weibo.com/lingyuanyousa",
-        "http://vocadb.net/Ar/21283"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
@@ -48167,11 +46370,19 @@
         "https://utaitedb.net/Ar/8169",
         "http://www.nicovideo.jp/user/905867",
         "https://twitter.com/momobakobako",
-        "http://vocadb.net/Ar/2417"
+        "http://vocadb.net/Ar/2417",
+        "https://zh.moegirl.org.cn/%E6%A1%83%E7%AE%B1"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%A1%83%E7%AE%B1",
+        "title": "桃箱",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/73/29280597_big_p2.png!/fw/640",
+        "revision": 8054571,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:8198",
@@ -48268,11 +46479,21 @@
         "https://www.nicovideo.jp/mylist/34129023",
         "https://twitter.com/wolpis_kater",
         "https://www.nicovideo.jp/user/16834193",
-        "https://vocadb.net/Ar/78530"
+        "https://vocadb.net/Ar/78530",
+        "https://zh.moegirl.org.cn/Wolpis_Carter"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "birthday": "08-14",
+      "birthday_source": "https://zh.moegirl.org.cn/Wolpis_Carter",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Wolpis_Carter",
+        "title": "ウォルピスカーター",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/7/79/Wolpis_Carter.webp!/fw/640",
+        "revision": 7387566,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:8305",
@@ -48363,11 +46584,19 @@
         "https://utaitedb.net/Ar/8455",
         "https://soundcloud.com/yuce-2",
         "https://twitter.com/yuce_e",
-        "https://www.tiktok.com/@yuce_e"
+        "https://www.tiktok.com/@yuce_e",
+        "https://zh.moegirl.org.cn/YUC%27e"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/YUC%27e",
+        "title": "YUC'e",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/c/ca/YUC%27e.png!/fw/640",
+        "revision": 8709776,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:8527",
@@ -48531,11 +46760,19 @@
       "sources": [
         "https://utaitedb.net/Ar/9682",
         "https://www.youtube.com/user/RyuuAurelius",
-        "https://twitter.com/ryuu_tan15"
+        "https://twitter.com/ryuu_tan15",
+        "https://zh.moegirl.org.cn/Ryuu"
       ],
       "source_status": "Finished",
       "directory": "utaitedb",
-      "last_seen_on": "2026-11-17"
+      "last_seen_on": "2026-11-17",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Ryuu",
+        "title": "Ryuu",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/4/48/6059caeb702b580.jpg!/fw/640",
+        "revision": 8590777,
+        "retrieved_on": "2026-11-17"
+      }
     },
     {
       "id": "ut:utaitedb:9762",
@@ -48730,94 +46967,225 @@
   ],
   "manual_records": [],
   "overrides": {},
-  "redirects": {
-    "ut:utaitedb:23675": "vt:hololive:hoshimachi-suisei",
-    "ut:utaitedb:23676": "vt:hololive:houshou-marine",
-    "ut:utaitedb:28057": "vt:hololive:inugami-korone",
-    "ut:utaitedb:23684": "vt:nijisanji:run5rxlhy7",
-    "ut:utaitedb:23034": "vt:hololive:tokino-sora",
-    "ut:utaitedb:24238": "vt:hololive:omaru-polka",
-    "ut:utaitedb:24100": "vt:holostars:kanade-izuru",
-    "ut:utaitedb:23678": "vt:hololive:amane-kanata",
-    "ut:utaitedb:23570": "vt:nijisanji:2bk3ipe1dh2",
-    "ut:utaitedb:23483": "vt:nijisanji:21sys3w9foka",
-    "ut:utaitedb:23410": "vt:nijisanji:clhmbr_qujq0",
-    "ut:utaitedb:27728": "vt:hololive:la-darknesss",
-    "ut:utaitedb:27497": "vt:hololive:nekomata-okayu",
-    "ut:utaitedb:27871": "vt:hololive:minato-aqua",
-    "ut:utaitedb:27992": "vt:hololive:usada-pekora",
-    "ut:utaitedb:27993": "vt:hololive:sakuramiko",
-    "ut:utaitedb:23585": "vt:nijisanji:lp4ni-jr9e",
-    "ut:utaitedb:23275": "vt:nijisanji:9fxuid253qag",
-    "ut:utaitedb:23102": "vt:nijisanji:wqewq2mghnn",
-    "ut:utaitedb:24102": "vt:holostars:rikka",
-    "ut:utaitedb:24243": "vt:hololive:tokoyami-towa",
-    "ut:utaitedb:36328": "vt:holostars:minase-rio",
-    "ut:utaitedb:24105": "vt:holostars:yukoku-roberu",
-    "ut:utaitedb:24106": "vt:holostars:kageyama-shien",
-    "ut:utaitedb:24101": "vt:holostars:arurandeisu",
-    "ut:utaitedb:24099": "vt:holostars:hanasaki-miyabi",
-    "ut:utaitedb:23760": "vt:hololive:shirakami-fubuki",
-    "ut:utaitedb:23717": "vt:nijisanji:x4-vk80ac",
-    "ut:utaitedb:23461": "vt:nijisanji:p7j9hcij86",
-    "ut:utaitedb:23497": "vt:nijisanji:ba0vptr1cb",
-    "ut:utaitedb:27970": "vt:hololive:sakamata-chloe",
-    "ut:utaitedb:27966": "vt:hololive:oozora-subaru",
-    "ut:utaitedb:29173": "vt:hololive:hiodoshi-ao",
-    "ut:utaitedb:29175": "vt:hololive:ichijou-ririka",
-    "ut:utaitedb:29176": "vt:hololive:juufuutei-raden",
-    "ut:utaitedb:27189": "vt:hololive:murasaki-shion",
-    "ut:utaitedb:27282": "vt:nijisanji:4eez5dwcno",
-    "ut:utaitedb:27180": "vt:nijisanji:nhawoxm9in6",
-    "ut:utaitedb:27503": "vt:hololive:takane-lui",
-    "ut:utaitedb:29209": "vt:hololive:himemori-luna",
-    "ut:utaitedb:29177": "vt:hololive:todoroki-hajime",
-    "ut:utaitedb:29205": "vt:hololive:irys",
-    "ut:utaitedb:29174": "vt:hololive:otonose-kanade",
-    "ut:utaitedb:29166": "vt:hololive:shishiro-botan",
-    "ut:utaitedb:27591": "vt:nijisanji:eh3k6jd98ok5",
-    "ut:utaitedb:27872": "vt:hololive:tsunomaki-watame",
-    "ut:utaitedb:28044": "vt:nijisanji:x-5g5ncpwksj",
-    "ut:utaitedb:27967": "vt:hololive:momosuzu-nene",
-    "ut:utaitedb:27969": "vt:hololive:kazama-iroha",
-    "ut:utaitedb:27989": "vt:hololive:nakiri-ayame",
-    "ut:utaitedb:29793": "vt:hololive:akai-haato",
-    "ut:utaitedb:33205": "vt:hololive:isaki-riona",
-    "ut:utaitedb:32817": "vt:hololive:kiryu-coco",
-    "ut:utaitedb:33898": "vt:nijisanji:i3so0lfq05",
-    "ut:utaitedb:23495": "vt:nijisanji:e01y66srp7d",
-    "ut:utaitedb:23485": "vt:nijisanji:b5npgpc-it2n",
-    "ut:utaitedb:23487": "vt:nijisanji:3kn45uiube",
-    "ut:utaitedb:23409": "vt:nijisanji:av8uxpfmi",
-    "ut:utaitedb:23710": "vt:nijisanji:fmi2ay76ya3",
-    "ut:utaitedb:23729": "vt:nijisanji:vrzbe02k3dl",
-    "ut:utaitedb:23670": "vt:nijisanji:scies_syd",
-    "ut:utaitedb:23587": "vt:nijisanji:ck4t-23mex_o",
-    "ut:utaitedb:23139": "vt:nijisanji:6k2z3x_6iu",
-    "ut:utaitedb:23306": "vt:nijisanji:2ehwuvca1hs",
-    "ut:utaitedb:23129": "vt:nijisanji:j6mzjc5s5ovr",
-    "ut:utaitedb:23130": "vt:nijisanji:sqlr2xuh3",
-    "ut:utaitedb:23721": "vt:nijisanji:fc0gqp8m-u",
-    "ut:utaitedb:24107": "vt:holostars:aragami-oga",
-    "ut:utaitedb:24103": "vt:holostars:astel-leda",
-    "ut:utaitedb:24104": "vt:holostars:kishido-temma",
-    "ut:utaitedb:24111": "vt:holostars:kagami-kira",
-    "ut:utaitedb:24015": "vt:nijisanji:kqusnfwd1q",
-    "ut:utaitedb:36287": "vt:nijisanji:qr4dll2s8eng",
-    "ut:utaitedb:35860": "vt:holostars:yatogami-fuma",
-    "ut:utaitedb:35641": "vt:nijisanji:8xt67h5vov",
-    "ut:utaitedb:35642": "vt:nijisanji:s0098uwq0e",
-    "ut:utaitedb:33922": "vt:nijisanji:4ieg-un_fi",
-    "ut:utaitedb:39530": "vt:nijisanji:lieef5j5q",
-    "ut:utaitedb:40206": "vt:nijisanji:xzalni7jjyb",
-    "ut:utaitedb:40093": "vt:nijisanji:zz_7rbwsol",
-    "ut:utaitedb:40094": "vt:nijisanji:gxancbkhyuwt",
-    "ut:utaitedb:40095": "vt:nijisanji:0k1fv9e8zs4g",
-    "ut:utaitedb:40096": "vt:nijisanji:ni0ao9zni",
-    "ut:utaitedb:40097": "vt:nijisanji:tjynw7pak7",
-    "ut:utaitedb:40098": "vt:nijisanji:cnxncpq4tsw",
-    "ut:utaitedb:40099": "vt:nijisanji:zx-e3qpysbk",
-    "ut:utaitedb:40100": "vt:nijisanji:1wk-t2f2yc",
-    "ut:utaitedb:40200": "vt:nijisanji:tkiqaddce"
+  "redirects": {},
+  "removed_ids": [
+    "ut:utaitedb:15362",
+    "ut:utaitedb:21285",
+    "ut:utaitedb:23031",
+    "ut:utaitedb:23034",
+    "ut:utaitedb:23055",
+    "ut:utaitedb:23057",
+    "ut:utaitedb:23102",
+    "ut:utaitedb:23129",
+    "ut:utaitedb:23130",
+    "ut:utaitedb:23139",
+    "ut:utaitedb:23207",
+    "ut:utaitedb:23215",
+    "ut:utaitedb:23216",
+    "ut:utaitedb:23275",
+    "ut:utaitedb:23306",
+    "ut:utaitedb:23409",
+    "ut:utaitedb:23410",
+    "ut:utaitedb:23444",
+    "ut:utaitedb:23461",
+    "ut:utaitedb:23483",
+    "ut:utaitedb:23485",
+    "ut:utaitedb:23487",
+    "ut:utaitedb:23495",
+    "ut:utaitedb:23497",
+    "ut:utaitedb:23570",
+    "ut:utaitedb:23585",
+    "ut:utaitedb:23587",
+    "ut:utaitedb:23670",
+    "ut:utaitedb:23675",
+    "ut:utaitedb:23676",
+    "ut:utaitedb:23678",
+    "ut:utaitedb:23684",
+    "ut:utaitedb:23710",
+    "ut:utaitedb:23717",
+    "ut:utaitedb:23721",
+    "ut:utaitedb:23729",
+    "ut:utaitedb:23741",
+    "ut:utaitedb:23760",
+    "ut:utaitedb:23761",
+    "ut:utaitedb:23767",
+    "ut:utaitedb:23959",
+    "ut:utaitedb:24015",
+    "ut:utaitedb:24099",
+    "ut:utaitedb:24100",
+    "ut:utaitedb:24101",
+    "ut:utaitedb:24102",
+    "ut:utaitedb:24103",
+    "ut:utaitedb:24104",
+    "ut:utaitedb:24105",
+    "ut:utaitedb:24106",
+    "ut:utaitedb:24107",
+    "ut:utaitedb:24108",
+    "ut:utaitedb:24111",
+    "ut:utaitedb:24238",
+    "ut:utaitedb:24243",
+    "ut:utaitedb:25297",
+    "ut:utaitedb:25298",
+    "ut:utaitedb:25372",
+    "ut:utaitedb:25499",
+    "ut:utaitedb:25692",
+    "ut:utaitedb:25735",
+    "ut:utaitedb:25797",
+    "ut:utaitedb:25873",
+    "ut:utaitedb:25874",
+    "ut:utaitedb:25876",
+    "ut:utaitedb:25915",
+    "ut:utaitedb:25951",
+    "ut:utaitedb:27165",
+    "ut:utaitedb:27180",
+    "ut:utaitedb:27189",
+    "ut:utaitedb:27282",
+    "ut:utaitedb:27306",
+    "ut:utaitedb:27495",
+    "ut:utaitedb:27497",
+    "ut:utaitedb:27503",
+    "ut:utaitedb:27591",
+    "ut:utaitedb:27605",
+    "ut:utaitedb:27728",
+    "ut:utaitedb:27853",
+    "ut:utaitedb:27854",
+    "ut:utaitedb:27871",
+    "ut:utaitedb:27872",
+    "ut:utaitedb:27966",
+    "ut:utaitedb:27967",
+    "ut:utaitedb:27969",
+    "ut:utaitedb:27970",
+    "ut:utaitedb:27975",
+    "ut:utaitedb:27984",
+    "ut:utaitedb:27985",
+    "ut:utaitedb:27989",
+    "ut:utaitedb:27992",
+    "ut:utaitedb:27993",
+    "ut:utaitedb:27998",
+    "ut:utaitedb:28044",
+    "ut:utaitedb:28047",
+    "ut:utaitedb:28057",
+    "ut:utaitedb:28143",
+    "ut:utaitedb:28144",
+    "ut:utaitedb:29166",
+    "ut:utaitedb:29173",
+    "ut:utaitedb:29174",
+    "ut:utaitedb:29175",
+    "ut:utaitedb:29176",
+    "ut:utaitedb:29177",
+    "ut:utaitedb:29183",
+    "ut:utaitedb:29191",
+    "ut:utaitedb:29192",
+    "ut:utaitedb:29193",
+    "ut:utaitedb:29194",
+    "ut:utaitedb:29195",
+    "ut:utaitedb:29205",
+    "ut:utaitedb:29207",
+    "ut:utaitedb:29209",
+    "ut:utaitedb:29211",
+    "ut:utaitedb:29215",
+    "ut:utaitedb:29217",
+    "ut:utaitedb:29218",
+    "ut:utaitedb:29516",
+    "ut:utaitedb:29793",
+    "ut:utaitedb:31238",
+    "ut:utaitedb:31462",
+    "ut:utaitedb:32586",
+    "ut:utaitedb:32587",
+    "ut:utaitedb:32592",
+    "ut:utaitedb:32817",
+    "ut:utaitedb:32841",
+    "ut:utaitedb:32842",
+    "ut:utaitedb:32891",
+    "ut:utaitedb:32894",
+    "ut:utaitedb:32896",
+    "ut:utaitedb:32897",
+    "ut:utaitedb:32898",
+    "ut:utaitedb:32899",
+    "ut:utaitedb:33205",
+    "ut:utaitedb:33512",
+    "ut:utaitedb:33655",
+    "ut:utaitedb:33898",
+    "ut:utaitedb:33922",
+    "ut:utaitedb:33932",
+    "ut:utaitedb:35641",
+    "ut:utaitedb:35642",
+    "ut:utaitedb:35852",
+    "ut:utaitedb:35855",
+    "ut:utaitedb:35858",
+    "ut:utaitedb:35859",
+    "ut:utaitedb:35860",
+    "ut:utaitedb:35886",
+    "ut:utaitedb:35934",
+    "ut:utaitedb:36080",
+    "ut:utaitedb:36081",
+    "ut:utaitedb:36287",
+    "ut:utaitedb:36289",
+    "ut:utaitedb:36290",
+    "ut:utaitedb:36291",
+    "ut:utaitedb:36323",
+    "ut:utaitedb:36324",
+    "ut:utaitedb:36325",
+    "ut:utaitedb:36328",
+    "ut:utaitedb:36414",
+    "ut:utaitedb:36419",
+    "ut:utaitedb:36421",
+    "ut:utaitedb:36422",
+    "ut:utaitedb:37498",
+    "ut:utaitedb:38245",
+    "ut:utaitedb:38286",
+    "ut:utaitedb:3873",
+    "ut:utaitedb:39364",
+    "ut:utaitedb:39530",
+    "ut:utaitedb:39750",
+    "ut:utaitedb:40093",
+    "ut:utaitedb:40094",
+    "ut:utaitedb:40095",
+    "ut:utaitedb:40096",
+    "ut:utaitedb:40097",
+    "ut:utaitedb:40098",
+    "ut:utaitedb:40099",
+    "ut:utaitedb:40100",
+    "ut:utaitedb:40200",
+    "ut:utaitedb:40206",
+    "ut:utaitedb:40296",
+    "ut:utaitedb:40299",
+    "ut:utaitedb:40302",
+    "ut:utaitedb:40350",
+    "ut:utaitedb:40351",
+    "ut:utaitedb:40352",
+    "ut:utaitedb:40415",
+    "ut:utaitedb:40932",
+    "ut:utaitedb:40945",
+    "ut:utaitedb:41552",
+    "ut:utaitedb:41668",
+    "ut:utaitedb:42485",
+    "ut:utaitedb:42491",
+    "ut:utaitedb:42544",
+    "ut:utaitedb:42668",
+    "ut:utaitedb:43273",
+    "ut:utaitedb:43400",
+    "ut:utaitedb:43643",
+    "ut:utaitedb:43699",
+    "ut:utaitedb:43739",
+    "ut:utaitedb:44134",
+    "ut:utaitedb:44652",
+    "ut:utaitedb:44717",
+    "ut:utaitedb:44719",
+    "ut:utaitedb:44730",
+    "ut:utaitedb:44734",
+    "ut:utaitedb:44736",
+    "ut:utaitedb:44746",
+    "ut:utaitedb:44751",
+    "ut:utaitedb:44754",
+    "ut:utaitedb:45427",
+    "ut:utaitedb:50785",
+    "ut:utaitedb:51268",
+    "ut:utaitedb:7876"
+  ],
+  "enrichment": {
+    "source": "https://zh.moegirl.org.cn",
+    "retrieved_on": "2026-11-17",
+    "scope": "existing singers and music creators only"
   }
 }
