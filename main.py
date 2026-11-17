@@ -24,6 +24,7 @@ from io import BytesIO
 from mimetypes import guess_type
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -438,6 +439,15 @@ CHARACTER_REVERSE_ALIASES = {
 }
 
 VOICE_ACTOR_CATALOGUE = load_voice_actor_registry(CHARACTER_PROFILES)
+try:
+    _PUBLIC_PEOPLE = load_generated_mapping("public_people.py", "PUBLIC_PEOPLE_REGISTRY")
+except Exception:
+    logger.exception("独立人物目录加载失败，继续使用偶像大师和声优资料。")
+    _PUBLIC_PEOPLE = {}
+PUBLIC_PEOPLE_CATALOGUE = _PUBLIC_PEOPLE.get("records", {})
+PUBLIC_PERSON_REDIRECTS = _PUBLIC_PEOPLE.get("redirects", {})
+PUBLIC_PERSON_LABELS = _PUBLIC_PEOPLE.get("kind_labels", {})
+PUBLIC_IMAGE_HOSTS = _PUBLIC_PEOPLE.get("image_hosts", {})
 
 KR_CHARACTER_NAMES = {
     "Mint",
@@ -682,6 +692,7 @@ class ImasBirthdayPlugin(Star):
     async def terminate(self):
         global IMASBD_PLUGIN_INSTANCE
         self._tantou_sync_pending.clear()
+        self._public_person_search_keys.cache_clear()
         if IMASBD_PLUGIN_INSTANCE is self:
             IMASBD_PLUGIN_INSTANCE = None
         if self._catalogue_task:
@@ -929,7 +940,7 @@ class ImasBirthdayPlugin(Star):
             raise ValueError("这份担当记录格式异常，未同步。")
         await self._load_idol_catalogue()
         aliases = self._tantou_alias_index(set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS))
-        return list(dict.fromkeys(aliases.get(self._exact_name_key(name), name) for name in names))
+        return list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names))
 
     async def _tantou_sync_members(self, event: AstrMessageEvent, names: list[str]) -> tuple[dict[str, dict[str, Any]], list[str]]:
         ids = [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)]
@@ -1405,7 +1416,7 @@ class ImasBirthdayPlugin(Star):
         if not isinstance(value, dict):
             return {}
         aliases = self._tantou_alias_index(set(self._idol_catalogue) | set(CHARACTER_PROFILES) | set(CHARACTER_IMAGE_ASSETS))
-        normalized = {user_id: list(dict.fromkeys(aliases.get(self._exact_name_key(name), name) for name in names)) for user_id, names in value.items()}
+        normalized = {user_id: list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names)) for user_id, names in value.items()}
         if normalized != value:
             await self.put_kv_data(f"tantou_v1:{umo}", normalized)
         return normalized
@@ -1469,6 +1480,15 @@ class ImasBirthdayPlugin(Star):
     def _voice_actor_id(name: str) -> str:
         return name if name in VOICE_ACTOR_CATALOGUE else ""
 
+    @staticmethod
+    def _public_person_id(name: str) -> str:
+        name = PUBLIC_PERSON_REDIRECTS.get(name, name)
+        return name if name in PUBLIC_PEOPLE_CATALOGUE else ""
+
+    @staticmethod
+    def _public_people_records() -> list[str]:
+        return list(PUBLIC_PEOPLE_CATALOGUE)
+
     def _voice_actor_alias_index(self) -> dict[str, str]:
         candidates: dict[str, set[str]] = {}
         for key, actor in VOICE_ACTOR_CATALOGUE.items():
@@ -1498,6 +1518,14 @@ class ImasBirthdayPlugin(Star):
         return result
 
     def _tantou_aliases(self, name: str) -> list[str]:
+        ident = self._public_person_id(name)
+        if ident:
+            row = PUBLIC_PEOPLE_CATALOGUE[ident]
+            types = {row["kind"], *row.get("roles", [])}
+            prefix_map = {"vtuber": ("VTuber", "管人"), "utaite": ("唱见",), "music_creator": ("曲师", "P主")}
+            prefixes = [prefix for kind, values in prefix_map.items() if kind in types for prefix in values]
+            aliases = row["aliases"]
+            return [*aliases, *(prefix + ":" + alias for prefix in prefixes for alias in aliases)]
         if self._voice_actor_id(name):
             actor = VOICE_ACTOR_CATALOGUE[name]
             return [actor["name"], *actor.get("aliases", [])]
@@ -1507,6 +1535,9 @@ class ImasBirthdayPlugin(Star):
         return [name, profile.get("display_name", ""), profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), code, *character_romanized_aliases(code), *character_romanized_abbreviations(code), *record.get("aliases", []), *profile.get("aliases", [])]
 
     def _tantou_display_name(self, name: str, members: dict[str, dict[str, Any]] | None = None) -> str:
+        ident = self._public_person_id(name)
+        if ident:
+            return PUBLIC_PEOPLE_CATALOGUE[ident]["name"]
         if self._voice_actor_id(name):
             return VOICE_ACTOR_CATALOGUE[name]["name"]
         if self._tantou_member_id(name):
@@ -1534,10 +1565,18 @@ class ImasBirthdayPlugin(Star):
         return f"{label}（{profile['cv']}）" if profile.get("display_name") and profile.get("cv") else label
 
     def _tantou_candidate_label(self, name: str) -> str:
-        kind = "声优" if self._voice_actor_id(name) else "角色"
+        ident = self._public_person_id(name)
+        kind = PUBLIC_PERSON_LABELS[PUBLIC_PEOPLE_CATALOGUE[ident]["kind"]] if ident else "声优" if self._voice_actor_id(name) else "角色"
         return f"{self._tantou_query_label(name)}（{kind}）"
 
+    @lru_cache(maxsize=8192)
+    def _public_person_search_keys(self, name: str) -> frozenset[str]:
+        return frozenset(self._normalize_character_query(alias) for alias in self._tantou_aliases(name) if alias)
+
     def _tantou_search_keys(self, name: str) -> tuple[set[str], set[str]]:
+        if self._public_person_id(name):
+            keys = self._public_person_search_keys(name)
+            return keys, keys
         aliases = {self._normalize_character_query(alias) for alias in self._tantou_aliases(name) if alias}
         abbreviations = set(character_romanized_abbreviations(self._idol_catalogue.get(name, {}).get("idol_code", "")))
         return aliases, aliases - abbreviations
@@ -1551,19 +1590,35 @@ class ImasBirthdayPlugin(Star):
         # This applies to every installed character, including future catalogue updates.
         # Generated shortcuts only match as a whole; a two-letter initial inside
         # an unrelated word must not turn a missing name into a false candidate.
+        def reliable_fragment(name, regular):
+            if self._public_person_id(name):
+                if key.isascii() and len(key) <= 3:
+                    return any(alias.startswith(key) for alias in regular)
+                return any(key in alias for alias in regular)
+            return any(alias and (key in alias or alias in key) for alias in regular)
         matches = [(1.0 if key in aliases else .92, name) for name, aliases, regular in indexed
-                   if key in aliases or any(alias and (key in alias or alias in key) for alias in regular)]
+                   if key in aliases or reliable_fragment(name, regular)]
+        exact_people = [name for score, name in matches if score == 1 and self._public_person_id(name)]
         if matches:
+            if any(not self._voice_actor_id(name) and not self._public_person_id(name) for _, name in matches):
+                # New directories must not displace reliable IMAS name fragments.
+                matches = [(min(score, .91) if self._public_person_id(name) else score, name) for score, name in matches]
             if any(score == 1.0 for score, _ in matches):
                 matches = [item for item in matches if item[0] == 1.0]
         else:
             matches = [(max((self._character_match_score(key, alias) for alias in regular), default=0), name)
                        for name, _, regular in indexed]
-            matches = [item for item in matches if item[0] >= .45]
-        preferred = {name for _, name in matches if not self._voice_actor_id(name)
+            matches = [item for item in matches if item[0] >= .45 and not self._public_person_id(item[1])]
+        preferred = {name for _, name in matches if not self._voice_actor_id(name) and not self._public_person_id(name)
                      and any(key == self._normalize_character_query(alias) for alias in self._lookup_character_profile(name).get("aliases", []))}
-        matches.sort(key=lambda item: (-item[0], bool(self._voice_actor_id(item[1])), item[1] not in preferred, self._tantou_display_name(item[1]), item[1]))
-        return [name for _, name in matches[:limit]]
+        matches.sort(key=lambda item: (-item[0], 2 if self._public_person_id(item[1]) else int(bool(self._voice_actor_id(item[1]))), item[1] not in preferred, self._tantou_display_name(item[1]), item[1]))
+        result = [name for _, name in matches[:limit]]
+        if exact_people and result and not any(self._public_person_id(name) for name in result) and not any(score == 1 and not self._public_person_id(name) for score, name in matches):
+            if len(result) < limit:
+                result.append(exact_people[0])
+            else:
+                result[-1] = exact_people[0]
+        return result
 
     def _tantou_alias_index(self, names: Any) -> dict[str, str]:
         candidates: dict[str, set[str]] = {}
@@ -1571,7 +1626,13 @@ class ImasBirthdayPlugin(Star):
             for alias in self._tantou_aliases(name):
                 if alias:
                     candidates.setdefault(self._exact_name_key(alias), set()).add(name)
-        return {key: next(iter(values)) for key, values in candidates.items() if len(values) == 1}
+        unique = {}
+        for key, values in candidates.items():
+            established = {name for name in values if not self._public_person_id(name)}
+            preferred = established or values
+            if len(preferred) == 1:
+                unique[key] = next(iter(preferred))
+        return unique
 
     def _tantou_split_aliases(self, names: Any, unique: dict[str, str]) -> dict[str, str | None]:
         # An ambiguous full name must stay one token so it can be confirmed as one item.
@@ -1595,10 +1656,10 @@ class ImasBirthdayPlugin(Star):
         cache = await self.get_kv_data("birthday_cache", {})
         if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
             names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
-        return sorted({CHARACTER_NAME_ALIASES.get(name, self._base_character_name(name)) for name in names if name and not name.startswith("qq:") and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
+        return sorted({CHARACTER_NAME_ALIASES.get(name, self._base_character_name(name)) for name in names if name and not name.startswith("qq:") and not self._public_person_id(name) and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
 
     async def _all_tantou_records(self) -> list[str]:
-        return [*await self._tantou_records(), *VOICE_ACTOR_CATALOGUE]
+        return [*await self._tantou_records(), *VOICE_ACTOR_CATALOGUE, *PUBLIC_PEOPLE_CATALOGUE]
 
     async def _change_tantou(self, event: AstrMessageEvent, command: str, args: str) -> str:
         umo, user_id = self._tantou_identity(event)
@@ -1648,6 +1709,12 @@ class ImasBirthdayPlugin(Star):
                 if len(tokens) > 30:
                     return "一次最多处理 30 个名字，请分次发送。"
                 resolved = {query: aliases[self._exact_name_key(query)] for query in tokens if self._exact_name_key(query) in aliases}
+                if command in {"加推", "加推女声优"}:
+                    for query, name in list(resolved.items()):
+                        if self._public_person_id(name):
+                            choices = self._tantou_candidates(query, records)
+                            if choices and not self._public_person_id(choices[0]):
+                                resolved.pop(query)
                 self._tantou_pending.pop((umo, user_id), None)
                 if command in {"减推", "减推女声优"}:
                     group = await self._tantou_group(umo)
@@ -1695,7 +1762,7 @@ class ImasBirthdayPlugin(Star):
         items = pending["items"]
         records = list(VOICE_ACTOR_CATALOGUE) if pending.get("voice_actor") else await self._all_tantou_records()
         aliases = self._voice_actor_alias_index() if pending.get("voice_actor") else self._tantou_alias_index(records)
-        choices = self._split_tantou_names(args, self._tantou_split_aliases(records, aliases), deduplicate=False)
+        choices = args.split() if re.fullmatch(r"[0-9]+(?:\s+[0-9]+)*", args.strip()) else self._split_tantou_names(args, self._tantou_split_aliases(records, aliases), deduplicate=False)
         candidate_items = [item for item in items if item["candidates"]]
         numeric = all(choice.isascii() and choice.isdigit() for choice in choices)
         selected_items = candidate_items if numeric and candidate_items and len(choices) == len(candidate_items) else items
@@ -1757,7 +1824,7 @@ class ImasBirthdayPlugin(Star):
             owner = await self._tantou_owner(umo, user_id, nickname)
         await self._cache_tantou_member_avatars(umo, [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)])
         members = await self._tantou_member_cards(umo, names)
-        title = "担当" if any(self._voice_actor_id(name) or self._tantou_member_id(name) for name in names) else "担当アイドル"
+        title = "担当" if any(self._voice_actor_id(name) or self._tantou_member_id(name) or self._public_person_id(name) for name in names) else "担当アイドル"
         message = self._tantou_producer_name(owner) + "\n" + title + "\n" + "、".join(self._tantou_display_name(name, members) for name in names)
         try:
             await self._prepare_tantou_icons(names)
@@ -1771,7 +1838,7 @@ class ImasBirthdayPlugin(Star):
     async def _tantou_llm_commentary(self, umo: str, names: list[str]) -> str:
         if not self._cfg_bool("tantou_llm_commentary", True):
             return ""
-        labels = [self._tantou_display_name(name) for name in names if not self._tantou_member_id(name)]
+        labels = [self._tantou_display_name(name) for name in names if not self._tantou_member_id(name) and not self._public_person_id(name)]
         if not labels or not hasattr(self.context, "llm_generate") or not hasattr(self.context, "get_current_chat_provider_id"):
             return ""
         try:
@@ -1807,7 +1874,11 @@ class ImasBirthdayPlugin(Star):
                 return usage
             records = await self._tantou_records()
             key = self._exact_name_key(query)
-            name = self._tantou_alias_index(records).get(key) or self._voice_actor_alias_index().get(key)
+            name = self._tantou_alias_index([*records, *VOICE_ACTOR_CATALOGUE, *PUBLIC_PEOPLE_CATALOGUE]).get(key)
+            if name and self._public_person_id(name):
+                established = self._tantou_candidates(query, records)
+                if any(key in alias for item in established for alias in self._tantou_search_keys(item)[1]):
+                    name = None
             if not name:
                 # Count distinct characters, not the number of matching aliases.
                 partial = []
@@ -1821,11 +1892,13 @@ class ImasBirthdayPlugin(Star):
                 else:
                     choices = self._tantou_candidates(query, records)
                     if not partial:
-                        actor_partial = [item for item in VOICE_ACTOR_CATALOGUE if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item))]
+                        actor_partial = [item for item in [*VOICE_ACTOR_CATALOGUE, *PUBLIC_PEOPLE_CATALOGUE] if any(key in self._exact_name_key(alias) for alias in self._tantou_aliases(item))]
                         if len(actor_partial) == 1:
                             name = actor_partial[0]
                         elif actor_partial:
                             choices = self._tantou_candidates(query, actor_partial)
+                            if len(choices) == 1:
+                                name = choices[0]
                     if not name:
                         labels = [self._tantou_candidate_label(item) for item in choices[:5]]
                         if labels and any(self._lookup_character_profile(item).get("display_name") for item in choices[:5]):
@@ -1878,7 +1951,7 @@ class ImasBirthdayPlugin(Star):
             counts = Counter({"qq:" + uid: len(set(names)) for uid, names in group.items() if names and self._tantou_member_id("qq:" + uid)})
         else:
             counts = Counter(name for names in group.values() for name in set(names)
-                             if kind == "all" or (kind == "idol" and not self._tantou_member_id(name) and not self._voice_actor_id(name))
+                             if kind == "all" or (kind == "idol" and not self._tantou_member_id(name) and not self._voice_actor_id(name) and not self._public_person_id(name))
                              or (kind == "member" and self._tantou_member_id(name))
                              or (kind == "voice_actor" and self._voice_actor_id(name)))
         if not counts:
@@ -1991,10 +2064,14 @@ class ImasBirthdayPlugin(Star):
         async with self._tantou_lock:
             group = await self._tantou_group(umo)
         aliases = self._tantou_alias_index(self._idol_catalogue)
-        birthday_names = {aliases.get(self._exact_name_key(self._base_character_name(name)), self._base_character_name(name)) for name in names}
+        birthday_names = {aliases.get(self._exact_name_key(self._base_character_name(name)), self._base_character_name(name)) for name in names if not self._public_person_id(name)}
         return sorted(user_id for user_id, follows in group.items() if any(name in birthday_names and not self._tantou_member_id(name) for name in follows))
 
     def _tantou_icon_path(self, name: str) -> Path | None:
+        ident = self._public_person_id(name)
+        if ident:
+            path = self.tantou_icons_dir / "people" / PUBLIC_PEOPLE_CATALOGUE[ident]["kind"] / (hashlib.sha256(ident.encode()).hexdigest() + ".png")
+            return path if path.is_file() else None
         if self._voice_actor_id(name):
             path = self.tantou_icons_dir / "seiyuu" / f"{name[3:]}.jpg"
             return path if path.is_file() else None
@@ -2015,7 +2092,8 @@ class ImasBirthdayPlugin(Star):
             missing = [name for name in dict.fromkeys(names) if name in self._idol_catalogue and not self._tantou_icon_path(name)]
             missing_actors = [name for name in dict.fromkeys(names) if self._voice_actor_id(name)
                               and VOICE_ACTOR_CATALOGUE[name].get("image_url") and not self._tantou_icon_path(name)]
-            if not missing and not missing_actors:
+            missing_people = [name for name in dict.fromkeys(names) if self._public_person_id(name) and not self._tantou_icon_path(name)]
+            if not missing and not missing_actors and not missing_people:
                 return
             limit = asyncio.Semaphore(4)
             async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
@@ -2065,7 +2143,40 @@ class ImasBirthdayPlugin(Star):
                                 temporary.unlink(missing_ok=True)
                         except Exception as exc:
                             logger.warning(f"声优头像读取失败，使用占位：{name} ({type(exc).__name__})")
-                await asyncio.gather(*(fetch(name) for name in missing), *(fetch_actor(name) for name in missing_actors))
+                async def fetch_person(name: str) -> None:
+                    async with limit:
+                        try:
+                            ident = self._public_person_id(name)
+                            row = PUBLIC_PEOPLE_CATALOGUE[ident]
+                            url = row.get("image_url", "")
+                            parts = urlsplit(url)
+                            if (parts.scheme != "https" or parts.hostname not in PUBLIC_IMAGE_HOSTS
+                                    or parts.port not in (None, 443) or parts.username or parts.password):
+                                return
+                            data = bytearray()
+                            async with client.stream("GET", url, follow_redirects=False) as response:
+                                response.raise_for_status()
+                                async for chunk in response.aiter_bytes():
+                                    data.extend(chunk)
+                                    if len(data) > 2_000_000:
+                                        raise ValueError("Public portrait exceeds size limit")
+                            with Image.open(BytesIO(data)) as source:
+                                if source.format not in {"PNG", "JPEG", "WEBP"} or max(source.size) > 2048:
+                                    raise ValueError("Unexpected public portrait")
+                                portrait = source.convert("RGBA")
+                                portrait.thumbnail((320, 320), Image.Resampling.LANCZOS)
+                            path = self.tantou_icons_dir / "people" / row["kind"] / (hashlib.sha256(ident.encode()).hexdigest() + ".png")
+                            path.parent.mkdir(parents=True, exist_ok=True)
+                            with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
+                                temporary = Path(output.name)
+                            try:
+                                portrait.save(temporary, format="PNG")
+                                temporary.replace(path)
+                            finally:
+                                temporary.unlink(missing_ok=True)
+                        except Exception as exc:
+                            logger.debug(f"独立人物头像读取失败，使用空白占位：{type(exc).__name__}")
+                await asyncio.gather(*(fetch(name) for name in missing), *(fetch_actor(name) for name in missing_actors), *(fetch_person(name) for name in missing_people))
 
     @imasbd.command("sid")
     async def imasbd_sid(self, event: AstrMessageEvent):
@@ -2928,7 +3039,7 @@ class ImasBirthdayPlugin(Star):
 
     def _with_tantou_mentions(self, chain: MessageChain, user_ids: list[str] | None) -> MessageChain:
         if user_ids and Comp is not None:
-            chain.chain.append(Comp.Plain("\n今天担当过生日的P："))
+            chain.chain.append(Comp.Plain("\n"))
             for user_id in dict.fromkeys(user_ids):
                 chain.chain.extend([Comp.At(qq=str(user_id)), Comp.Plain(" ")])
         return chain
@@ -3417,7 +3528,7 @@ class ImasBirthdayPlugin(Star):
             y += line.height + 14
 
         grid_x, grid_width, grid_top, grid_height, gap = 88, 1624, 394, 608, 24
-        mixed = any(self._voice_actor_id(name) or self._tantou_member_id(name) for name in names)
+        mixed = any(self._voice_actor_id(name) or self._tantou_member_id(name) or self._public_person_id(name) for name in names)
         draw.text((grid_x, 256), "担当" if mixed else "担当アイドル", fill="#3c4d66", font=self._pil_font(ImageFont, 44, bold=True))
         if brands is None:
             selected_brands = {self._character_brand(name) for name in names if not self._tantou_member_id(name)}
@@ -3604,12 +3715,12 @@ class ImasBirthdayPlugin(Star):
             try:
                 with Image.open(asset) as source:
                     avatar = source.convert("RGBA")
-                if official and not self._voice_actor_id(name):
+                if official and not self._voice_actor_id(name) and not self._public_person_id(name):
                     # The official PNG already contains its rounded hexagon and crop.
                     avatar = ImageOps.contain(avatar, (size, size), Image.Resampling.LANCZOS)
                     canvas.paste(avatar, (x + (size - avatar.width) // 2, y + (size - avatar.height) // 2), avatar)
                     return
-                if self._voice_actor_id(name) and not custom:
+                if (self._voice_actor_id(name) or self._public_person_id(name)) and not custom:
                     avatar = ImageOps.contain(avatar, (round(size * .64), round(avatar_height * .80)), Image.Resampling.LANCZOS)
                 else:
                     avatar = ImageOps.fit(avatar, (size, avatar_height), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))
@@ -4047,6 +4158,8 @@ class ImasBirthdayPlugin(Star):
         return path if path.exists() else None
 
     def _character_brand(self, character: str) -> str:
+        if self._public_person_id(character):
+            return "PUBLIC_PERSON"
         if self._voice_actor_id(character):
             return "SEIYUU"
         custom_brand = self._editor_record(character).get("brand")
@@ -4101,7 +4214,7 @@ class ImasBirthdayPlugin(Star):
         return re.sub(r"[^0-9a-zα]+", "_", value.lower()).strip("_")
 
     def _visible_characters(self, entry: dict[str, list[str]]) -> list[str]:
-        characters = self._split_people(entry.get("characters", []))
+        characters = [name for name in self._split_people(entry.get("characters", [])) if not self._public_person_id(name)]
         if self._cfg_bool("include_kr_characters", False):
             return characters
         return [character for character in characters if not self._is_kr_character(character)]

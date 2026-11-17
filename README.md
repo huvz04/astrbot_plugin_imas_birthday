@@ -345,6 +345,41 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 生日图片默认不再附带重复的详细聊天文字，但仍发送同日生日声优的姓名及已确认的「角色名役」；图片缺失时保留完整文字通知和 @。如需原来的长文字，在插件设置开启 `birthday_text_with_card`。泰勇气的配音关联依据[事务所履历](https://remax-web.jp/man/T/tai_y/tai_y.pdf)，显示为「声优：泰 勇気（ドラマCD プロデューサー役）」。
 
+### 独立人物库：VTuber、唱见、音乐创作者
+
+三类资料物理分开，不写入 `character_profiles.py`、偶像大师官网目录或角色编辑器的 `characters.json`：
+
+| 内置快照 | 首批条目数 | 来源 |
+| --- | ---: | --- |
+| `data/people/vtubers.json` | 347 | [hololive](https://hololive.hololivepro.com/talents/)、[HOLOSTARS](https://holostars.hololivepro.com/talent/)、[にじさんじ](https://www.nijisanji.jp/talents)官网名录 |
+| `data/people/utaite.json` | 2,700 | [UtaiteDB](https://utaitedb.net/) 的 Utaite 条目 |
+| `data/people/music_creators.json` | 2,913 | [VocaDB](https://vocadb.net/) 的 Producer 条目，另补[田中秀和官方作品资料](https://danmaku.jp/archive/circle/ci065/) |
+
+可以直接发送 `加推 田中秀和 まふまふ 星街すいせい`，减推、担当查询、名片和跨群同步沿用原指令。新人物参与担当总排行和 DD 数量，**不参与偶像排行、偶像事务所／企划统计或角色生日提醒**。名片显示来源记载的公开艺名，不加偶像大师标志或配音角色。生日担当提醒现在只追加 @，不再显示「今天担当过生日的P」说明。
+
+新增目录不改变原偶像大师角色与声优的明确别名优先级。遇到跨库重名或短名，可以使用 `加推 VTuber:叶`（也可写 `管人:叶`）、`加推 唱见:まふまふ`、`加推 曲师:田中秀和`（也可写 `P主:田中秀和`）限定类别。核对过官网相同公开账号的 VTuber／唱见，以及数据库明确互链的唱见／P 主，共合并 126 组编号引用；只凭同名不会自动合并，不关联 VTuber 背后的非公开身份。
+
+每条资料有稳定 `id`、`name`、`aliases`、`sources` 和可选 `image_url`；运行时固定 `kind`、`is_idolmaster=false`。原始记录的 Approved／Finished／Locked 是来源库的条目状态，不代表官方认证。首批音乐库按关注数排序各检查 3,000 条，保留指定类型、非草稿且提供官方链接的条目；不是全网收录，也不保证仍在籍或仍活动。头像首次显示时按需下载到 `tantou_icons/people/<类别>/`，失败用空白占位；不随插件批量打包。只接受指定官方 CDN／数据库图片域名，限制大小和格式，不接受消息中提供的图片地址，不跟随跳转。
+
+维护者可运行 `python tools/sync_public_people.py --max-artists 3000` 批量更新；这个离线维护工具另外需要 `beautifulsoup4`，插件运行不需要它。默认缓存目录在插件外的 `research/imas-birthday-tantou/public-people/api-cache/`，重复生成会复用缓存，主动重新获取可加 `--refresh`。工具使用自定义 User-Agent、缓存和间隔请求；保留旧编号和手动层，不用定时全量抓取。数据来源及使用说明见 [VocaDB Public API](https://wiki.vocadb.net/docs/public-api)、[VocaDB 数据许可](https://wiki.vocadb.net/docs/license)，各条目也保留回源链接；第三方头像权利仍属于原作者。
+
+个人补充请放到插件目录外的 `AstrBot/data/imas_birthday_assets/people/`，文件名仍为 `vtubers.json`、`utaite.json`、`music_creators.json`，分别使用对应的 `kind`。例如 `vtubers.json`：
+
+```json
+{
+  "schema": 1,
+  "kind": "vtuber",
+  "overrides": {
+    "vt:hololive:hoshimachi-suisei": {"aliases": ["星街彗星", "星姐"]}
+  },
+  "manual_records": []
+}
+```
+
+`overrides` 按稳定编号补充别名或覆盖头像地址，保留来源别名；`manual_records` 可补入同类别的新人物，需要 `id`、`name`、`aliases` 和 `sources`，编号分别以 `vt:`、`ut:`、`mc:` 开头。保存后重载插件。改图时可清理对应类别的独立缩略图缓存后重新生成；不要把新人物作为偶像大师角色加入原 WebUI。覆盖资料在插件外，更新插件不会覆盖。基础 JSON 仍作为随版本更新的只读来源快照使用。
+
+日本相关 Wiki 可用于人工查证：[にじさんじ非官方 Wiki](https://wikiwiki.jp/nijisanji/)、[hololive 非官方 Wiki](https://seesaawiki.jp/hololivetv/)、[歌い手まとめ](https://w.atwiki.jp/utaiteematome/)、[初音ミク Wiki 作り手一覧](https://w.atwiki.jp/hmiku/pages/47.html)。此次自动导入采用上述官方名录及数据库公开 API，不批量复制 Wiki 简介、歌词或未经核实的传闻。
+
 ### 本群担当排行
 
 发送 `担当查询 百合子` 或 `/担当查询 月村 手毬`，列出本群已保存登记中担当这位偶像的制作人及人数。支持中日文名字、已有别名和唯一简称：例如「百合子」只匹配七尾百合子，直接返回结果；「田中」匹配多人时提示候选，错字仍提示修正。这只改变查询，加推仍沿用确认流程。名字优先使用本群绑定 CN，其次使用当前群名片，再回退缓存昵称；括号中的账号用于区分同名群友。查询不会 @ 群友，也不跨群读取；待确认加推不计入。
@@ -379,7 +414,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.102 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.103 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 

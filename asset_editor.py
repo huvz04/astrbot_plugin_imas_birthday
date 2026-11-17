@@ -260,6 +260,10 @@ class AssetEditor:
                 raise ValueError("这个角色已被其他页面修改，请重新选择角色后再保存。")
             known = await self.plugin._tantou_records()
             if name not in known:
+                public_records = self.plugin._public_people_records()
+                public_aliases = self.plugin._tantou_alias_index(public_records)
+                if self.plugin._public_person_id(name) or self.plugin._exact_name_key(name) in public_aliases:
+                    raise ValueError("此人物属于独立人物库，请编辑 imas_birthday_assets/people 中对应的 JSON，不要新增为偶像大师角色。")
                 aliases = self.plugin._tantou_alias_index(known)
                 if self.plugin._exact_name_key(name) in aliases:
                     raise ValueError("这个名字已对应现有角色，请搜索并编辑原角色。")

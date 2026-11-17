@@ -434,10 +434,12 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
             for alias in aliases:
                 key = self.plugin._exact_name_key(alias)
                 self.assertIn(name, owners[key])
-                if len(owners[key]) == 1:
+                established = {item for item in owners[key] if not self.plugin._public_person_id(item)}
+                effective_owners = established or owners[key]
+                if len(effective_owners) == 1:
                     self.assertEqual(index[key], name)
                 else:
-                    self.assertNotIn(key, index)
+                    self.assertFalse(key in index, key)
         self.assertEqual(covered, 341)
         # A generated initial must not match as a fragment inside unrelated input.
         self.assertEqual(self.plugin._tantou_candidates("完全无关的测试词abcdef", records), [])
@@ -826,6 +828,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, names), ["1001"])
         chain = self.plugin._with_tantou_mentions(MessageChain().message("生日快乐"), ["1001", "1001"])
         self.assertEqual([c.qq for c in chain.chain if isinstance(c, At)], ["1001"])
+        self.assertEqual([c.text for c in chain.chain if isinstance(c, Plain)], ["生日快乐", "\n", " "])
         self.plugin.config["tantou_birthday_mentions"] = False
         self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, names), [])
 
