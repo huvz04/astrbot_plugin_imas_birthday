@@ -692,6 +692,21 @@ class ImasBirthdayPlugin(Star):
         with contextlib.suppress(RuntimeError):
             asyncio.get_running_loop()
             self._ensure_scheduler("init")
+            self._editor_server_task = asyncio.create_task(self._start_editor_server())
+
+    async def _start_editor_server(self):
+        self._editor_server = None
+        if not self._cfg_bool("editor_web_enabled", False):
+            return
+        try:
+            spec = importlib.util.spec_from_file_location("imasbd_editor_server", self.plugin_dir / "editor_server.py")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            self._editor_server = module.EditorServer(self)
+            await self._editor_server.start()
+            logger.info(f"图片资料独立编辑页已启动：端口 {self.config.get('editor_web_port', 8097)}")
+        except Exception as exc:
+            logger.error(f"独立编辑页启动失败：{exc}")
 
     @filter.on_astrbot_loaded()
     async def on_astrbot_loaded(self):
@@ -699,6 +714,14 @@ class ImasBirthdayPlugin(Star):
 
     async def terminate(self):
         global IMASBD_PLUGIN_INSTANCE
+        task = getattr(self, "_editor_server_task", None)
+        if task:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        server = getattr(self, "_editor_server", None)
+        if server:
+            await server.close()
         self._tantou_sync_pending.clear()
         self._public_person_search_keys.cache_clear()
         if IMASBD_PLUGIN_INSTANCE is self:
@@ -1428,6 +1451,9 @@ class ImasBirthdayPlugin(Star):
         normalized = {user_id: list(dict.fromkeys(PUBLIC_PERSON_REDIRECTS.get(aliases.get(self._exact_name_key(name), name), aliases.get(self._exact_name_key(name), name)) for name in names if not self._removed_public_person(name))) for user_id, names in value.items()}
         if normalized != value:
             if any(self._removed_public_person(name) for names in value.values() for name in names):
+                trim_backup_key = f"tantou_before_catalogue_trim_v1:{umo}"
+                if await self.get_kv_data(trim_backup_key, None) is None:
+                    await self.put_kv_data(trim_backup_key, value)
                 backup_key = f"tantou_before_vtuber_removal_v1:{umo}"
                 if await self.get_kv_data(backup_key, None) is None:
                     await self.put_kv_data(backup_key, value)

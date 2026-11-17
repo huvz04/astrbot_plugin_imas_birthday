@@ -180,5 +180,28 @@
     "type": "text",
     "default": "今天是 {month}月{day}日，偶像大师相关生日：\n{items}\n祝大家生日快乐！",
     "hint": "可用变量：{year}、{month}、{day}、{date}、{slash_date}、{birthday_time}、{beijing_time}、{fancy_year}、{fancy_slash_date}、{fancy_birthday_time}、{fancy_beijing_time}、{decorated_beijing_time}、{items}"
+  },
+  "editor_web_enabled": {
+    "description": "启用独立图片资料管理页面",
+    "type": "bool",
+    "default": false,
+    "hint": "需要设置访问密码，重载插件后生效。与 AstrBot 单页面使用同一份数据。"
+  },
+  "editor_web_host": {
+    "description": "独立管理页面监听地址",
+    "type": "string",
+    "default": "127.0.0.1",
+    "hint": "本机使用保持 127.0.0.1；远程访问可设为 0.0.0.0，并在可信网络或 HTTPS 反向代理后访问。"
+  },
+  "editor_web_port": {
+    "description": "独立管理页面端口",
+    "type": "int",
+    "default": 8097
+  },
+  "editor_web_password": {
+    "description": "独立管理页面访问密码",
+    "type": "string",
+    "default": "",
+    "hint": "至少 12 位；未设置有效密码时不会启动。修改后需重载插件。"
   }
 }

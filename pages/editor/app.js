@@ -1,14 +1,16 @@
-const $ = id => document.getElementById(id);
-const bridge = window.AstrBotPluginPage;
+window.ImasEditors = window.ImasEditors || {};
+window.ImasEditors['characters'] = function(root, bridge) {
+const $ = id => root.querySelector(`#${id}`);
+
 let catalogue = [], brands = {}, current = null, images = {}, dirty = false, busy = false;
 let birthdayLayouts = {}, birthdayColumns = '1';
 function status(text, error = false) { $('status').textContent = text; $('status').classList.toggle('error', error); }
 function changed() { dirty = true; $('dirty').textContent = '有未保存的修改'; }
 async function run(action) {
   if (busy) return;
-  busy = true; document.body.classList.add('busy'); $('fields').disabled = true;
+  busy = true; root.querySelector('.module-body').classList.add('busy'); $('fields').disabled = true;
   try { await action(); } catch (error) { status(error.message || '操作失败，请查看 AstrBot 日志。', true); }
-  finally { busy = false; document.body.classList.remove('busy'); $('fields').disabled = false; }
+  finally { busy = false; root.querySelector('.module-body').classList.remove('busy'); $('fields').disabled = false; }
 }
 function maySwitch() {
   if (dirty) { status('请先保存修改，或点击“撤销未保存修改”后切换角色。', true); return false; }
@@ -178,3 +180,6 @@ $('preview').onclick=()=>run(async()=>{
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 if(!bridge)status('请从 AstrBot 插件详情里的“角色图片与资料”页面进入。',true);
 else run(async()=>{await bridge.ready();await $('tantou-mask').decode();await refreshList();status('选择角色开始编辑，或点击右上角新增角色。');});
+
+return () => { if (dirty) {status('请先保存修改或撤销后再切换模块。', true); return false;} return !busy; };
+};

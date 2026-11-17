@@ -1,13 +1,15 @@
-const $ = id => document.getElementById(id), bridge = window.AstrBotPluginPage;
+window.ImasEditors = window.ImasEditors || {};
+window.ImasEditors['music'] = function(root, bridge) {
+const $ = id => root.querySelector(`#${id}`);
 let catalogue = [], current = null, imageState = null, dirty = false, busy = false, page = 0;
 const labels = {utaite: '唱见', music_creator: 'P主／音乐创作者'}, pageSize = 80;
 function status(value, error = false) { $('status').textContent = value; $('status').classList.toggle('error', error); }
 function changed() { dirty = true; $('dirty').textContent = '有未保存的修改'; $('preview-image').hidden = true; }
 async function run(action) {
   if (busy) return;
-  busy = true; document.body.classList.add('busy'); $('fields').disabled = true;
+  busy = true; root.querySelector('.module-body').classList.add('busy'); $('fields').disabled = true;
   try { await action(); } catch (error) { status(error.message || '操作失败，请重试。', true); }
-  finally { busy = false; document.body.classList.remove('busy'); $('fields').disabled = false; }
+  finally { busy = false; root.querySelector('.module-body').classList.remove('busy'); $('fields').disabled = false; }
 }
 function normal(value) { return String(value).normalize('NFKC').toLocaleLowerCase().replace(/\s/g, ''); }
 function renderList() {
@@ -127,3 +129,6 @@ $('preview').onclick = () => run(async () => {
 window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
 if (!bridge) status('请从 AstrBot 插件详情中的「唱见与P主图片资料」进入。', true);
 else run(async () => { await bridge.ready(); await $('mask').decode(); await refresh(); status('选择一位唱见或音乐创作者开始编辑。'); });
+
+return () => { if (dirty) {status('请先保存修改或撤销后再切换模块。', true); return false;} return !busy; };
+};

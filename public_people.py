@@ -28,6 +28,8 @@ def load_catalogues(root: Path, override_root: Path | None = None) -> tuple[dict
             payload = {**payload, "manual_records": [*payload.get("manual_records", []), *custom.get("manual_records", [])],
                        "overrides": {**payload.get("overrides", {}), **custom.get("overrides", {})}}
         for row in [*payload.get("records", []), *payload.get("manual_records", [])]:
+            if payload.get("moegirl_only") and not row.get("moegirl", {}).get("url"):
+                continue
             original = row
             row = {**row, **payload.get("overrides", {}).get(row.get("id"), {})}
             ident, name = row.get("id", ""), row.get("name", "")

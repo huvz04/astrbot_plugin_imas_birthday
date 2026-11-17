@@ -79,6 +79,9 @@ def write_catalogue(destination, kind, records, scanned, redirects=None):
     redirects = {**previous.get("redirects", {}), **(redirects or {})}
     removed = set(previous.get("removed_ids", []))
     current = {item["id"]: item for item in records if item["id"] not in removed}
+    if previous.get("moegirl_only"):
+        approved = {item["id"] for item in previous.get("records", []) if item.get("moegirl", {}).get("url")}
+        current = {ident: row for ident, row in current.items() if ident in approved or row.get("moegirl", {}).get("url")}
     retained = {item["id"]: item for item in previous.get("records", []) if item["id"] not in redirects and item["id"] not in removed}
     for row in retained.values():
         row.setdefault("last_seen_on", previous.get("retrieved_on", ""))

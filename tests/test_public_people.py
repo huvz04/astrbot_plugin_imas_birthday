@@ -36,6 +36,7 @@ class PublicPeopleSourceTests(unittest.TestCase):
             for row in [*payload["records"], *payload["manual_records"]]:
                 self.assertTrue(row["id"].startswith(prefix + ":"))
                 self.assertTrue(row["sources"])
+                self.assertTrue(row.get("moegirl", {}).get("url"))
                 if row.get("birthday"):
                     self.assertRegex(row["birthday"], r"^\d{2}-\d{2}$")
                     self.assertTrue(row.get("birthday_source"))
@@ -43,9 +44,9 @@ class PublicPeopleSourceTests(unittest.TestCase):
                 counts[kind] += 1
         self.assertNotIn("vtuber", counts)
         self.assertFalse((ROOT / "data" / "people" / "vtubers.json").exists())
-        self.assertGreaterEqual(counts["utaite"], 2000)
-        self.assertGreaterEqual(counts["music_creator"], 2000)
-        self.assertGreaterEqual(len(source.PUBLIC_PERSON_REDIRECTS), 30)
+        self.assertEqual(counts["utaite"], 45)
+        self.assertEqual(counts["music_creator"], 253)
+        self.assertTrue(source.PUBLIC_PERSON_REDIRECTS)
         for ident, row in source.PUBLIC_PEOPLE_CATALOGUE.items():
             self.assertFalse(row["is_idolmaster"])
             self.assertNotIn(ident, plugin_module.CHARACTER_PROFILES)
