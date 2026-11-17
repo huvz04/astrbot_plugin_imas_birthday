@@ -639,6 +639,45 @@
       }
     },
     {
+      "id": "ut:utaitedb:1447",
+      "name": "柊優花",
+      "aliases": [
+        "柊優花",
+        "Hiiragi Yuka",
+        "YUKA",
+        "柊 優花",
+        "优花",
+        "優花",
+        "柊优花",
+        "吉冈美咲",
+        "吉岡美咲",
+        "Yoshioka Misaki"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/27/Yoshioka_Misaki.jpg!/fw/640",
+      "sources": [
+        "https://utaitedb.net/Ar/1447",
+        "http://www.nicovideo.jp/mylist/22481244",
+        "http://ameblo.jp/misia12321",
+        "https://twitter.com/hiiragi_yuka530",
+        "http://vocadb.net/Ar/780",
+        "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1"
+      ],
+      "source_status": "Finished",
+      "directory": "utaitedb",
+      "last_seen_on": "2026-11-17",
+      "birthday": "05-30",
+      "birthday_source": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1",
+      "image_source": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1",
+        "title": "柊优花",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/2/27/Yoshioka_Misaki.jpg!/fw/640",
+        "revision": 8749037,
+        "retrieved_on": "2026-11-17"
+      },
+      "music_identity_source": "https://zh.moegirl.org.cn/%E6%9F%8A%E4%BC%98%E8%8A%B1"
+    },
+    {
       "id": "ut:utaitedb:1493",
       "name": "cillia",
       "aliases": [
@@ -738,6 +777,44 @@
         "revision": 8513697,
         "retrieved_on": "2026-11-17"
       }
+    },
+    {
+      "id": "ut:utaitedb:17118",
+      "name": "藍月なくる",
+      "aliases": [
+        "藍月なくる",
+        "Aitsuki Nakuru",
+        "なくる",
+        "Nakuru",
+        "蓝月",
+        "藍月",
+        "蓝月奈久留",
+        "藍月奈久留",
+        "拿轱辘"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6d/AitsukiIcon2.jpg!/fw/640",
+      "sources": [
+        "https://utaitedb.net/Ar/17118",
+        "https://twitter.com/Gelidium_31",
+        "https://soundcloud.com/aituki-nakuru",
+        "https://aitsukinakuru.com",
+        "https://vocadb.net/Ar/157899",
+        "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99"
+      ],
+      "source_status": "Finished",
+      "directory": "utaitedb",
+      "last_seen_on": "2026-11-17",
+      "birthday": "03-01",
+      "birthday_source": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99",
+      "image_source": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99",
+        "title": "蓝月奈久留",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/6/6d/AitsukiIcon2.jpg!/fw/640",
+        "revision": 8363203,
+        "retrieved_on": "2026-11-17"
+      },
+      "music_identity_source": "https://zh.moegirl.org.cn/%E8%93%9D%E6%9C%88%E5%A5%88%E4%B9%85%E7%95%99"
     },
     {
       "id": "ut:utaitedb:17176",
@@ -972,6 +1049,45 @@
         "title": "Ado",
         "image_url": "https://storage.moegirl.org.cn/moegirl/commons/f/fe/Ado.jpg!/fw/640",
         "revision": 8761332,
+        "retrieved_on": "2026-11-17"
+      }
+    },
+    {
+      "id": "ut:utaitedb:24",
+      "name": "nayuta",
+      "aliases": [
+        "なゆた",
+        "nayuta",
+        "葉月奈乃",
+        "葉月なの",
+        "Hadzuki Nano",
+        "ななくさなゆ",
+        "Nanakusa Nayu",
+        "NANO",
+        "奶油糖",
+        "なゆたん",
+        "叶月奈乃"
+      ],
+      "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9e/Nayuta%E6%96%B0%E8%A7%86%E8%A7%89%E5%9B%BE.jpeg!/fw/640",
+      "sources": [
+        "https://utaitedb.net/Ar/24",
+        "http://7uta.seesaa.net/",
+        "http://www.nicovideo.jp/user/1279558",
+        "http://www.nicovideo.jp/mylist/35828253",
+        "http://vocadb.net/Ar/9090",
+        "https://zh.moegirl.org.cn/Nayuta"
+      ],
+      "source_status": "Approved",
+      "directory": "utaitedb",
+      "last_seen_on": "2026-11-17",
+      "birthday": "09-27",
+      "birthday_source": "https://zh.moegirl.org.cn/Nayuta",
+      "image_source": "https://zh.moegirl.org.cn/Nayuta",
+      "moegirl": {
+        "url": "https://zh.moegirl.org.cn/Nayuta",
+        "title": "Nayuta",
+        "image_url": "https://storage.moegirl.org.cn/moegirl/commons/9/9e/Nayuta%E6%96%B0%E8%A7%86%E8%A7%89%E5%9B%BE.jpeg!/fw/640",
+        "revision": 8459002,
         "retrieved_on": "2026-11-17"
       }
     },
@@ -1523,7 +1639,6 @@
     "ut:utaitedb:1444",
     "ut:utaitedb:1445",
     "ut:utaitedb:1446",
-    "ut:utaitedb:1447",
     "ut:utaitedb:1448",
     "ut:utaitedb:1450",
     "ut:utaitedb:1453",
@@ -1564,7 +1679,6 @@
     "ut:utaitedb:16961",
     "ut:utaitedb:1700",
     "ut:utaitedb:17086",
-    "ut:utaitedb:17118",
     "ut:utaitedb:17169",
     "ut:utaitedb:17202",
     "ut:utaitedb:17209",
@@ -1787,7 +1901,6 @@
     "ut:utaitedb:23952",
     "ut:utaitedb:23959",
     "ut:utaitedb:23961",
-    "ut:utaitedb:24",
     "ut:utaitedb:24004",
     "ut:utaitedb:24015",
     "ut:utaitedb:24026",

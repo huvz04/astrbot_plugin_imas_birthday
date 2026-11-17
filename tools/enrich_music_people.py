@@ -48,12 +48,12 @@ def categories(html):
     return json.loads(match[1]) if match else []
 
 
-def parse_profile(html, url):
+def parse_profile(html, url, *, verified_music=False):
     soup = BeautifulSoup(html, "html.parser")
     cats = categories(html)
-    if any(re.search(r"虚拟(?:UP主|主播|YouTuber|歌手)|VTuber", cat, re.I) for cat in cats):
+    if not verified_music and any(re.search(r"虚拟(?:UP主|主播|YouTuber|歌手)|VTuber", cat, re.I) for cat in cats):
         return {"excluded": True}
-    if not any(re.search(r"职人|音乐人|作曲家|作词家|歌手|唱见|编曲家", cat) for cat in cats):
+    if not verified_music and not any(re.search(r"职人|音乐人|作曲家|作词家|歌手|唱见|编曲家", cat) for cat in cats):
         return {}
     table = soup.select_one("table.infobox,table.infotemplatebox")
     if not table:
@@ -125,7 +125,14 @@ def category_titles(client, category, cache, interval):
 
 def api_profiles(client, rows, cache, interval):
     """Public query props support batches even when category-list APIs require login."""
-    names = sorted({row["name"].replace("_", " ") for row in rows.values() if "|" not in row["name"]})
+    names = sorted({name.replace("_", " ") for row in rows.values()
+                    for name in (row["name"], row.get("moegirl", {}).get("title", ""))
+                    if name and "|" not in name})
+    # Only individually reviewed singer identities may override incomplete or
+    # overlapping voice-actor/VTuber categories. Never admit all such categories.
+    verified_titles = {key(row["moegirl"]["title"]) for row in rows.values()
+                       if row.get("music_identity_source") in row.get("sources", [])
+                       and row.get("moegirl", {}).get("title")}
     for start in range(0, len(names), 50):
         params = {"action": "query", "prop": "pageimages|categories|info", "piprop": "original",
                   "titles": "|".join(names[start:start + 50]), "redirects": 1, "cllimit": "max", "inprop": "url", "format": "json"}
@@ -157,8 +164,9 @@ def api_profiles(client, rows, cache, interval):
                     if current == title:
                         aliases.add(origin)
                 cats = [cat["title"].removeprefix("Category:") for cat in page.get("categories", [])]
-                excluded = any(re.search(r"虚拟(?:UP主|主播|YouTuber|歌手)|VTuber", cat, re.I) for cat in cats)
-                if not excluded and not any(re.search(r"职人|音乐人|作曲家|作词家|网络歌手|唱见|编曲家", cat) for cat in cats):
+                verified_music = key(title) in verified_titles
+                excluded = not verified_music and any(re.search(r"虚拟(?:UP主|主播|YouTuber|歌手)|VTuber", cat, re.I) for cat in cats)
+                if not excluded and not verified_music and not any(re.search(r"职人|音乐人|作曲家|作词家|歌手|唱见|编曲家", cat) for cat in cats):
                     continue
                 dates = [re.fullmatch(r"(\d{1,2})月(\d{1,2})日", cat) for cat in cats]
                 dates = {(int(match[1]), int(match[2])) for match in dates if match}
@@ -243,7 +251,11 @@ def main():
         print(f"Public category pages: {len(titles)}, matching titles: {len(targets)}", flush=True)
         for number, (title, candidates) in enumerate(targets, 1):
             try:
-                profile = parse_profile(fetch(client, BASE + "/" + quote(title.replace(" ", "_")), args.cache_dir, args.interval), BASE + "/" + quote(title))
+                verified_music = len(candidates) == 1 and any(
+                    rows[ident].get("music_identity_source") in rows[ident].get("sources", [])
+                    and key(rows[ident].get("moegirl", {}).get("title", "")) == key(title)
+                    for ident in candidates)
+                profile = parse_profile(fetch(client, BASE + "/" + quote(title.replace(" ", "_")), args.cache_dir, args.interval), BASE + "/" + quote(title), verified_music=verified_music)
                 if profile.get("excluded"):
                     if len(candidates) == 1:
                         excluded.update(candidates)

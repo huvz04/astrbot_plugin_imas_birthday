@@ -359,7 +359,9 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 唱见与 P 主／曲师分别保存在 `data/people/utaite.json`、`data/people/music_creators.json`，继续直接使用 `加推 まふまふ`、`加推 田中秀和`，可用 `唱见:`、`P主:`、`曲师:` 限定同名人物。这些人物参与担当总览、担当查询、跨群同步与总榜／DD 排行，不计入偶像排行和企划占比，也不会作为偶像大师角色或声优。
 
-当前仅保留 **298 位**已核对到萌娘百科条目的唱见与音乐创作者（45 位唱见、253 位音乐创作者），其中 **188 位**有明确生日，**294 位**提供萌百备选头像。原目录头像继续保留，萌百备选图需在管理页面载入后保存。
+当前仅保留 **301 位**已核对到萌娘百科条目的唱见与音乐创作者（48 位唱见、253 位音乐创作者），其中 **191 位**有明确生日，**297 位**提供萌百头像。一般保留原目录头像，管理页面可载入萌百备选图后保存；藍月なくる、nayuta、柊優花及田中秀和默认使用萌百人物图。
+
+已核对「蓝月／藍月」「优花／優花」等常用别名。部分唱见的萌百条目只归类为声优，或同时包含虚拟主播分类；仅对已逐条核实音乐身份、记录 `music_identity_source` 来源的条目保留唱见身份，不恢复管人目录。
 
 0.1.106 起，仅保留存在萌百对应资料的条目；已移除的批量条目停止参与加推、查询、排行和跨群同步，清理旧登记前保存到 `tantou_before_catalogue_trim_v1:<群UMO>`。自动目录维护不再重新加入未核对的条目。
 
@@ -414,7 +416,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.107 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.108 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 

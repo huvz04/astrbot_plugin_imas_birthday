@@ -44,7 +44,7 @@ class PublicPeopleSourceTests(unittest.TestCase):
                 counts[kind] += 1
         self.assertNotIn("vtuber", counts)
         self.assertFalse((ROOT / "data" / "people" / "vtubers.json").exists())
-        self.assertEqual(counts["utaite"], 45)
+        self.assertEqual(counts["utaite"], 48)
         self.assertEqual(counts["music_creator"], 253)
         self.assertTrue(source.PUBLIC_PERSON_REDIRECTS)
         for ident, row in source.PUBLIC_PEOPLE_CATALOGUE.items():
@@ -121,6 +121,18 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
         self.mafu = "ut:utaitedb:1097"
         self.singer = next(ident for ident, row in self.registry.items() if row["name"] == "そらる")
 
+    async def test_restored_singers_and_tanaka_resolve_and_survive_retired_id_filter(self):
+        expected = ["ut:utaitedb:17118", "ut:utaitedb:24", "ut:utaitedb:1447", self.tanaka]
+        reply = await self.plugin._change_tantou(self.event, "加推", "蓝月 nayuta 优花 田中秀和")
+        self.assertIn("添加成功", reply)
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user], expected)
+        self.assertEqual(await self.plugin._tantou_sync_names(self.event.unified_msg_origin, self.event.user), expected)
+        for ident, alias in zip(expected, ["藍月なくる", "奶油糖", "柊優花", "田中 秀和"]):
+            self.assertFalse(self.plugin._removed_public_person(ident))
+            self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, alias))
+            self.assertTrue(self.registry[ident]["image_url"].startswith("https://storage.moegirl.org.cn/"))
+        self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, expected), [])
+
     async def test_plain_add_remove_query_and_typed_names_use_the_separate_catalogues(self):
         reply = await self.plugin._change_tantou(self.event, "加推", "田中 秀和 まふまふ そらる")
         self.assertIn("添加成功", reply)
@@ -192,7 +204,7 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
                 await prepare(self.plugin, [self.tanaka])
                 await prepare(self.plugin, [self.tanaka])
             self.assertEqual(len(requests), 1)
-            self.assertEqual(requests[0].url.host, "images.ctfassets.net")
+            self.assertEqual(requests[0].url.host, "storage.moegirl.org.cn")
             path = self.plugin._tantou_icon_path(self.tanaka)
             with Image.open(path) as image:
                 self.assertEqual(image.size, (320, 320))

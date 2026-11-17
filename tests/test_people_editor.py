@@ -43,6 +43,14 @@ class PeopleEditorTests(unittest.IsolatedAsyncioTestCase):
         return await self.editor.save({"id": self.ident, "name": "田中秀和", "aliases": ["测试曲师"],
                                        "birthday": None, "revision": self.editor.records.get(self.ident, {}).get("revision", ""), **changes})
 
+    async def test_reported_missing_people_are_listed_with_search_aliases(self):
+        people = {row["id"]: row for row in (await self.editor.list_records())["people"]}
+        for ident, alias in [("ut:utaitedb:17118", "蓝月"), ("ut:utaitedb:24", "nayuta"),
+                             ("ut:utaitedb:1447", "优花"), (self.ident, "田中 秀和")]:
+            self.assertIn(alias, people[ident]["aliases"])
+            self.assertTrue(people[ident]["has_source_image"])
+            self.assertTrue(people[ident]["birthday"])
+
     async def test_birthday_name_alias_crop_and_reload_do_not_touch_character_data(self):
         token = self.editor.import_image(assets_test.EditorTests.picture())["source"]
         await self.save(name="田中 秀和", birthday="02-29", image={"source": token, "x": 1, "y": .5, "zoom": 1, "fit": "cover"})
@@ -142,3 +150,25 @@ class EnrichmentTests(unittest.TestCase):
         for value in ("未知", "2月30日", "1月2日或1月3日", "不公开（1月2日为纪念日）"):
             self.assertEqual(enrich.parse_profile(self.profile(value), "https://zh.moegirl.org.cn/Test")["birthday"], "")
         self.assertTrue(enrich.parse_profile(self.profile("1月2日", '"网络歌手","虚拟UP主"'), "https://zh.moegirl.org.cn/Test")["excluded"])
+
+    def test_api_accepts_singers_and_individually_verified_music_identities(self):
+        rows = {"one": {"name": "nayuta"},
+                "two": {"name": "藍月なくる", "moegirl": {"title": "蓝月奈久留"},
+                        "music_identity_source": "https://example.org/music", "sources": ["https://example.org/music"]},
+                "three": {"name": "柊優花", "moegirl": {"title": "柊优花"},
+                          "music_identity_source": "https://example.org/music", "sources": ["https://example.org/music"]}}
+        payload = {"query": {"pages": {str(i): {"title": title, "ns": 0,
+                    "categories": [{"title": "Category:" + c} for c in cats]}
+                    for i, (title, cats) in enumerate([
+                        ("Nayuta", ["歌手", "9月27日"]), ("蓝月奈久留", ["配音演员", "3月1日"]),
+                        ("柊优花", ["配音演员", "日语虚拟UP主", "5月30日"]),
+                        ("Other VTuber", ["歌手", "虚拟UP主"])])}}}
+        with tempfile.TemporaryDirectory() as folder, httpx.Client(transport=httpx.MockTransport(
+                lambda request: httpx.Response(200, json=payload))) as client:
+            profiles = {p["title"]: p for p in enrich.api_profiles(client, rows, Path(folder), 0)}
+        for title in ["Nayuta", "蓝月奈久留", "柊优花"]:
+            self.assertFalse(profiles[title]["excluded"])
+            self.assertTrue(profiles[title]["birthday"])
+        self.assertTrue(profiles["Other VTuber"]["excluded"])
+        html = self.profile("5月30日", '"配音演员","日语虚拟UP主"')
+        self.assertEqual(enrich.parse_profile(html, "https://example.org", verified_music=True)["birthday"], "05-30")
