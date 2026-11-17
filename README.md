@@ -14,11 +14,11 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 
 ### 独立管理端口
 
-在插件配置中开启 `editor_web_enabled`，设置 `editor_web_password`（至少 12 位），重载插件后访问 **http://127.0.0.1:8097**。密码不提供默认值，未设置有效密码时不会启动。
+在插件配置中开启 `editor_web_enabled`，重载插件后访问 **http://127.0.0.1:8097**。`editor_web_password` 留空时直接进入；需要登录验证时再设置密码（至少 12 位）。
 
 - `editor_web_host` 默认 `127.0.0.1`，用于本机；需要其他设备访问时设置 `0.0.0.0`，使用服务器地址访问，建议在可信网络或 HTTPS 反向代理后使用。
 - `editor_web_port` 默认 `8097`，可改为未占用的端口。
-- 登录有效期 8 小时，修改密码、重载或停止插件后旧登录失效。页面有密码尝试限速和跨站请求校验。
+- 设置密码时，登录有效期 8 小时，修改密码、重载或停止插件后旧登录失效。页面有密码尝试限速和跨站请求校验。
 - 独立端口与 AstrBot 内只有一个管理视图，共用「偶像大师角色」「唱见／P主」两个模块以及同一份持久化数据。模块有未保存修改时先保存或撤销再切换。
 - 唱见／P主生日仅供资料编辑使用，**不加入偶像大师生日提醒**。
 
@@ -414,7 +414,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.106 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.107 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 

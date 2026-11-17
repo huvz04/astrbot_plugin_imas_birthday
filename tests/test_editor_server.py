@@ -1,6 +1,7 @@
 import importlib.util
 import sys
 import unittest
+from types import SimpleNamespace
 from pathlib import Path
 from unittest.mock import AsyncMock
 from aiohttp.test_utils import TestClient, TestServer
@@ -54,6 +55,20 @@ class EditorServerTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             await self.server.start()
         self.assertIsNone(self.server.runner)
+
+    async def test_empty_password_opens_page_and_edit_api_without_login(self):
+        self.server.password = ''
+        self.plugin.people_editor = SimpleNamespace(actions=('list', 'save'),
+            list_records=AsyncMock(return_value={'people': []}), save=AsyncMock(return_value={'saved': True}))
+        response = await self.client.get('/')
+        self.assertEqual(response.status, 200)
+        self.assertFalse(response.history)
+        self.assertEqual((await self.client.get('/login', allow_redirects=False)).headers['Location'], '/')
+        self.assertEqual((await self.client.get('/api/people/list')).status, 200)
+        response = await self.client.post('/api/people/save', json={}, headers={'X-Imas-Editor': '1'})
+        self.assertEqual(await response.json(), {'saved': True})
+        self.assertEqual((await self.client.post('/api/people/save', json={})).status, 403)
+        self.assertEqual((await self.client.post('/api/people/save', json={}, headers={'X-Imas-Editor': '1', 'Origin': 'https://evil.example'})).status, 403)
 
     async def test_non_imas_music_birthdays_are_not_in_reminder_or_card(self):
         self.plugin._get_source_birthdays = AsyncMock(return_value={'06-04': {'characters':[], 'seiyuu':[], 'related_people':[], 'events':[]}})

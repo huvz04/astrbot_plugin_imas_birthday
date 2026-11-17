@@ -22,7 +22,7 @@ class EditorServer:
         if self.runner or not self.plugin.config.get('editor_web_enabled', False):
             return
         self.password = str(self.plugin.config.get('editor_web_password', ''))
-        if len(self.password) < 12:
+        if self.password and len(self.password) < 12:
             raise ValueError('独立编辑页需要至少 12 位访问密码。')
         host = str(self.plugin.config.get('editor_web_host', '127.0.0.1'))
         port = int(self.plugin.config.get('editor_web_port', 8097))
@@ -56,7 +56,7 @@ class EditorServer:
             raise web.HTTPForbidden()
         now = time.monotonic()
         self.sessions = {token: expiry for token, expiry in self.sessions.items() if expiry > now}
-        if request.path != '/login' and request.cookies.get('imas_editor') not in self.sessions:
+        if self.password and request.path != '/login' and request.cookies.get('imas_editor') not in self.sessions:
             if request.path.startswith('/api/'):
                 return web.json_response({'error': '请先登录。'}, status=401)
             raise web.HTTPFound('/login')
@@ -67,6 +67,8 @@ class EditorServer:
         return response
 
     async def login(self, request):
+        if not self.password:
+            raise web.HTTPFound('/')
         if request.method == 'GET':
             return web.Response(text=LOGIN, content_type='text/html')
         if request.method != 'POST':
