@@ -1,2 +1,2 @@
-# Optional dependency for music catalogue discovery/enrichment, not plugin runtime.
+# Optional HTML parser for music and voice-actor catalogue maintenance.
 beautifulsoup4>=4.12.0

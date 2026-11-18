@@ -2,6 +2,7 @@
 import copy
 import importlib.util
 import json
+from io import BytesIO
 import tempfile
 import unittest
 from pathlib import Path
@@ -105,26 +106,24 @@ class PeopleEditorTests(unittest.IsolatedAsyncioTestCase):
         await self.save(image={"source": replacement, "x": .5, "y": .5, "zoom": 1, "fit": "contain"})
         self.assertTrue(self.plugin._editor_image(self.ident, "tantou").exists())
 
-    async def test_moegirl_photo_fetch_rejects_redirects_and_arbitrary_urls(self):
-        original = httpx.AsyncClient
-        requests = []
-        def response(request):
-            requests.append(request)
-            return httpx.Response(200, content=assets_test.EditorTests.picture())
-        self.registry[self.ident]["moegirl"] = {"image_url": "https://storage.moegirl.org.cn/moegirl/commons/a/photo.png"}
-        with patch.object(httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(response), **kw)):
-            result = await self.editor.load_source(self.ident)
-        self.assertTrue(self.editor.source_path(result["source"]).exists())
-        self.assertNotIn(self.ident, self.editor.records)
-        for url in ("http://127.0.0.1/", "https://storage.moegirl.org.cn.evil.test/x", "https://user:pass@storage.moegirl.org.cn/x"):
-            self.registry[self.ident]["moegirl"]["image_url"] = url
-            with self.assertRaises(ValueError):
-                await self.editor.load_source(self.ident)
-        self.assertEqual(len(requests), 1)
-        self.registry[self.ident]["moegirl"]["image_url"] = "https://storage.moegirl.org.cn/x"
-        with patch.object(httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(lambda r: httpx.Response(302, headers={"location": "http://127.0.0.1/x"})), **kw)):
-            with self.assertRaises(ValueError):
-                await self.editor.load_source(self.ident)
+    async def test_directory_crop_keeps_credits_and_an_upload_clears_them(self):
+        self.plugin.tantou_icons_dir = self.root / "icons"
+        path = self.plugin._person_photo_path(self.ident)
+        path.parent.mkdir(parents=True)
+        path.write_bytes(assets_test.EditorTests.picture())
+        base = (await self.editor.detail(self.ident))["portrait"]
+        self.assertEqual(base["license"], "CC BY-SA 4.0")
+        self.assertTrue(base["image_author"])
+        result = await self.editor.load_source(self.ident)
+        await self.save(image={"source": result["source"], "x": .5, "y": .5, "zoom": 1, "fit": "contain"})
+        self.assertEqual((await self.editor.detail(self.ident))["portrait"], base)
+        self.assertIn(base["source_url"], self.plugin._portrait_credits([self.ident]))
+        image = BytesIO()
+        Image.new("RGB", (16, 24), "green").save(image, format="PNG")
+        custom = self.editor.import_image(image.getvalue())
+        await self.save(image={"source": custom["source"], "x": .5, "y": .5, "zoom": 1, "fit": "contain"})
+        self.assertFalse((await self.editor.detail(self.ident))["portrait"].get("license"))
+        self.assertFalse(self.plugin._portrait_credits([self.ident]))
 
     async def test_removed_vtuber_records_are_backed_up_and_no_longer_sync_or_rank(self):
         event = Event()

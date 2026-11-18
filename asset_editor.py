@@ -13,7 +13,6 @@ import uuid
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from PIL import Image, ImageOps
 
@@ -391,6 +390,7 @@ class PeopleEditor(AssetEditor):
     page_label = "唱见与P主图片资料管理"
     actions = (*AssetEditor.actions, "source")
     filenames = {"utaite": "utaite.json", "music_creator": "music_creators.json"}
+    photo_fields = ("avatar_url", "original_url", "source_url", "license", "license_url", "image_author", "attribution", "verified_at")
 
     def __init__(self, plugin, root, catalogue):
         self.plugin, self.catalogue = plugin, catalogue
@@ -402,6 +402,8 @@ class PeopleEditor(AssetEditor):
             payload = json.loads((plugin.plugin_dir / "data" / "people" / filename).read_text(encoding="utf-8"))
             for row in [*payload.get("records", []), *payload.get("manual_records", [])]:
                 self.base[row["id"]] = {**row, "kind": kind}
+            for ident, row in payload.get("legacy_names", {}).items():
+                self.base[ident] = {**row, "kind": kind, "archived": True}
             path = self.people_root / filename
             if path.exists():
                 custom = json.loads(path.read_text(encoding="utf-8"))
@@ -430,9 +432,10 @@ class PeopleEditor(AssetEditor):
         return {"people": [{"id": ident, "name": row["name"], "kind": row["kind"],
                             "birthday": row.get("birthday", ""), "aliases": row.get("aliases", []),
                             "has_image": self.has_image(ident, "tantou"),
-                            "has_source_image": bool(row.get("image_url")),
+                            "has_source_image": bool(row.get("avatar_url")),
                             "custom": bool(self.records.get(ident))}
-                           for ident, row in self.catalogue.items()], "storage": str(self.people_root)}
+                           for ident, row in self.catalogue.items() if not row.get("archived") or ident in self.records],
+                "storage": str(self.people_root)}
 
     async def detail(self, name):
         name = self.identity(name)
@@ -452,8 +455,9 @@ class PeopleEditor(AssetEditor):
         return {"id": name, "name": row["name"], "kind": row["kind"], "birthday": row.get("birthday", ""),
                 "aliases": row.get("aliases", []), "base_birthday": base.get("birthday", ""),
                 "base_name": base["name"], "sources": row.get("sources", []),
-                "birthday_source": row.get("birthday_source", ""), "image_source": row.get("image_source", ""),
-                "has_moegirl_image": bool(row.get("moegirl", {}).get("image_url")),
+                "birthday_source": row.get("birthday_source", ""),
+                "portrait": settings.get("provenance", {}) if settings else {k: row.get(k) for k in self.photo_fields},
+                "has_source_image": bool(row.get("avatar_url")),
                 "record": copy.deepcopy(self.records.get(name, {})),
                 "image": {"image": image, "source": settings.get("source", "") if settings else "",
                           "x": settings.get("x", .5) if settings else .5,
@@ -522,7 +526,14 @@ class PeopleEditor(AssetEditor):
                             raise ValueError("请先上传图片。")
                         token = self.import_image(path.read_bytes())["source"]
                     self.source_path(token)
-                    record["images"] = {"tantou": {"source": token, **crop}}
+                    previous_image = previous.get("images", {}).get("tantou", {})
+                    provenance = previous_image.get("provenance", {}) if previous_image.get("source") == token else {}
+                    path = self.current_image(ident, "tantou")
+                    if path and not provenance:
+                        base_token = hashlib.sha256(image_bytes(decode_image(path.read_bytes()))).hexdigest()
+                        if token == base_token:
+                            provenance = {k: self.catalogue[ident].get(k) for k in self.photo_fields}
+                    record["images"] = {"tantou": {"source": token, **crop, "provenance": provenance}}
             record["revision"] = uuid.uuid4().hex
             kind = self.catalogue[ident]["kind"]
             path = self.people_root / self.filenames[kind]
@@ -544,24 +555,12 @@ class PeopleEditor(AssetEditor):
         return {"saved": True, "id": ident, "revision": record["revision"]}
 
     async def load_source(self, name):
-        import httpx
         name = self.identity(name)
-        url = self.catalogue[name].get("moegirl", {}).get("image_url", "")
-        parts = urlsplit(url)
-        if parts.scheme != "https" or parts.hostname != "storage.moegirl.org.cn" or parts.port not in (None, 443) or parts.username or parts.password:
-            raise ValueError("这位人物没有可用的萌百图片，请上传图片。")
-        try:
-            async with httpx.AsyncClient(timeout=12, follow_redirects=False) as client:
-                data = bytearray()
-                async with client.stream("GET", url) as response:
-                    response.raise_for_status()
-                    async for chunk in response.aiter_bytes():
-                        data.extend(chunk)
-                        if len(data) > 2_000_000:
-                            raise ValueError("来源图片超过 2 MB，请下载缩小后手动上传。")
-            return await asyncio.to_thread(self.import_image, bytes(data))
-        except httpx.HTTPError as exc:
-            raise ValueError("萌百图片暂时无法读取，请稍后再试或手动上传。") from exc
+        await self.plugin._prepare_tantou_icons([name])
+        path = self.current_image(name, "tantou")
+        if not path:
+            raise ValueError("来源头像暂时无法读取，可稍后重试或上传图片。")
+        return await asyncio.to_thread(self.import_image, path.read_bytes())
 
     async def preview(self, name, columns=1):
         name = self.identity(name)

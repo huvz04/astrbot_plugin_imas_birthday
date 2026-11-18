@@ -46,13 +46,24 @@ async function select(id) {
   $('birthday').value = data.birthday || ''; $('birthday').disabled = $('birthday-mode').value !== 'custom';
   $('base-birthday').textContent = `基础资料：${data.base_birthday || '未公开／未登记'}`;
   $('sources').replaceChildren();
-  for (const source of [...new Set([data.birthday_source, data.image_source, ...data.sources])]) {
-    try { const url = new URL(source); if (url.protocol !== 'https:' && url.protocol !== 'http:') continue;
-      const a = document.createElement('a'); a.textContent = source; a.href = url.href; a.target = '_blank'; a.rel = 'noopener noreferrer'; $('sources').append(a);
-    } catch { /* A manual source note is plain text, not a link. */ }
+  const photo = data.portrait || {};
+  const credit = document.createElement('p');
+  const origin = data.image.custom && !photo.source_url ? '本地图片' : '目录头像';
+  credit.textContent = `${origin} · 摄影／绘者 ${photo.image_author || '未标注'} · 授权 ${photo.license || '未注明'}${photo.verified_at ? ' · 核验于 ' + photo.verified_at : ''}`;
+  $('sources').append(credit);
+  const links = [[photo.source_url, '头像来源页'], [photo.original_url, '原图'], [photo.license_url, '授权条款'],
+                 [data.birthday_source, '生日来源'], ...data.sources.map(url => [url, url])];
+  const seen = new Set();
+  for (const [source, label] of links) {
+    if (!source || seen.has(source)) continue;
+    try {
+      const url = new URL(source); if (!['https:', 'http:'].includes(url.protocol)) continue;
+      const a = document.createElement('a'); a.textContent = label; a.href = url.href; a.target = '_blank';
+      a.rel = 'noopener noreferrer'; $('sources').append(a); seen.add(source);
+    } catch { /* Manual source notes can be plain text. */ }
   }
   imageState = {...data.image, image: await loadImage(data.image.image), action: 'keep'};
-  $('moegirl-image').hidden = !data.has_moegirl_image;
+  $('directory-image').hidden = !data.has_source_image;
   $('dirty').textContent = '修改后点击保存生效'; draw(); renderList(); status('已载入资料，修改保存后立即生效。');
 }
 function draw() {
@@ -93,11 +104,11 @@ $('upload').onchange = event => run(async () => {
   changed(); draw(); status('图片已载入，可以拖动调整位置。');
 });
 $('center').onclick = () => { if (!imageState?.image) return; imageState.x = imageState.y = .5; imageState.zoom = 1; imageState.action = 'change'; changed(); draw(); };
-$('moegirl-image').onclick = () => run(async () => {
-  status('正在载入萌百图片…');
+$('directory-image').onclick = () => run(async () => {
+  status('正在载入目录头像…');
   const result = await bridge.apiGet('people/source', {name: current.id});
   imageState = {image: await loadImage(result.image), source: result.source, x: .5, y: .5, zoom: 1, fit: 'contain', action: 'change', custom: true};
-  changed(); draw(); status('萌百图片已载入，调整后点击保存生效。');
+  changed(); draw(); status('目录头像已载入，调整后点击保存生效。');
 });
 $('restore').onclick = () => { imageState.action = 'restore'; changed(); draw(); };
 let drag = null;

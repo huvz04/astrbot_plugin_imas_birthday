@@ -1,4 +1,4 @@
-"""Fill singer/producer birthdays and missing portraits from public Moegirl pages.
+"""Optionally enrich existing singer/producer birthdays from public Moegirl pages.
 
 No login, search fuzzing, real-name guessing, or runtime crawling. Only existing
 catalogue identities matched by unique stage names or official accounts are used.
@@ -209,7 +209,7 @@ def main():
         for alias in [row["name"], *row.get("aliases", [])]:
             if len(key(alias)) >= 2:
                 index.setdefault(key(alias), set()).add(ident)
-    count = images = birthdays = 0
+    count = birthdays = 0
     excluded = set()
     with httpx.Client(timeout=30, follow_redirects=True, headers={"User-Agent": UA}) as client:
         for profile in api_profiles(client, rows, args.cache_dir, args.interval):
@@ -225,9 +225,6 @@ def main():
             if profile["birthday"]:
                 row["birthday"], row["birthday_source"] = profile["birthday"], source
                 birthdays += 1
-            if not row.get("image_url") and profile["image_url"]:
-                row["image_url"], row["image_source"] = profile["image_url"], source
-                images += 1
             row["sources"] = list(dict.fromkeys([*row["sources"], source]))
             row["moegirl"] = {"url": source, "title": profile["title"], "image_url": profile["image_url"],
                               "revision": profile.get("revision"), "retrieved_on": datetime.now(timezone.utc).date().isoformat()}
@@ -272,10 +269,6 @@ def main():
                     row["birthday"] = profile["birthday"]
                     row["birthday_source"] = source
                     birthdays += 1
-                if not row.get("image_url") and profile["image_url"]:
-                    row["image_url"] = profile["image_url"]
-                    row["image_source"] = source
-                    images += 1
                 row["sources"] = list(dict.fromkeys([*row["sources"], source]))
                 row["moegirl"] = {**row.get("moegirl", {}), "url": source, "title": profile["title"],
                                   "image_url": profile["image_url"], "retrieved_on": datetime.now(timezone.utc).date().isoformat()}
@@ -283,16 +276,12 @@ def main():
             except (httpx.HTTPError, ValueError) as exc:
                 print(f"Skipped {title}: {type(exc).__name__}", flush=True)
             if number % 25 == 0:
-                print(f"Reviewed {number}/{len(targets)}, birthdays {birthdays}, portraits {images}", flush=True)
+                print(f"Reviewed {number}/{len(targets)}, birthdays {birthdays}", flush=True)
         for p in payloads.values():
-            removed = set(p.get("removed_ids", [])) | {ident for ident in excluded if any(row["id"] == ident for row in p["records"])}
-            p["records"] = [row for row in p["records"] if row["id"] not in removed]
-            p["removed_ids"] = sorted(removed)
-            p["redirects"] = {k: v for k, v in p.get("redirects", {}).items() if k not in removed and v not in excluded}
             p["enrichment"] = {"source": BASE, "retrieved_on": datetime.now(timezone.utc).date().isoformat(), "scope": "existing singers and music creators only"}
         for filename, p in payloads.items():
             (args.data_dir / filename).write_text(json.dumps(p, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"matched": count, "birthdays": birthdays, "filled_portraits": images, "excluded_vtubers": len(excluded)}, ensure_ascii=False))
+    print(json.dumps({"matched": count, "birthdays": birthdays, "skipped_profiles": len(excluded)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

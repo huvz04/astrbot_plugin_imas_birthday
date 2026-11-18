@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import tempfile
+import sys
 import unittest
 from collections import Counter
 from pathlib import Path
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("public_people_test_source", ROOT / "public_people.py")
 source = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(source)
+sys.path.insert(0, str(ROOT / "tools"))
 spec = importlib.util.spec_from_file_location("sync_public_people_test_source", ROOT / "tools" / "sync_public_people.py")
 sync = importlib.util.module_from_spec(spec)
 try:
@@ -36,7 +38,12 @@ class PublicPeopleSourceTests(unittest.TestCase):
             for row in [*payload["records"], *payload["manual_records"]]:
                 self.assertTrue(row["id"].startswith(prefix + ":"))
                 self.assertTrue(row["sources"])
-                self.assertTrue(row.get("moegirl", {}).get("url"))
+                self.assertTrue({"avatar_url", "source_url", "license", "image_author", "verified_at"} <= row.keys())
+                if row.get("avatar_url"):
+                    self.assertTrue(row["source_url"])
+                    self.assertTrue(row["verified_at"])
+                if kind == "utaite":
+                    self.assertTrue(row["wiki_url"].startswith("https://ja.wikipedia.org/wiki/"))
                 if row.get("birthday"):
                     self.assertRegex(row["birthday"], r"^\d{2}-\d{2}$")
                     self.assertTrue(row.get("birthday_source"))
@@ -44,11 +51,9 @@ class PublicPeopleSourceTests(unittest.TestCase):
                 counts[kind] += 1
         self.assertNotIn("vtuber", counts)
         self.assertFalse((ROOT / "data" / "people" / "vtubers.json").exists())
-        coverage = json.loads((ROOT / "data" / "people" / "music_catalogue_coverage.json").read_text(encoding="utf-8"))
-        self.assertTrue(coverage["complete"])
-        self.assertEqual(dict(counts), coverage["totals"])
-        self.assertGreater(sum(counts.values()), 301)
-        self.assertTrue(all(row["complete"] for row in coverage["categories"].values()))
+        self.assertGreater(counts["music_creator"], 200)
+        self.assertGreater(counts["utaite"], 48)
+        self.assertFalse(any(":moegirl:" in i for i in plugin_module.ImasBirthdayPlugin._public_people_records()))
         self.assertTrue(source.PUBLIC_PERSON_REDIRECTS)
         for ident, row in source.PUBLIC_PEOPLE_CATALOGUE.items():
             self.assertFalse(row["is_idolmaster"])
@@ -69,6 +74,27 @@ class PublicPeopleSourceTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 source.load_catalogues(Path(folder))
 
+    def test_japanese_singer_scope_requires_evidence_and_keeps_existing_accounts(self):
+        singers = [r for r in source.PUBLIC_PEOPLE_CATALOGUE.values() if not r["archived"]
+                   and (r["kind"] == "utaite" or "utaite" in r.get("roles", []))]
+        self.assertTrue(all(r.get("wiki_url", "").startswith("https://ja.wikipedia.org/wiki/") and r.get("japan_source") for r in singers))
+        self.assertTrue({"nayuta", "柊優花", "藍月なくる", "そらる", "まふまふ"} <= {r["name"] for r in singers})
+        self.assertFalse({"银临", "茶理理", "熊子", "ダズビー"} & {r["name"] for r in singers})
+        self.assertEqual(len(singers), len({r["wiki_url"] for r in singers}))
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_japanese_page_does_not_make_a_foreign_singer_or_group_eligible(self):
+        from sync_japanese_utaite import eligible
+        def entity(country, kind="Q5"):
+            def claim(identifier):
+                return [{"mainsnak": {"datavalue": {"value": {"id": identifier}}}}]
+            return {"claims": {"P27": claim(country), "P31": claim(kind)}}
+        page = {"extract": "テストは日本の男性歌い手。4人組ユニットのメンバー。"}
+        self.assertTrue(eligible(page, entity("Q17"), True, True))
+        self.assertFalse(eligible(page, entity("Q148"), True, True))
+        self.assertFalse(eligible(page, entity("Q17", "Q215380"), True, True))
+        self.assertFalse(eligible({"extract": "テストは台湾の歌手。"}, {}, True, True))
+
     @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
     def test_parser_filters_unverified_or_wrong_type_entries_but_keeps_names_and_sources(self):
         row = {"id": 123, "artistType": "Producer", "defaultName": "テストP", "status": "Approved",
@@ -81,26 +107,19 @@ class PublicPeopleSourceTests(unittest.TestCase):
 
     @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
     def test_rebuild_keeps_existing_ids_manual_records_and_per_file_overrides(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder) / "utaite.json"
-            old = {"id": "ut:utaitedb:123", "name": "旧名", "aliases": [], "sources": ["https://utaitedb.net/Ar/123"]}
-            manual = {**old, "id": "ut:manual:test"}
-            old.update({"birthday": "01-02", "birthday_source": "https://zh.moegirl.org.cn/Test", "moegirl": {"title": "Test"}})
-            payload = {"records": [old], "manual_records": [manual], "overrides": {old["id"]: {"aliases": ["中文别名"]}}, "enrichment": {"source": "moegirl"}, "removed_ids": ["ut:utaitedb:9"]}
-            path.write_text(json.dumps(payload), encoding="utf-8")
-            sync.write_catalogue(path, "utaite", [], 0)
-            rebuilt = json.loads(path.read_text(encoding="utf-8"))
-            self.assertEqual(rebuilt["records"][0]["id"], old["id"])
-            self.assertEqual(rebuilt["manual_records"], [manual])
-            self.assertEqual(rebuilt["overrides"], payload["overrides"])
-            self.assertEqual(rebuilt["enrichment"], payload["enrichment"])
-            refreshed = {"id": old["id"], "name": "新名", "aliases": ["New Name"], "sources": ["https://utaitedb.net/Ar/123"]}
-            sync.write_catalogue(path, "utaite", [refreshed, {**refreshed, "id": "ut:utaitedb:9"}], 2)
-            rebuilt = json.loads(path.read_text(encoding="utf-8"))
-            self.assertEqual(len(rebuilt["records"]), 1)
-            self.assertEqual(rebuilt["records"][0]["birthday"], "01-02")
-            self.assertIn("New Name", rebuilt["records"][0]["aliases"])
-            self.assertEqual(rebuilt["removed_ids"], payload["removed_ids"])
+        old = {"id": "mc:vocadb:123", "name": "旧名", "aliases": ["旧名"], "sources": [],
+               "birthday": "01-02", "birthday_source": "https://example.org/old"}
+        payload = {"schema": 1, "kind": "music_creator", "records": [old], "manual_records": [],
+                   "overrides": {old["id"]: {"aliases": ["中文别名"]}}, "redirects": {}, "removed_ids": []}
+        artist = {"id": 123, "defaultName": "新名", "artistType": "Producer", "status": "Approved",
+                  "webLinks": [{"category": "Official", "url": "https://example.org/new"}]}
+        with patch.object(sync, "snapshot", return_value=(json.dumps(artist), "2026-11-18")):
+            result = sync.refresh(None, payload, "mc", "vocadb", "Producer", [])
+        self.assertEqual(result["overrides"], payload["overrides"])
+        updated, = result["records"]
+        self.assertEqual((updated["id"], updated["name"], updated["birthday"]), (old["id"], "新名", "01-02"))
+        self.assertIn("旧名", updated["aliases"])
+        self.assertIsNone(updated["verified_at"])
 
     def test_external_per_kind_overrides_extend_aliases_without_changing_bundled_data(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -133,18 +152,19 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
         for ident, alias in zip(expected, ["藍月なくる", "奶油糖", "柊優花", "田中 秀和"]):
             self.assertFalse(self.plugin._removed_public_person(ident))
             self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, alias))
-            self.assertTrue(self.registry[ident]["image_url"].startswith("https://storage.moegirl.org.cn/"))
+            self.assertTrue(self.registry[ident]["avatar_url"])
+            self.assertIn(self.registry[ident]["source_url"], self.registry[ident]["sources"])
         self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, expected), [])
 
-    async def test_directory_discovered_people_can_be_added_queried_and_removed(self):
-        names = ['伊东歌词太郎', 'C418']
-        expected = [next(ident for ident, row in self.registry.items() if row['name'] == name) for name in names]
-        self.assertIn('添加成功', await self.plugin._change_tantou(self.event, '加推', ' '.join(names)))
-        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user], expected)
-        for name in names:
-            self.assertIn('本群 1人', await self.plugin._tantou_followers(self.event, name))
-        self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, expected), [])
-        self.assertEqual(await self.plugin._change_tantou(self.event, '减推', ' '.join(names)), '成功减推了：伊东歌词太郎、C418')
+    async def test_legacy_registrations_render_and_can_be_removed_without_reopening_discovery(self):
+        names = ["排骨教主", "C418"]
+        ids = [next(i for i, r in self.registry.items() if r["name"] == name and r["archived"]) for name in names]
+        self.assertFalse(set(ids) & set(await self.plugin._all_tantou_records()))
+        key = "tantou_v1:" + self.event.unified_msg_origin
+        self.plugin.storage[key] = {self.event.user: ids}
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user], ids)
+        self.assertEqual([self.plugin._tantou_display_name(i) for i in ids], names)
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", " ".join(names)), "成功减推了：排骨教主、C418")
 
     async def test_plain_add_remove_query_and_typed_names_use_the_separate_catalogues(self):
         reply = await self.plugin._change_tantou(self.event, "加推", "田中 秀和 まふまふ そらる")
@@ -217,14 +237,14 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
                 await prepare(self.plugin, [self.tanaka])
                 await prepare(self.plugin, [self.tanaka])
             self.assertEqual(len(requests), 1)
-            self.assertEqual(requests[0].url.host, "storage.moegirl.org.cn")
+            self.assertIn(requests[0].url.host, {"thumb.wikimedia.org", "upload.wikimedia.org"})
             path = self.plugin._tantou_icon_path(self.tanaka)
             with Image.open(path) as image:
                 self.assertEqual(image.size, (320, 320))
                 self.assertEqual(image.format, "PNG")
             path.unlink()
             for url in ("http://127.0.0.1/x", "https://images.ctfassets.net.evil.example/x", "https://user:pass@images.ctfassets.net/x"):
-                replacement = {**self.registry[self.tanaka], "image_url": url}
+                replacement = {**self.registry[self.tanaka], "avatar_url": url}
                 with patch.dict(self.registry, {self.tanaka: replacement}), patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(response), **kw)):
                     await prepare(self.plugin, [self.tanaka])
                 self.assertFalse(self.plugin._tantou_icon_path(self.tanaka))

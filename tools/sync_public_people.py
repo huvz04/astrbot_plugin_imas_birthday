@@ -1,154 +1,168 @@
-"""Build physically separate singer and creator snapshots from public music APIs.
-
-No network requests run in the plugin's normal command handlers except bounded
-portrait downloads. Cached API responses avoid repeated requests while reviewing.
-"""
-from __future__ import annotations
-
+"""Refresh the installed music catalogue by VocaDB / UtaiteDB artist ID."""
 import argparse
-import hashlib
 import json
 import re
-import time
-from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 
+from catalogue_sources import USER_AGENT, snapshot
+from commons_portrait import commons_portrait
+from sync_japanese_utaite import accounts, japanese_title, refresh_singers
+
 ROOT = Path(__file__).resolve().parents[1]
-USER_AGENT = "imas-birthday-catalogue/1.0 (+https://github.com/huvz04/astrbot_plugin_imas_birthday)"
+DIRECTORIES = {"utaite.json": ("ut", "utaitedb", "Utaite"),
+               "music_creators.json": ("mc", "vocadb", "Producer")}
+TANAKA = "mc:manual:tanaka-hidekazu"
+TANAKA_FILE = "Hidekazu Tanaka Introduction at Aikatsu! ANION 2019-03-08.jpg"
 
 
-def clean(value):
-    return re.sub(r"\s+", " ", str(value or "")).strip()
-
-
-def merge_record(target, source):
-    target["aliases"] = list(dict.fromkeys([*target["aliases"], source["name"], *source["aliases"]]))
-    target["sources"] = list(dict.fromkeys([*target["sources"], *source["sources"]]))
-
-
-def get_cached(client, url, cache, refresh=False, params=None):
-    key = hashlib.sha256((url + json.dumps(params, sort_keys=True)).encode()).hexdigest()
-    path = cache / (key + ".txt")
-    if path.is_file() and not refresh:
-        return path.read_text(encoding="utf-8")
-    response = client.get(url, params=params)
-    response.raise_for_status()
-    path.write_text(response.text, encoding="utf-8")
-    time.sleep(.4)
-    return response.text
-
-
-def parse_artist(row, provider, prefix, expected_type):
-    links = [link for link in row.get("webLinks", []) if not link.get("disabled")]
-    official = [link["url"] for link in links if link.get("category") == "Official"]
-    if (row.get("artistType") != expected_type or row.get("status") not in {"Approved", "Finished", "Locked"}
-            or not official or not clean(row.get("defaultName")) or len(clean(row.get("defaultName"))) > 100):
+def parse_artist(row, provider, prefix, expected_type, checked=None):
+    if (row.get("deleted") or row.get("artistType") != expected_type
+            or row.get("status") not in {"Approved", "Finished", "Locked"}):
         return None
-    name = clean(row["defaultName"])
-    aliases = [clean(item.get("value")) for item in row.get("names", []) if 1 < len(clean(item.get("value"))) <= 150]
+    name = " ".join((row.get("defaultName") or "").split())
+    profile = f"https://{provider}.net/Ar/{row['id']}"
+    links = [link for link in row.get("webLinks", []) if not link.get("disabled")
+             and urlsplit(link.get("url", "")).scheme in ("http", "https")]
+    official = [link["url"] for link in links if link.get("category") == "Official"]
+    if not official or not 0 < len(name) <= 100:
+        return None
     references = [link["url"] for link in links if link.get("category") == "Reference"
-                  and any(site in link["url"] for site in ("vocadb.net/Ar/", "utaitedb.net/Ar/", "atwiki.jp/hmiku/"))]
+                  and urlsplit(link["url"]).hostname in ("vocadb.net", "utaitedb.net", "utaite.wiki", "ja.wikipedia.org")]
+    picture = row.get("mainPicture") or {}
+    avatar = picture.get("urlThumb")
+    if avatar and (urlsplit(avatar).scheme != "https" or urlsplit(avatar).hostname != f"static.{provider}.net"):
+        raise ValueError("Unexpected main picture host for " + profile)
+    aliases = [a["value"].strip() for a in row.get("names", []) if 0 < len((a.get("value") or "").strip()) <= 150]
     return {"id": f"{prefix}:{provider}:{row['id']}", "name": name, "aliases": list(dict.fromkeys(aliases)),
-            "image_url": row.get("mainPicture", {}).get("urlThumb", ""),
-            "sources": [f"https://{provider}.net/Ar/{row['id']}", *official[:3], *references],
-            "source_status": row["status"], "directory": provider}
+            "directory": provider, "source_status": row["status"], "sources": [profile, *official[:3], *references],
+            "avatar_url": avatar, "original_url": picture.get("urlOriginal") if avatar else None,
+            "source_url": profile if avatar else None, "image_author": None, "license": None,
+            "verified_at": checked if avatar else None, "last_seen_on": checked}
 
 
-def fetch_artists(client, provider, prefix, artist_type, cache, max_artists, refresh):
-    result, total = [], 0
-    while total < max_artists:
-        params = {"artistTypes": artist_type, "sort": "FollowerCount", "maxResults": min(100, max_artists - total),
-                  "start": total, "fields": "Names,MainPicture,WebLinks"}
-        data = json.loads(get_cached(client, f"https://{provider}.net/api/artists", cache, refresh, params))
-        rows = data.get("items", [])
-        if not rows:
-            break
-        for row in rows:
-            record = parse_artist(row, provider, prefix, artist_type)
-            if record:
-                result.append(record)
-        total += len(rows)
-        print(f"{provider}: inspected {total}, retained {len(result)}", flush=True)
-    return result, total
+def refresh(client, data, prefix, provider, artist_type, additions):
+    payload = {key: data[key] for key in ("schema", "kind", "overrides", "redirects", "removed_ids")}
+    active = []
+    archived = dict(data.get("legacy_names", {}))
+    existing = {row["id"]: row for row in data["records"]}
+    for ident in additions:
+        existing.setdefault(ident, {"id": ident})
+    for ident, old in sorted(existing.items()):
+        if ":moegirl:" in ident:
+            archived[ident] = {"name": old["name"], "aliases": old.get("aliases", [])}
+            continue
+        if not re.fullmatch(prefix + ":" + provider + r":[1-9][0-9]*", ident):
+            raise ValueError("Unknown provider ID: " + ident)
+        number = ident.rsplit(":", 1)[1]
+        url = f"https://{provider}.net/api/artists/{number}?fields=Names,MainPicture,WebLinks,Tags"
+        raw, checked = snapshot(client, url)
+        artist = json.loads(raw)
+        if str(artist.get("id")) != number:
+            raise ValueError("Different artist returned for " + ident)
+        current = parse_artist(artist, provider, prefix, artist_type, checked)
+        if current is None:
+            raise ValueError(f"{ident} changed identity, type or status; review before replacing the catalogue")
+        if ident in additions and ident not in {r["id"] for r in data["records"]}:
+            virtual = any(t.get("tag", {}).get("urlSlug") in {"vtuber", "virtual-youtuber"} for t in artist.get("tags", []))
+            if virtual or not current["avatar_url"] or ident in payload["removed_ids"]:
+                raise ValueError("Unreviewed virtual, retired or unpictured artist: " + ident)
+        current["aliases"] = list(dict.fromkeys([*old.get("aliases", []), *current["aliases"]]))
+        current["sources"] = list(dict.fromkeys([*current["sources"], *old.get("sources", [])]))
+        for key in ("birthday", "birthday_source", "roles", "music_identity_source"):
+            if key in old:
+                current[key] = old[key]
+        if "roles" in current:
+            current["roles"] = [role for role in current["roles"] if role != "utaite"]
+        active.append(current)
+    manual = []
+    for old in data.get("manual_records", []):
+        if old["id"] == TANAKA:
+            photo = commons_portrait(client, TANAKA_FILE)
+            row = {key: old[key] for key in ("id", "name", "aliases", "sources", "roles", "directory",
+                                             "birthday", "birthday_source") if key in old}
+            row.update(photo)
+            row["sources"] = list(dict.fromkeys([*row["sources"], photo["source_url"]]))
+            manual.append(row)
+        else:
+            manual.append(old)
+    payload.update(records=active, manual_records=manual, legacy_names=archived)
+    return payload
 
 
-def write_catalogue(destination, kind, records, scanned, redirects=None):
-    previous = json.loads(destination.read_text(encoding="utf-8")) if destination.exists() else {}
-    redirects = {**previous.get("redirects", {}), **(redirects or {})}
-    removed = set(previous.get("removed_ids", []))
-    current = {item["id"]: item for item in records if item["id"] not in removed}
-    if previous.get("moegirl_only"):
-        approved = {item["id"] for item in previous.get("records", []) if item.get("moegirl", {}).get("url")}
-        current = {ident: row for ident, row in current.items() if ident in approved or row.get("moegirl", {}).get("url")}
-    retained = {item["id"]: item for item in previous.get("records", []) if item["id"] not in redirects and item["id"] not in removed}
-    for row in retained.values():
-        row.setdefault("last_seen_on", previous.get("retrieved_on", ""))
-    for row in current.values():
-        row["last_seen_on"] = datetime.now(timezone.utc).date().isoformat()
-    for ident, row in current.items():
-        old = retained.get(ident, {})
-        retained[ident] = {**old, **row}
-        retained[ident]["aliases"] = list(dict.fromkeys([*old.get("aliases", []), *row["aliases"]]))
-        retained[ident]["sources"] = list(dict.fromkeys([*old.get("sources", []), *row["sources"]]))
-    payload = {**previous, "schema": 1, "kind": kind, "retrieved_on": datetime.now(timezone.utc).date().isoformat(),
-               "scanned": scanned, "records": sorted(retained.values(), key=lambda item: item["id"]),
-               "manual_records": previous.get("manual_records", []), "overrides": previous.get("overrides", {}),
-               "redirects": redirects, "removed_ids": sorted(removed)}
-    destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+def merge_singer_roles(singers, creators):
+    # Keep the established creator ID and its local edits when two directories
+    # link to the same Japanese biography or primary account.
+    by_source = {}
+    for row in creators["records"]:
+        for url in row["sources"]:
+            token = japanese_title(url) or accounts(url)
+            if token:
+                by_source.setdefault(token, set()).add(row["id"])
+    creator_rows = {r["id"]: r for r in creators["records"]}
+    unmatched = []
+    for singer in singers["records"]:
+        matches = set()
+        for url in singer["sources"]:
+            matches.update(by_source.get(japanese_title(url) or accounts(url), ()))
+            voca = re.fullmatch(r"https?://(?:www\.)?vocadb\.net/Ar/(\d+)/?", url)
+            if voca and "mc:vocadb:" + voca[1] in creator_rows:
+                matches.add("mc:vocadb:" + voca[1])
+        if not matches:
+            for url in singer.get("wiki_accounts", []):
+                for ident in by_source.get(accounts(url), ()):
+                    creator = creator_rows[ident]
+                    if singer["name"].casefold() in {n.casefold() for n in [creator["name"], *creator["aliases"]]}:
+                        matches.add(ident)
+        singer.pop("wiki_accounts", None)
+        if len(matches) != 1:
+            unmatched.append(singer)
+            continue
+        creator = creator_rows[matches.pop()]
+        creator.update({key: singer[key] for key in ("wiki_url", "wikidata_id", "japan_source")})
+        creator["aliases"] = list(dict.fromkeys([*creator["aliases"], singer["name"], *singer["aliases"]]))
+        creator["sources"] = list(dict.fromkeys([*creator["sources"], *singer["sources"]]))
+        creator["roles"] = list(dict.fromkeys([*creator.get("roles", []), "music_creator", "utaite"]))
+        singers["redirects"][singer["id"]] = creator["id"]
+    singers["records"] = unmatched
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cache-dir", type=Path, default=ROOT.parent / "research" / "imas-birthday-tantou" / "public-people" / "api-cache")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "data" / "people")
-    parser.add_argument("--max-artists", type=int, default=3000, help="Maximum inspected entries per music directory")
-    parser.add_argument("--refresh", action="store_true")
+    parser.add_argument("--data-dir", type=Path, default=ROOT / "data" / "people")
+    parser.add_argument("--add", action="append", default=[], metavar="mc:vocadb:ID",
+                        help="Also verify a specific VocaDB creator. Singers are discovered from Japanese wiki profiles.")
     args = parser.parse_args()
-    if not 1 <= args.max_artists <= 20000:
-        parser.error("--max-artists must be between 1 and 20000")
-    args.cache_dir.mkdir(parents=True, exist_ok=True)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    with httpx.Client(timeout=35, follow_redirects=True, headers={"User-Agent": USER_AGENT}) as client:
-        utaite, u_scanned = fetch_artists(client, "utaitedb", "ut", "Utaite", args.cache_dir, args.max_artists, args.refresh)
-        music, m_scanned = fetch_artists(client, "vocadb", "mc", "Producer", args.cache_dir, args.max_artists, args.refresh)
-        redirects = {}
-    # Explicit database cross-references join dual-role creators without guessing
-    # that equal names necessarily identify the same person.
-    by_music_id = {record["id"]: record for record in music}
-    for singer in utaite:
-        for source in list(singer["sources"]):
-            match = re.fullmatch(r"https?://(?:www\.)?vocadb\.net/Ar/([0-9]+)", source)
-            ident = "mc:vocadb:" + match.group(1) if match else ""
-            if ident in by_music_id:
-                creator = by_music_id.pop(ident)
-                canonical = redirects.get(singer["id"], singer["id"])
-                redirects[ident] = canonical
-                target = singer
-                merge_record(target, creator)
-                target["roles"] = list(dict.fromkeys([*target.get("roles", ["utaite"]), "music_creator"]))
-    old_redirects = {}
-    for filename in ("utaite.json", "music_creators.json"):
-        path = args.output_dir / filename
-        if path.exists():
-            old_redirects.update(json.loads(path.read_text(encoding="utf-8")).get("redirects", {}))
-    removed = {ident for filename in ("utaite.json", "music_creators.json")
-               if (args.output_dir / filename).exists()
-               for ident in json.loads((args.output_dir / filename).read_text(encoding="utf-8")).get("removed_ids", [])}
-    redirects = {k: v for k, v in {**old_redirects, **redirects}.items() if k not in removed and v not in removed and not v.startswith("vt:")}
-    for origin in redirects:
-        target, seen = redirects[origin], {origin}
-        while target in redirects:
-            if target in seen:
-                raise ValueError("Circular public identity reference")
-            seen.add(target)
-            target = redirects[target]
-        redirects[origin] = target
-    utaite = [row for row in utaite if row["id"] not in redirects]
-    write_catalogue(args.output_dir / "utaite.json", "utaite", utaite, u_scanned, {k: v for k, v in redirects.items() if k.startswith("ut:")})
-    write_catalogue(args.output_dir / "music_creators.json", "music_creator", list(by_music_id.values()), m_scanned, {k: v for k, v in redirects.items() if k.startswith("mc:")})
-    print(json.dumps({"utaite": len(utaite), "music_creators": len(by_music_id), "dual_role": len(redirects)}, ensure_ascii=False))
+    if any(not re.fullmatch(r"mc:vocadb:[1-9][0-9]*", ident) for ident in args.add):
+        parser.error("Use a typed artist ID with a positive numeric database ID.")
+    results = {}
+    with httpx.Client(timeout=25, headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client:
+        for filename, (prefix, provider, artist_type) in DIRECTORIES.items():
+            path = args.data_dir / filename
+            data = json.loads(path.read_text(encoding="utf-8"))
+            additions = [i for i in args.add if i.startswith(prefix + ":")]
+            results[path] = (refresh_singers(client, data, parse_artist) if prefix == "ut" else
+                             refresh(client, data, prefix, provider, artist_type, additions))
+    merge_singer_roles(results[args.data_dir / "utaite.json"], results[args.data_dir / "music_creators.json"])
+    active = {r["id"] for data in results.values() for r in data["records"] + data["manual_records"]}
+    known = active | {key for data in results.values() for key in data.get("legacy_names", {})}
+    redirects = {key: target for data in results.values() for key, target in data["redirects"].items()}
+    for data in results.values():
+        for key, target in data["redirects"].items():
+            seen = {key}
+            while target in redirects and target not in seen:
+                seen.add(target)
+                target = redirects[target]
+            if key in active or target in seen or target not in known:
+                raise ValueError("Resolve the cross-directory identity before writing: " + key)
+            data["redirects"][key] = target
+    for path, data in results.items():
+        temp = path.with_suffix(".json.tmp")
+        temp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        temp.replace(path)
+        print(f"{path.name}: {len(data['records']) + len(data['manual_records'])} active, {len(data['legacy_names'])} archived")
 
 
 if __name__ == "__main__":

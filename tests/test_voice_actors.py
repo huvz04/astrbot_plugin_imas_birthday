@@ -140,7 +140,7 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(matches), 1)
         ident, row = matches[0]
         self.assertTrue(ident.startswith("va:imas-"))
-        self.assertEqual(row["image_url"], "")
+        self.assertIsNone(row["avatar_url"])
         self.assertTrue(row["is_idolmaster"])
         self.assertIn("上田铃帆", row["roles"])
 
@@ -276,7 +276,8 @@ class VoiceActorTests(unittest.IsolatedAsyncioTestCase):
             original = httpx.AsyncClient
             with patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kwargs: original(transport=httpx.MockTransport(respond), **kwargs)):
                 await plugin_module.ImasBirthdayPlugin._prepare_tantou_icons(self.plugin, ["va:21149", "va:21149"])
-            self.assertEqual(requests, ["https://seigura.secureserv.jp/img/talent/21149.jpg"])
+            self.assertEqual(requests, [plugin_module.VOICE_ACTOR_CATALOGUE["va:21149"]["avatar_url"]])
+            self.assertTrue(requests[0].startswith("https://seigura.com/wp-content/uploads/"))
             self.assertTrue(self.plugin._tantou_icon_path("va:21149").is_file())
 
     async def test_llm_commentary_uses_temari_voice_and_fails_closed(self):
