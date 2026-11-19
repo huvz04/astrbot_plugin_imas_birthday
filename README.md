@@ -359,7 +359,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 唱见与 P 主／曲师分别保存在 `data/people/utaite.json`、`data/people/music_creators.json`，继续直接使用 `加推 まふまふ`、`加推 田中秀和`，可用 `唱见:`、`P主:`、`曲师:` 限定同名人物。这些人物参与担当总览、担当查询、跨群同步与总榜／DD 排行，不计入偶像排行和企划占比，也不会作为偶像大师角色或声优。
 
-唱见收录范围为有日语维基人物条目、资料明确为日本歌手的个人。维护工具遍历「歌い手」分类及其子分类，也核对 UtaiteDB 引用的日语维基传记。通过维基数据国籍声明或日文人物简介核对日本身份，通过同一人物页或官方账号关联头像。团体和管人不作为独立唱见条目加入。每位收录者都保留日语维基来源和日本身份依据。[日语维基「歌い手」](https://ja.wikipedia.org/wiki/Category:歌い手) · [UtaiteDB](https://utaitedb.net/)
+唱见收录有日文 Wiki 人物页、且有公开资料能核对日本国籍或日本出身的个人。维护工具遍历日语维基百科的「歌い手」分类、ニコニコ大百科「歌い手一覧」的个人名单，以及 Seesaa「歌い手wiki」的五十音目录。每条记录保留人物页和身份依据。UtaiteDB 的头像通过同一人物条目或本人账号关联，缺图时可在管理页上传。[日语维基百科](https://ja.wikipedia.org/wiki/Category:歌い手) · [ニコニコ大百科](https://dic.nicovideo.jp/a/歌い手一覧) · [Seesaa 歌い手wiki](https://seesaawiki.jp/utaite/) · [UtaiteDB](https://utaitedb.net/)
 
 音乐创作者以 VocaDB 的制作人资料和主图为主。兼任唱见和创作者的人物，能够核对同一身份时共用登记。蓝月、优花、奶油糖等已核对的中文别名继续用于检索。退出目录的旧唱见和曲师保留显示名、旧缓存和本地裁切，已经登记的用户可以查看或减推。
 
@@ -374,7 +374,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 手动资料保存在插件外的 `AstrBot/data/imas_birthday_assets/people/utaite.json`、`music_creators.json` 的 `overrides`；上传图和裁切副本保存在同目录的 `editor/originals`、`editor/renders`。请备份整个 `people` 目录。自动目录更新不覆盖手动设置，修改生日不会主动向群发送消息。
 
-维护者可安装 `tools/requirements-public-people.txt`，运行 `python tools/sync_public_people.py` 刷新两份音乐目录。唱见工具遍历 UtaiteDB 的分页并核对日语维基来源。曲师按现有 VocaDB 编号更新，`--add mc:vocadb:编号` 可额外核对其他创作者。目录核对发生在维护时，群内查询只读取随包数据和所需头像。
+维护者可安装 `tools/requirements-public-people.txt`，运行 `python tools/sync_public_people.py` 刷新两份音乐目录，或加 `--singers-only` 单独更新唱见和兼任唱见的身份关联。曲师按现有 VocaDB 编号更新，`--add mc:vocadb:编号` 可额外核对其他创作者。群内查询使用随包目录，按需缓存头像。
 
 ### 本群担当排行
 
@@ -410,7 +410,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.110 ZIP 安装包内附这些官方偶像头像；从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图；均缺失时保留名字，头像使用空白占位。
+提供的 0.1.111 ZIP 安装包内附这些官方偶像头像。从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图。均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 

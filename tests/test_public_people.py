@@ -15,6 +15,7 @@ from PIL import Image
 from test_tantou import Event, make_plugin, plugin_module
 
 ROOT = Path(__file__).resolve().parents[1]
+SINGER_WIKI = r"^https://(?:ja\.wikipedia\.org/wiki/|dic\.nicovideo\.jp/a/|seesaawiki\.jp/utaite/d/)[^?#]+$"
 spec = importlib.util.spec_from_file_location("public_people_test_source", ROOT / "public_people.py")
 source = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(source)
@@ -43,7 +44,7 @@ class PublicPeopleSourceTests(unittest.TestCase):
                     self.assertTrue(row["source_url"])
                     self.assertTrue(row["verified_at"])
                 if kind == "utaite":
-                    self.assertTrue(row["wiki_url"].startswith("https://ja.wikipedia.org/wiki/"))
+                    self.assertRegex(row["wiki_url"], SINGER_WIKI)
                 if row.get("birthday"):
                     self.assertRegex(row["birthday"], r"^\d{2}-\d{2}$")
                     self.assertTrue(row.get("birthday_source"))
@@ -77,8 +78,13 @@ class PublicPeopleSourceTests(unittest.TestCase):
     def test_japanese_singer_scope_requires_evidence_and_keeps_existing_accounts(self):
         singers = [r for r in source.PUBLIC_PEOPLE_CATALOGUE.values() if not r["archived"]
                    and (r["kind"] == "utaite" or "utaite" in r.get("roles", []))]
-        self.assertTrue(all(r.get("wiki_url", "").startswith("https://ja.wikipedia.org/wiki/") and r.get("japan_source") for r in singers))
-        self.assertTrue({"nayuta", "柊優花", "藍月なくる", "そらる", "まふまふ"} <= {r["name"] for r in singers})
+        for row in singers:
+            self.assertRegex(row["wiki_url"], SINGER_WIKI)
+            self.assertTrue(row["japan_source"])
+            self.assertIn(row["wiki_url"], row["sources"])
+        self.assertTrue({"nayuta", "柊優花", "藍月なくる", "そらる", "まふまふ", "赤ティン", "コゲ犬", "recog"} <= {r["name"] for r in singers})
+        self.assertTrue(any("seesaawiki.jp/utaite/d/" in u for r in singers for u in r["sources"]))
+        self.assertTrue(any("dic.nicovideo.jp/a/" in r["wiki_url"] for r in singers))
         self.assertFalse({"银临", "茶理理", "熊子", "ダズビー"} & {r["name"] for r in singers})
         self.assertEqual(len(singers), len({r["wiki_url"] for r in singers}))
 
@@ -94,6 +100,71 @@ class PublicPeopleSourceTests(unittest.TestCase):
         self.assertFalse(eligible(page, entity("Q148"), True, True))
         self.assertFalse(eligible(page, entity("Q17", "Q215380"), True, True))
         self.assertFalse(eligible({"extract": "テストは台湾の歌手。"}, {}, True, True))
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_public_wiki_checks_article_identity_and_foreign_or_group_profiles(self):
+        import community_utaite as community
+        e = community.Entry("テスト", community.NICO + "/id/123", "nico", True)
+        def article(number, description, table=""):
+            body = (f'<meta property="og:url" content="{community.NICO}/id/{number}">'
+                    f'<meta property="og:description" content="{description}"><div id="article"><body>'
+                    + table + '<a href="https://www.nicovideo.jp/mylist/12">作品</a></body></div>')
+            with patch.object(community, "snapshot", return_value=(body, "2026-11-19")):
+                return community.inspect_profile(None, e)
+        self.assertIsNone(article(456, "日本の歌い手"))
+        self.assertIsNone(article(123, "テストは二人組の歌い手ユニット。"))
+        self.assertIsNone(article(123, "テストはバーチャルシンガー。"))
+        profile = article(123, "テストは歌い手。", "<table><tr><th>出身地</th><td>台湾</td></tr></table>")
+        self.assertEqual(profile[-1], "foreign")
+        profile = article(123, "テストは歌い手。", "<table><tr><th>出身地</th><td>福岡県</td></tr></table>")
+        self.assertEqual((profile[0], profile[2], profile[3]), ("ut:nicopedia:123", {"niconico:mylist/12"}, "birthplace"))
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_hometown_requires_same_performer_and_account_and_foreign_citizenship_wins(self):
+        import community_utaite as community
+        names = {"テスト"}
+        origins = {"twitter:owned": {("テスト", "source")}, "twitter:shared": {("別人", "other")}}
+        self.assertEqual(community.matching_hometowns(names, {"twitter:shared"}, origins), set())
+        self.assertEqual(community.matching_hometowns(names, {"twitter:owned"}, origins), {"source"})
+        entry = community.Entry("テスト", community.SEESAA + "d/test", "seesaa", True)
+        artist = {"defaultName": "テスト", "names": [], "webLinks": [{"category": "Official", "url": "https://x.com/owned"}]}
+        indexes = ({"テスト": {1}}, {"twitter:owned": {1}}, {1: {("P2002", "owned")}}, {})
+        def discover(tokens, country):
+            profile = ("ut:seesaa:123", entry.url, tokens, "")
+            with patch.object(community, "inspect_profile", return_value=profile):
+                return list(community.community_profiles(None, {1: entry}, {1: (artist, "2026-11-19")}, indexes,
+                                                        {("P2002", "owned"): {"Q1"}}, {"Q1": country}, origins))
+        self.assertFalse(discover({"twitter:other"}, ("source", "citizenship")))
+        self.assertFalse(discover({"twitter:owned"}, ("", "foreign")))
+        self.assertEqual(discover({"twitter:owned"}, ("", ""))[0][-2:], ("source", "birthplace"))
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_second_wiki_and_new_portrait_keep_existing_registration(self):
+        from contextlib import ExitStack
+        import community_utaite as community
+        stable = "ut:seesaa:13"
+        source_url = community.SEESAA + "d/test"
+        bio = "https://www.wikidata.org/wiki/Q1#P27"
+        old = {"records": [{"id": stable, "name": "テスト", "aliases": ["旧名"], "sources": [source_url],
+                            "wiki_url": source_url, "japan_source": bio}], "removed_ids": ["ut:utaitedb:12"]}
+        entry = community.Entry("テスト", community.NICO + "/a/test", "nico", True)
+        second = community.Entry("テスト", source_url, "seesaa", True)
+        artist = {"id": 12, "artistType": "Utaite", "status": "Finished", "defaultName": "テスト",
+                  "webLinks": [{"category": "Official", "url": "https://x.com/test"}],
+                  "mainPicture": {"urlThumb": "https://static.utaitedb.net/test.png"}}
+        profiles = [(entry, "ut:nicopedia:45", entry.url, 12, "Q1", {"twitter:test"}, bio, "citizenship"),
+                    (second, stable, source_url, None, None, {"twitter:test"}, bio, "citizenship")]
+        rows, redirects = {}, {}
+        with ExitStack() as stack:
+            for name, result in (("read_index", {}), ("collect_links", ({}, {}, {}, {})), ("geography", ({}, {})),
+                                 ("origins_by_account", {}), ("community_profiles", profiles)):
+                stack.enter_context(patch.object(community, name, return_value=result))
+            community.add_community_singers(None, {12: (artist, "2026-11-19")}, rows, old, redirects, sync.parse_artist)
+        self.assertEqual(list(rows), [stable])
+        self.assertEqual(redirects["ut:utaitedb:12"], stable)
+        self.assertIn("旧名", rows[stable]["aliases"])
+        self.assertTrue(rows[stable]["avatar_url"])
+        self.assertTrue({entry.url, source_url} <= set(rows[stable]["sources"]))
 
     @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
     def test_parser_filters_unverified_or_wrong_type_entries_but_keeps_names_and_sources(self):
@@ -142,6 +213,20 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
         self.tanaka = "mc:manual:tanaka-hidekazu"
         self.mafu = "ut:utaitedb:1097"
         self.singer = next(ident for ident, row in self.registry.items() if row["name"] == "そらる")
+
+    async def test_community_singers_can_be_added_queried_and_removed_under_their_original_ids(self):
+        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推", "赤ティン コゲ犬"))
+        group = await self.plugin._tantou_group(self.event.unified_msg_origin)
+        self.assertEqual(group[self.event.user], ["ut:utaitedb:1948", "ut:utaitedb:1176"])
+        for name in ("赤ティン", "コゲ犬"):
+            self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, name))
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "コゲ犬 赤ティン"), "成功减推了：コゲ犬、赤ティン")
+
+    def test_community_singer_with_existing_biography_or_composer_gets_one_identity(self):
+        for name in ("ゴム", "みきとP", "ラマーズP", "ゆよゆっぺ"):
+            matching = [r for r in self.registry.values() if not r["archived"] and name == r["name"]]
+            self.assertEqual(len(matching), 1, name)
+            self.assertTrue(matching[0]["kind"] == "utaite" or "utaite" in matching[0]["roles"])
 
     async def test_restored_singers_and_tanaka_resolve_and_survive_retired_id_filter(self):
         expected = ["ut:utaitedb:17118", "ut:utaitedb:24", "ut:utaitedb:1447", self.tanaka]

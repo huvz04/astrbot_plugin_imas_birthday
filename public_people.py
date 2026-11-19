@@ -29,7 +29,7 @@ def load_catalogues(root: Path, override_root: Path | None = None) -> tuple[dict
                        "overrides": {**payload.get("overrides", {}), **custom.get("overrides", {})}}
         legacy = []
         for ident, entry in payload.get("legacy_names", {}).items():
-            if not re.fullmatch(prefix + r":(?:moegirl|utaitedb|jawiki):[0-9]+", ident):
+            if not re.fullmatch(prefix + r":(?:moegirl|utaitedb|jawiki|nicopedia|seesaa):[0-9]+", ident):
                 raise ValueError(f"Invalid retired identity: {ident}")
             legacy.append({**entry, "id": ident, "archived": True, "sources": []})
         for row in [*payload.get("records", []), *payload.get("manual_records", []), *legacy]:

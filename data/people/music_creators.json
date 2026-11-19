@@ -5664,7 +5664,11 @@
         "https://ja.wikipedia.org/wiki/ラマーズP",
         "https://utaitedb.net/Ar/5039",
         "https://w.atwiki.jp/hmiku/pages/1752.html",
-        "https://zh.moegirl.org.cn/LamazeP"
+        "https://zh.moegirl.org.cn/LamazeP",
+        "https://dic.nicovideo.jp/a/%E3%83%A9%E3%83%9E%E3%83%BC%E3%82%BAp",
+        "https://www.wikidata.org/wiki/Q1706447#P27",
+        "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%83%9E%E3%83%BC%E3%82%BAP",
+        "https://x.com/lamazep"
       ],
       "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/304.jpg?v=46",
       "original_url": "https://static.vocadb.net/img/Artist/mainOrig/304.jpg?v=46",
@@ -5676,8 +5680,13 @@
       "birthday": "04-25",
       "birthday_source": "https://zh.moegirl.org.cn/LamazeP",
       "roles": [
-        "music_creator"
-      ]
+        "music_creator",
+        "utaite"
+      ],
+      "wiki_url": "https://dic.nicovideo.jp/a/%E3%83%A9%E3%83%9E%E3%83%BC%E3%82%BAp",
+      "wikidata_id": "Q1706447",
+      "japan_source": "https://www.wikidata.org/wiki/Q1706447#P27",
+      "japan_basis": "citizenship"
     },
     {
       "id": "mc:vocadb:305",
@@ -8324,7 +8333,11 @@
         "http://utaitedb.net/Ar/1269",
         "https://ja.wikipedia.org/wiki/ゆよゆっぺ",
         "http://www5.atwiki.jp/hmiku/pages/3011.html",
-        "https://zh.moegirl.org.cn/Yuyoyuppe"
+        "https://zh.moegirl.org.cn/Yuyoyuppe",
+        "https://dic.nicovideo.jp/a/%E3%82%86%E3%82%88%E3%82%86%E3%81%A3%E3%81%BA",
+        "https://www.wikidata.org/wiki/Q24868155#P27",
+        "https://ja.wikipedia.org/wiki/%E3%82%86%E3%82%88%E3%82%86%E3%81%A3%E3%81%BA",
+        "https://x.com/yupeyupe"
       ],
       "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/6.jpg?v=48",
       "original_url": "https://static.vocadb.net/img/Artist/mainOrig/6.jpg?v=48",
@@ -8336,8 +8349,13 @@
       "birthday": "09-25",
       "birthday_source": "https://zh.moegirl.org.cn/Yuyoyuppe",
       "roles": [
-        "music_creator"
-      ]
+        "music_creator",
+        "utaite"
+      ],
+      "wiki_url": "https://dic.nicovideo.jp/a/%E3%82%86%E3%82%88%E3%82%86%E3%81%A3%E3%81%BA",
+      "wikidata_id": "Q24868155",
+      "japan_source": "https://www.wikidata.org/wiki/Q24868155#P27",
+      "japan_basis": "citizenship"
     },
     {
       "id": "mc:vocadb:60331",
@@ -10813,7 +10831,11 @@
         "http://www.nicovideo.jp/mylist/21782192",
         "http://utaitedb.net/Ar/1157",
         "http://www5.atwiki.jp/hmiku/pages/11669.html",
-        "https://zh.moegirl.org.cn/MikitoP"
+        "https://zh.moegirl.org.cn/MikitoP",
+        "https://dic.nicovideo.jp/a/%E3%81%BF%E3%81%8D%E3%81%A8p",
+        "https://www.wikidata.org/wiki/Q74145740#P27",
+        "https://ja.wikipedia.org/wiki/%E3%81%BF%E3%81%8D%E3%81%A8P",
+        "https://x.com/mikito_p_"
       ],
       "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/876.jpg?v=31",
       "original_url": "https://static.vocadb.net/img/Artist/mainOrig/876.jpg?v=31",
@@ -10825,8 +10847,13 @@
       "birthday": "08-30",
       "birthday_source": "https://zh.moegirl.org.cn/MikitoP",
       "roles": [
-        "music_creator"
-      ]
+        "music_creator",
+        "utaite"
+      ],
+      "wiki_url": "https://dic.nicovideo.jp/a/%E3%81%BF%E3%81%8D%E3%81%A8p",
+      "wikidata_id": "Q74145740",
+      "japan_source": "https://www.wikidata.org/wiki/Q74145740#P27",
+      "japan_basis": "citizenship"
     },
     {
       "id": "mc:vocadb:88032",

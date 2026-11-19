@@ -116,6 +116,7 @@ def eligible(page, entity, in_category, singer_match):
 
 
 def refresh_singers(client, previous, parse_artist):
+    from community_utaite import add_community_singers
     candidates = provider_rows(client)
     by_title, by_account = defaultdict(set), defaultdict(set)
     for ident, (row, _) in candidates.items():
@@ -232,6 +233,7 @@ def refresh_singers(client, previous, parse_artist):
             wiki_id = "ut:jawiki:" + str(pages[unquote(row["wiki_url"].split("/wiki/")[1]).replace("_", " ")]["pageid"])
             if wiki_id in old or wiki_id in redirects or wiki_id in archived:
                 redirects[wiki_id] = row["id"]
+    community = add_community_singers(client, candidates, records, previous, redirects, parse_artist)
     for ident, row in old.items():
         if ident not in records and ident not in redirects:
             archived[ident] = {"name": row["name"], "aliases": row.get("aliases", [])}
@@ -241,4 +243,4 @@ def refresh_singers(client, previous, parse_artist):
             "removed_ids": sorted(set(previous.get("removed_ids", [])) - set(records) - set(archived) - set(redirects)),
             "redirects": redirects,
             "coverage": {"wiki_categories": "Category:歌い手", "category_articles": len(category),
-                         "directory_entries_scanned": len(candidates), "wiki_articles_checked": len(pages)}}
+                         "directory_entries_scanned": len(candidates), "wiki_articles_checked": len(pages), **community}}

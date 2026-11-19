@@ -121,30 +121,44 @@ def merge_singer_roles(singers, creators):
             unmatched.append(singer)
             continue
         creator = creator_rows[matches.pop()]
-        creator.update({key: singer[key] for key in ("wiki_url", "wikidata_id", "japan_source")})
+        creator.update({key: singer[key] for key in ("wiki_url", "wikidata_id", "japan_source", "japan_basis") if key in singer})
         creator["aliases"] = list(dict.fromkeys([*creator["aliases"], singer["name"], *singer["aliases"]]))
         creator["sources"] = list(dict.fromkeys([*creator["sources"], *singer["sources"]]))
         creator["roles"] = list(dict.fromkeys([*creator.get("roles", []), "music_creator", "utaite"]))
         singers["redirects"][singer["id"]] = creator["id"]
     singers["records"] = unmatched
+    for row in unmatched:
+        singers["redirects"].pop(row["id"], None)
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data" / "people")
+    parser.add_argument("--singers-only", action="store_true", help="Reuse the installed composer profiles while refreshing singers.")
     parser.add_argument("--add", action="append", default=[], metavar="mc:vocadb:ID",
                         help="Also verify a specific VocaDB creator. Singers are discovered from Japanese wiki profiles.")
     args = parser.parse_args()
     if any(not re.fullmatch(r"mc:vocadb:[1-9][0-9]*", ident) for ident in args.add):
         parser.error("Use a typed artist ID with a positive numeric database ID.")
+    if args.singers_only and args.add:
+        parser.error("--singers-only cannot add a composer")
     results = {}
     with httpx.Client(timeout=25, headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client:
         for filename, (prefix, provider, artist_type) in DIRECTORIES.items():
             path = args.data_dir / filename
             data = json.loads(path.read_text(encoding="utf-8"))
             additions = [i for i in args.add if i.startswith(prefix + ":")]
-            results[path] = (refresh_singers(client, data, parse_artist) if prefix == "ut" else
-                             refresh(client, data, prefix, provider, artist_type, additions))
+            if prefix == "ut":
+                results[path] = refresh_singers(client, data, parse_artist)
+            elif args.singers_only:
+                for row in data["records"]:
+                    if "utaite" in row.get("roles", []):
+                        row["roles"].remove("utaite")
+                        for key in ("wiki_url", "wikidata_id", "japan_source", "japan_basis"):
+                            row.pop(key, None)
+                results[path] = data
+            else:
+                results[path] = refresh(client, data, prefix, provider, artist_type, additions)
     merge_singer_roles(results[args.data_dir / "utaite.json"], results[args.data_dir / "music_creators.json"])
     active = {r["id"] for data in results.values() for r in data["records"] + data["manual_records"]}
     known = active | {key for data in results.values() for key in data.get("legacy_names", {})}
