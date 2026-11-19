@@ -207,6 +207,46 @@
       "japan_source": "https://www.wikidata.org/wiki/Q55973351#P27"
     },
     {
+      "id": "ut:jawiki:4072016",
+      "name": "ぷす",
+      "directory": "jawiki",
+      "aliases": [
+        "ぷす",
+        "Pusu",
+        "じっぷす",
+        "Zips",
+        "矢野麻也",
+        "Yano Asaya"
+      ],
+      "sources": [
+        "https://ja.wikipedia.org/wiki/%E3%81%B7%E3%81%99",
+        "https://x.com/Pusu_kun",
+        "https://vocadb.net/Ar/3382",
+        "https://twitter.com/Zips3",
+        "http://www.nicovideo.jp/user/10019421",
+        "http://www.youtube.com/user/EXSpins",
+        "http://utaitedb.net/Ar/1516",
+        "https://ja.wikipedia.org/wiki/ぷす",
+        "http://www5.atwiki.jp/hmiku/pages/24976.html",
+        "https://zh.moegirl.org.cn/Pusu"
+      ],
+      "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/3382.png?v=32",
+      "source_url": "https://vocadb.net/Ar/3382",
+      "original_url": "https://static.vocadb.net/img/Artist/mainOrig/3382.png?v=32",
+      "license": null,
+      "image_author": null,
+      "verified_at": "2026-11-18",
+      "birthday": "05-23",
+      "birthday_source": "https://zh.moegirl.org.cn/Pusu",
+      "roles": [
+        "utaite"
+      ],
+      "wiki_url": "https://ja.wikipedia.org/wiki/%E3%81%B7%E3%81%99",
+      "wikidata_id": "Q84975591",
+      "japan_source": "https://www.wikidata.org/wiki/Q84975591#P27",
+      "former_creator_id": "mc:vocadb:3382"
+    },
+    {
       "id": "ut:jawiki:4073365",
       "name": "アボット",
       "directory": "jawiki",
@@ -226,6 +266,43 @@
       "wiki_url": "https://ja.wikipedia.org/wiki/%E3%82%A2%E3%83%9C%E3%83%83%E3%83%88_%28%E9%A2%A8%E4%BF%97%E5%AC%A2%29",
       "wikidata_id": "Q85869963",
       "japan_source": "https://www.wikidata.org/wiki/Q85869963#P27"
+    },
+    {
+      "id": "ut:jawiki:4139705",
+      "name": "Ayase",
+      "directory": "jawiki",
+      "aliases": [
+        "Ayase",
+        "Ayase_0404"
+      ],
+      "sources": [
+        "https://ja.wikipedia.org/wiki/Ayase",
+        "https://x.com/Ayase_0404",
+        "https://vocadb.net/Ar/70347",
+        "https://www.nicovideo.jp/user/86488427",
+        "https://www.youtube.com/channel/UCvpredjG93ifbCP1Y77JyFA",
+        "https://twitter.com/Ayase_0404",
+        "https://utaitedb.net/Ar/23103",
+        "https://zh.moegirl.org.cn/Ayase",
+        "https://commons.wikimedia.org/wiki/File:Ayase_at_the_2024_Melon_Music_Awards.png"
+      ],
+      "avatar_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/81/Ayase_at_the_2024_Melon_Music_Awards.png/330px-Ayase_at_the_2024_Melon_Music_Awards.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "source_url": "https://commons.wikimedia.org/wiki/File:Ayase_at_the_2024_Melon_Music_Awards.png",
+      "original_url": "https://upload.wikimedia.org/wikipedia/commons/8/81/Ayase_at_the_2024_Melon_Music_Awards.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+      "license": "CC BY 3.0",
+      "image_author": "TenAsia",
+      "verified_at": "2026-11-19",
+      "birthday": "04-04",
+      "birthday_source": "https://zh.moegirl.org.cn/Ayase",
+      "roles": [
+        "utaite"
+      ],
+      "license_url": "https://creativecommons.org/licenses/by/3.0",
+      "attribution": "TenAsia",
+      "wiki_url": "https://ja.wikipedia.org/wiki/Ayase",
+      "wikidata_id": "Q96713094",
+      "japan_source": "https://www.wikidata.org/wiki/Q96713094#P27",
+      "former_creator_id": "mc:vocadb:70347"
     },
     {
       "id": "ut:jawiki:4328224",
@@ -267,6 +344,40 @@
       "wiki_url": "https://ja.wikipedia.org/wiki/%E5%9D%82%E7%94%B0%E4%BD%B3%E5%AD%90",
       "wikidata_id": "Q110403275",
       "japan_source": "https://www.wikidata.org/wiki/Q110403275#P27"
+    },
+    {
+      "id": "ut:jawiki:4541836",
+      "name": "Aqu3ra",
+      "directory": "jawiki",
+      "aliases": [
+        "Aqu3ra",
+        "あくえら",
+        "あぷえら",
+        "Apu3ra",
+        "아쿠에라",
+        "아푸에라"
+      ],
+      "sources": [
+        "https://ja.wikipedia.org/wiki/Aqu3ra",
+        "https://vocadb.net/Ar/69848",
+        "https://www.nicovideo.jp/user/83706458",
+        "https://www.youtube.com/channel/UCT5ZYc0Whk1NX_Fdvlm1baw",
+        "https://twitter.com/AQU3RA_music",
+        "https://zh.moegirl.org.cn/Aqu3ra"
+      ],
+      "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/69848.png?v=15",
+      "source_url": "https://vocadb.net/Ar/69848",
+      "original_url": "https://static.vocadb.net/img/Artist/mainOrig/69848.png?v=15",
+      "license": null,
+      "image_author": null,
+      "verified_at": "2026-11-18",
+      "roles": [
+        "utaite"
+      ],
+      "wiki_url": "https://ja.wikipedia.org/wiki/Aqu3ra",
+      "wikidata_id": "Q111111943",
+      "japan_source": "https://www.wikidata.org/wiki/Q111111943#P27",
+      "former_creator_id": "mc:vocadb:69848"
     },
     {
       "id": "ut:jawiki:4564349",
@@ -455,6 +566,128 @@
       "wiki_url": "https://ja.wikipedia.org/wiki/Zillah",
       "wikidata_id": null,
       "japan_source": "https://ja.wikipedia.org/wiki/Zillah"
+    },
+    {
+      "id": "ut:nicopedia:289253",
+      "name": "ラマーズP",
+      "directory": "nicopedia",
+      "aliases": [
+        "ラマーズP",
+        "LamazeP",
+        "名無し",
+        "えせえし",
+        "人生アヌスＰ",
+        "Jinsei AnusP",
+        "サウザーP",
+        "ThouzerP",
+        "しゃいろｎ",
+        "Shairon",
+        "たこつぼ",
+        "라마즈P",
+        "ゴジマジP",
+        "拉马兹P"
+      ],
+      "sources": [
+        "https://dic.nicovideo.jp/a/%E3%83%A9%E3%83%9E%E3%83%BC%E3%82%BAp",
+        "https://www.wikidata.org/wiki/Q1706447#P27",
+        "https://ja.wikipedia.org/wiki/%E3%83%A9%E3%83%9E%E3%83%BC%E3%82%BAP",
+        "https://x.com/lamazep",
+        "https://vocadb.net/Ar/304"
+      ],
+      "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/304.jpg?v=46",
+      "source_url": "https://vocadb.net/Ar/304",
+      "original_url": "https://static.vocadb.net/img/Artist/mainOrig/304.jpg?v=46",
+      "license": null,
+      "image_author": null,
+      "verified_at": "2026-11-18",
+      "wiki_url": "https://dic.nicovideo.jp/a/%E3%83%A9%E3%83%9E%E3%83%BC%E3%82%BAp",
+      "wikidata_id": "Q1706447",
+      "japan_source": "https://www.wikidata.org/wiki/Q1706447#P27",
+      "japan_basis": "citizenship",
+      "birthday": "04-25",
+      "birthday_source": "https://zh.moegirl.org.cn/LamazeP",
+      "roles": [
+        "utaite"
+      ],
+      "former_creator_id": "mc:vocadb:304"
+    },
+    {
+      "id": "ut:nicopedia:2904458",
+      "name": "ゆよゆっぺ",
+      "directory": "nicopedia",
+      "aliases": [
+        "ゆよゆっぺ",
+        "Yuyoyuppe",
+        "DJ'TEKINA//SOMETHING",
+        "ふにゅ",
+        "Funyu",
+        "yupeyupe",
+        "間宮丈裕",
+        "Mamiya Takehiro",
+        "ゆよゆーっぺ",
+        "Yyyp"
+      ],
+      "sources": [
+        "https://dic.nicovideo.jp/a/%E3%82%86%E3%82%88%E3%82%86%E3%81%A3%E3%81%BA",
+        "https://www.wikidata.org/wiki/Q24868155#P27",
+        "https://ja.wikipedia.org/wiki/%E3%82%86%E3%82%88%E3%82%86%E3%81%A3%E3%81%BA",
+        "https://x.com/yupeyupe",
+        "https://vocadb.net/Ar/6"
+      ],
+      "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/6.jpg?v=48",
+      "source_url": "https://vocadb.net/Ar/6",
+      "original_url": "https://static.vocadb.net/img/Artist/mainOrig/6.jpg?v=48",
+      "license": null,
+      "image_author": null,
+      "verified_at": "2026-11-18",
+      "wiki_url": "https://dic.nicovideo.jp/a/%E3%82%86%E3%82%88%E3%82%86%E3%81%A3%E3%81%BA",
+      "wikidata_id": "Q24868155",
+      "japan_source": "https://www.wikidata.org/wiki/Q24868155#P27",
+      "japan_basis": "citizenship",
+      "birthday": "09-25",
+      "birthday_source": "https://zh.moegirl.org.cn/Yuyoyuppe",
+      "roles": [
+        "utaite"
+      ],
+      "former_creator_id": "mc:vocadb:6"
+    },
+    {
+      "id": "ut:nicopedia:4517914",
+      "name": "みきとP",
+      "directory": "nicopedia",
+      "aliases": [
+        "みきとP",
+        "MikitoP",
+        "愛島",
+        "Aijima",
+        "미키토P",
+        "island_",
+        "爱岛",
+        "米奇头"
+      ],
+      "sources": [
+        "https://dic.nicovideo.jp/a/%E3%81%BF%E3%81%8D%E3%81%A8p",
+        "https://www.wikidata.org/wiki/Q74145740#P27",
+        "https://ja.wikipedia.org/wiki/%E3%81%BF%E3%81%8D%E3%81%A8P",
+        "https://x.com/mikito_p_",
+        "https://vocadb.net/Ar/876"
+      ],
+      "avatar_url": "https://static.vocadb.net/img/Artist/mainThumb/876.jpg?v=31",
+      "source_url": "https://vocadb.net/Ar/876",
+      "original_url": "https://static.vocadb.net/img/Artist/mainOrig/876.jpg?v=31",
+      "license": null,
+      "image_author": null,
+      "verified_at": "2026-11-18",
+      "wiki_url": "https://dic.nicovideo.jp/a/%E3%81%BF%E3%81%8D%E3%81%A8p",
+      "wikidata_id": "Q74145740",
+      "japan_source": "https://www.wikidata.org/wiki/Q74145740#P27",
+      "japan_basis": "citizenship",
+      "birthday": "08-30",
+      "birthday_source": "https://zh.moegirl.org.cn/MikitoP",
+      "roles": [
+        "utaite"
+      ],
+      "former_creator_id": "mc:vocadb:876"
     },
     {
       "id": "ut:utaitedb:10157",
@@ -971,7 +1204,6 @@
       "birthday": "10-18",
       "birthday_source": "https://zh.moegirl.org.cn/Mafumafu",
       "roles": [
-        "music_creator",
         "utaite"
       ],
       "wiki_url": "https://ja.wikipedia.org/wiki/%E3%81%BE%E3%81%B5%E3%81%BE%E3%81%B5",
@@ -1413,9 +1645,7 @@
       "last_seen_on": "2026-11-19",
       "birthday": "01-31",
       "birthday_source": "https://zh.moegirl.org.cn/%E7%BE%8E%E4%BE%9D%E7%A4%BC%E8%8A%BD",
-      "roles": [
-        "music_creator"
-      ],
+      "roles": [],
       "wiki_url": "https://ja.wikipedia.org/wiki/%E3%83%A1%E3%82%A4%E3%83%AA%E3%82%A2",
       "wikidata_id": "Q3550799",
       "japan_source": "https://www.wikidata.org/wiki/Q3550799#P27"
@@ -1590,7 +1820,6 @@
       "birthday": "02-25",
       "birthday_source": "https://zh.moegirl.org.cn/%E5%A4%8F%E4%BB%A3%E5%AD%9D%E6%98%8E",
       "roles": [
-        "music_creator",
         "utaite"
       ],
       "wiki_url": "https://ja.wikipedia.org/wiki/%E5%A4%8F%E4%BB%A3%E5%AD%9D%E6%98%8E",
@@ -1875,7 +2104,6 @@
       "birthday": "10-03",
       "birthday_source": "https://zh.moegirl.org.cn/Senra",
       "roles": [
-        "music_creator",
         "utaite"
       ],
       "wiki_url": "https://ja.wikipedia.org/wiki/%E3%82%BB%E3%83%B3%E3%83%A9",
@@ -2057,7 +2285,6 @@
       "birthday": "12-26",
       "birthday_source": "https://zh.moegirl.org.cn/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85",
       "roles": [
-        "music_creator",
         "utaite"
       ],
       "wiki_url": "https://ja.wikipedia.org/wiki/%E4%BD%90%E9%A6%99%E6%99%BA%E4%B9%85",
@@ -2624,9 +2851,7 @@
       "last_seen_on": "2026-11-19",
       "birthday": "03-04",
       "birthday_source": "https://zh.moegirl.org.cn/DAOKO",
-      "roles": [
-        "music_creator"
-      ],
+      "roles": [],
       "wiki_url": "https://ja.wikipedia.org/wiki/Daoko",
       "wikidata_id": "Q17161119",
       "japan_source": "https://www.wikidata.org/wiki/Q17161119#P27"
@@ -2902,9 +3127,7 @@
       "last_seen_on": "2026-11-19",
       "birthday": "02-16",
       "birthday_source": "https://zh.moegirl.org.cn/%E6%9F%9A%E6%9C%A8%E6%A2%A8%E6%B2%99",
-      "roles": [
-        "music_creator"
-      ],
+      "roles": [],
       "wiki_url": "https://ja.wikipedia.org/wiki/Risa_Yuzuki",
       "wikidata_id": "Q81373301",
       "japan_source": "https://www.wikidata.org/wiki/Q81373301#P27"
@@ -4064,9 +4287,7 @@
       "last_seen_on": "2026-11-19",
       "birthday": "03-08",
       "birthday_source": "https://zh.moegirl.org.cn/UiNA",
-      "roles": [
-        "music_creator"
-      ],
+      "roles": [],
       "wiki_url": "https://ja.wikipedia.org/wiki/%E3%81%86%E3%81%84%E3%81%AB%E3%82%83%E3%81%99",
       "wikidata_id": "Q28067844",
       "japan_source": "https://www.wikidata.org/wiki/Q28067844#P27"
@@ -4730,9 +4951,7 @@
       "license": null,
       "verified_at": "2026-11-19",
       "last_seen_on": "2026-11-19",
-      "roles": [
-        "music_creator"
-      ],
+      "roles": [],
       "wiki_url": "https://ja.wikipedia.org/wiki/YUC%27e",
       "wikidata_id": "Q123406062",
       "japan_source": "https://www.wikidata.org/wiki/Q123406062#P27"
@@ -8178,13 +8397,7 @@
     "ut:utaitedb:9976"
   ],
   "redirects": {
-    "ut:jawiki:4072016": "mc:vocadb:3382",
-    "ut:jawiki:4139705": "mc:vocadb:70347",
-    "ut:jawiki:4541836": "mc:vocadb:69848",
-    "ut:utaitedb:1046": "ut:jawiki:3222211",
-    "ut:nicopedia:289253": "mc:vocadb:304",
-    "ut:nicopedia:2904458": "mc:vocadb:6",
-    "ut:nicopedia:4517914": "mc:vocadb:876"
+    "ut:utaitedb:1046": "ut:jawiki:3222211"
   },
   "coverage": {
     "wiki_categories": "Category:歌い手",

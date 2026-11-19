@@ -690,7 +690,7 @@ class ImasBirthdayPlugin(Star):
             self.people_editor = editor_module.PeopleEditor(self, editor_root.parent / "people", PUBLIC_PEOPLE_CATALOGUE)
             self.people_editor.register(context)
         except (ValueError, OSError, KeyError) as exc:
-            logger.warning(f"唱见与P主编辑页暂不可用，请检查独立人物覆盖文件：{type(exc).__name__}")
+            logger.warning(f"唱见与偶像大师幕后编辑页暂不可用，请检查人物资料文件：{type(exc).__name__}")
         if not self.editor.register(context):
             logger.info("当前 AstrBot 不支持插件页面；角色编辑页面需要 AstrBot 4.27.3 或更新版本。")
         with contextlib.suppress(RuntimeError):
@@ -1568,9 +1568,19 @@ class ImasBirthdayPlugin(Star):
         ident = self._public_person_id(name)
         if ident:
             row = PUBLIC_PEOPLE_CATALOGUE[ident]
-            types = {row["kind"], *row.get("roles", [])}
-            prefix_map = {"utaite": ("唱见",), "music_creator": ("曲师", "P主")}
-            prefixes = [prefix for kind, values in prefix_map.items() if kind in types for prefix in values]
+            if row["kind"] == "utaite":
+                prefixes = ["唱见"]
+            elif row.get("archived"):
+                prefixes = ["曲师", "P主"]
+            else:
+                roles = set(row.get("roles", []))
+                prefixes = ["幕后"]
+                if roles & {"producer", "series_lead"}:
+                    prefixes.append("制作人")
+                if roles & {"composer", "arranger", "sound_director"}:
+                    prefixes.append("曲师")
+                if "composer" in roles:
+                    prefixes.append("作曲家")
             aliases = row["aliases"]
             return [*aliases, *(prefix + ":" + alias for prefix in prefixes for alias in aliases)]
         if self._voice_actor_id(name):
@@ -1613,7 +1623,11 @@ class ImasBirthdayPlugin(Star):
 
     def _tantou_candidate_label(self, name: str) -> str:
         ident = self._public_person_id(name)
-        kind = PUBLIC_PERSON_LABELS[PUBLIC_PEOPLE_CATALOGUE[ident]["kind"]] if ident else "声优" if self._voice_actor_id(name) else "角色"
+        if ident:
+            row = PUBLIC_PEOPLE_CATALOGUE[ident]
+            kind = "旧登记" if row.get("archived") else PUBLIC_PERSON_LABELS[row["kind"]]
+        else:
+            kind = "声优" if self._voice_actor_id(name) else "角色"
         return f"{self._tantou_query_label(name)}（{kind}）"
 
     @lru_cache(maxsize=8192)
@@ -2143,14 +2157,24 @@ class ImasBirthdayPlugin(Star):
             row = PUBLIC_PEOPLE_CATALOGUE[ident]
             directory = self.tantou_icons_dir / "people" / row["kind"]
             if row.get("archived"):
-                # Legacy cache and hand-edited originals remain usable on old cards.
+                previous = row.get("cached_avatar_key", "")
+                if re.fullmatch("[0-9a-f]{64}", previous):
+                    cached = directory / (previous + ".png")
+                    if cached.is_file():
+                        return cached
                 return directory / (hashlib.sha256(ident.encode()).hexdigest() + ".png")
         else:
             ident = name
             row = VOICE_ACTOR_CATALOGUE[name]
             directory = self.tantou_icons_dir / "seiyuu"
         key = json.dumps([ident, row.get("avatar_url"), row.get("verified_at")], ensure_ascii=False)
-        return directory / (hashlib.sha256(key.encode()).hexdigest() + ".png")
+        path = directory / (hashlib.sha256(key.encode()).hexdigest() + ".png")
+        if row.get("former_creator_id") and not path.is_file():
+            old_key = json.dumps([row["former_creator_id"], row.get("avatar_url"), row.get("verified_at")], ensure_ascii=False)
+            old_path = self.tantou_icons_dir / "people" / "music_creator" / (hashlib.sha256(old_key.encode()).hexdigest() + ".png")
+            if old_path.is_file():
+                return old_path
+        return path
 
     def _tantou_icon_path(self, name: str) -> Path | None:
         if self._public_person_id(name) or self._voice_actor_id(name):
@@ -2226,7 +2250,9 @@ class ImasBirthdayPlugin(Star):
                                 if source.format not in {"PNG", "JPEG", "WEBP"} or max(source.size) > 4096:
                                     raise ValueError("Unexpected portrait size or format")
                                 portrait = source.convert("RGBA")
-                                portrait.thumbnail((320, 320), Image.Resampling.LANCZOS)
+                                zoom = (row.get("portrait_crop") or {}).get("zoom", 1)
+                                edge = 960 if zoom > 1 else 320
+                                portrait.thumbnail((edge, edge), Image.Resampling.LANCZOS)
                             path = self._person_photo_path(name)
                             path.parent.mkdir(parents=True, exist_ok=True)
                             with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".png", delete=False) as output:
@@ -3785,7 +3811,14 @@ class ImasBirthdayPlugin(Star):
                     avatar = ImageOps.contain(avatar, (size, size), Image.Resampling.LANCZOS)
                     canvas.paste(avatar, (x + (size - avatar.width) // 2, y + (size - avatar.height) // 2), avatar)
                     return
-                if (self._voice_actor_id(name) or self._public_person_id(name)) and not custom:
+                directory_crop = PUBLIC_PEOPLE_CATALOGUE.get(self._public_person_id(name), {}).get("portrait_crop")
+                if directory_crop and official:
+                    if __package__:
+                        from .asset_editor import crop_image
+                    else:
+                        from asset_editor import crop_image
+                    avatar = crop_image(avatar, (size, avatar_height), directory_crop)
+                elif (self._voice_actor_id(name) or self._public_person_id(name)) and not custom:
                     avatar = ImageOps.contain(avatar, (round(size * .64), round(avatar_height * .80)), Image.Resampling.LANCZOS)
                 else:
                     avatar = ImageOps.fit(avatar, (size, avatar_height), Image.Resampling.LANCZOS, centering=(0.5, 0.5) if self._tantou_member_id(name) else (0.5, 0.2))

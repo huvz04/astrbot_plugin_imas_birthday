@@ -218,10 +218,6 @@ def refresh_singers(client, previous, parse_artist):
         japanese_claim = any(c["id"] == "Q17" for c in claims(entity, "P27"))
         row["japan_source"] = "https://www.wikidata.org/wiki/" + qid + "#P27" if japanese_claim else wiki
         row["sources"].extend("https://x.com/" + acc for acc in claims(entity, "P2002") if re.fullmatch(r"[A-Za-z0-9_]{1,15}", acc))
-        if key(row["name"]) == key(re.sub(r" \([^()]+\)$", "", title)):
-            # This also lets an existing VocaDB composer keep their original ID
-            # when the Japanese singer page links to the composer's account.
-            row["wiki_accounts"] = list(wiki_links.values())
         row["sources"] = list(dict.fromkeys([wiki, *row["sources"], *previous_row.get("sources", []),
                                             *([row["source_url"]] if row.get("source_url") else [])]))
         records[row["id"]] = row
@@ -234,6 +230,19 @@ def refresh_singers(client, previous, parse_artist):
             if wiki_id in old or wiki_id in redirects or wiki_id in archived:
                 redirects[wiki_id] = row["id"]
     community = add_community_singers(client, candidates, records, previous, redirects, parse_artist)
+    for row in records.values():
+        former = old.get(row["id"], {})
+        if former.get("former_creator_id"):
+            row["former_creator_id"] = former["former_creator_id"]
+            if not row.get("avatar_url") and former.get("source_url"):
+                for field in ("avatar_url", "original_url", "source_url", "license", "license_url", "image_author",
+                              "attribution", "verified_at"):
+                    if field in former:
+                        row[field] = former[field]
+                if row["source_url"] not in row["sources"]:
+                    row["sources"].append(row["source_url"])
+        # An active singer always takes precedence over an old cross-directory redirect.
+        redirects.pop(row["id"], None)
     for ident, row in old.items():
         if ident not in records and ident not in redirects:
             archived[ident] = {"name": row["name"], "aliases": row.get("aliases", [])}

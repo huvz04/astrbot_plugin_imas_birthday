@@ -1,4 +1,4 @@
-"""Optionally enrich existing singer/producer birthdays from public Moegirl pages.
+"""Optionally enrich existing Japanese singer birthdays from public Moegirl pages.
 
 No login, search fuzzing, real-name guessing, or runtime crawling. Only existing
 catalogue identities matched by unique stage names or official accounts are used.
@@ -201,9 +201,9 @@ def main():
     if not .4 <= args.interval <= 30:
         parser.error("--interval must be between 0.4 and 30 seconds")
     args.cache_dir.mkdir(parents=True, exist_ok=True)
-    payloads = {filename: json.loads((args.data_dir / filename).read_text(encoding="utf-8"))
-                for filename in ("utaite.json", "music_creators.json")}
-    rows = {row["id"]: row for p in payloads.values() for row in [*p["records"], *p.get("manual_records", [])]}
+    path = args.data_dir / "utaite.json"
+    singers = json.loads(path.read_text(encoding="utf-8"))
+    rows = {row["id"]: row for row in [*singers["records"], *singers.get("manual_records", [])]}
     index = {}
     for ident, row in rows.items():
         for alias in [row["name"], *row.get("aliases", [])]:
@@ -229,12 +229,11 @@ def main():
             row["moegirl"] = {"url": source, "title": profile["title"], "image_url": profile["image_url"],
                               "revision": profile.get("revision"), "retrieved_on": datetime.now(timezone.utc).date().isoformat()}
             count += 1
-        titles = set()
-        for category in ("网络歌手", "VOCALOID职人", "作曲家"):
-            try:
-                titles.update(category_titles(client, category, args.cache_dir, args.interval))
-            except (httpx.HTTPError, ValueError) as exc:
-                print(f"Category {category}: {type(exc).__name__}", flush=True)
+        try:
+            titles = set(category_titles(client, "网络歌手", args.cache_dir, args.interval))
+        except (httpx.HTTPError, ValueError) as exc:
+            print(f"Category 网络歌手: {type(exc).__name__}", flush=True)
+            titles = set()
         # Explicit reference links can cover pages outside the main categories.
         for row in rows.values():
             for source in row.get("sources", []):
@@ -242,7 +241,6 @@ def main():
                 if p.hostname in {"zh.moegirl.org.cn", "mzh.moegirl.org.cn"}:
                     from urllib.parse import unquote
                     titles.add(unquote(p.path.strip("/")).replace("_", " "))
-        titles.add("田中秀和")
         targets = [(title, index[key(title.replace("_", " "))]) for title in sorted(titles)
                    if key(title.replace("_", " ")) in index]
         print(f"Public category pages: {len(titles)}, matching titles: {len(targets)}", flush=True)
@@ -277,10 +275,8 @@ def main():
                 print(f"Skipped {title}: {type(exc).__name__}", flush=True)
             if number % 25 == 0:
                 print(f"Reviewed {number}/{len(targets)}, birthdays {birthdays}", flush=True)
-        for p in payloads.values():
-            p["enrichment"] = {"source": BASE, "retrieved_on": datetime.now(timezone.utc).date().isoformat(), "scope": "existing singers and music creators only"}
-        for filename, p in payloads.items():
-            (args.data_dir / filename).write_text(json.dumps(p, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        singers["enrichment"] = {"source": BASE, "retrieved_on": datetime.now(timezone.utc).date().isoformat(), "scope": "existing Japanese singers only"}
+        path.write_text(json.dumps(singers, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"matched": count, "birthdays": birthdays, "skipped_profiles": len(excluded)}, ensure_ascii=False))
 
 

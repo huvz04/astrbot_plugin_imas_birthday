@@ -7,9 +7,9 @@ from bs4 import BeautifulSoup
 from catalogue_sources import snapshot
 
 
-def commons_portrait(client, filename):
+def commons_portrait(client, filename, width=320):
     params = {"action": "query", "format": "json", "formatversion": 2, "prop": "imageinfo",
-              "titles": "File:" + filename, "iiprop": "url|extmetadata", "iiurlwidth": 320}
+              "titles": "File:" + filename, "iiprop": "url|extmetadata", "iiurlwidth": width}
     raw, checked = snapshot(client, "https://commons.wikimedia.org/w/api.php?" + urlencode(params))
     page, = json.loads(raw)["query"]["pages"]
     info, = page.get("imageinfo", [])

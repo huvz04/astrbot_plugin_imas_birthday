@@ -31,7 +31,7 @@ except ModuleNotFoundError as exc:
 
 
 class PublicPeopleSourceTests(unittest.TestCase):
-    def test_two_physical_files_have_typed_stable_ids_sources_and_no_imas_data(self):
+    def test_singer_and_staff_files_keep_separate_typed_ids_and_staff_credits(self):
         counts = Counter()
         for filename, (kind, prefix) in source.CATALOGUES.items():
             payload = json.loads((ROOT / "data" / "people" / filename).read_text(encoding="utf-8"))
@@ -45,6 +45,10 @@ class PublicPeopleSourceTests(unittest.TestCase):
                     self.assertTrue(row["verified_at"])
                 if kind == "utaite":
                     self.assertRegex(row["wiki_url"], SINGER_WIKI)
+                else:
+                    self.assertEqual(row["directory"], "imas_staff")
+                    self.assertIn(row["credit_url"], row["sources"])
+                    self.assertTrue(row["credit"] and row["roles"])
                 if row.get("birthday"):
                     self.assertRegex(row["birthday"], r"^\d{2}-\d{2}$")
                     self.assertTrue(row.get("birthday_source"))
@@ -52,12 +56,11 @@ class PublicPeopleSourceTests(unittest.TestCase):
                 counts[kind] += 1
         self.assertNotIn("vtuber", counts)
         self.assertFalse((ROOT / "data" / "people" / "vtubers.json").exists())
-        self.assertGreater(counts["music_creator"], 200)
         self.assertGreater(counts["utaite"], 48)
-        self.assertFalse(any(":moegirl:" in i for i in plugin_module.ImasBirthdayPlugin._public_people_records()))
+        self.assertNotIn("mc:vocadb:45", plugin_module.ImasBirthdayPlugin._public_people_records())
         self.assertTrue(source.PUBLIC_PERSON_REDIRECTS)
         for ident, row in source.PUBLIC_PEOPLE_CATALOGUE.items():
-            self.assertFalse(row["is_idolmaster"])
+            self.assertEqual(row["is_idolmaster"], row.get("directory") == "imas_staff")
             self.assertNotIn(ident, plugin_module.CHARACTER_PROFILES)
             self.assertNotIn(ident, plugin_module.CHARACTER_TANTOU_ICONS)
 
@@ -177,20 +180,19 @@ class PublicPeopleSourceTests(unittest.TestCase):
             self.assertIsNone(sync.parse_artist({**row, **change}, "vocadb", "mc", "Producer"))
 
     @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
-    def test_rebuild_keeps_existing_ids_manual_records_and_per_file_overrides(self):
-        old = {"id": "mc:vocadb:123", "name": "旧名", "aliases": ["旧名"], "sources": [],
-               "birthday": "01-02", "birthday_source": "https://example.org/old"}
-        payload = {"schema": 1, "kind": "music_creator", "records": [old], "manual_records": [],
-                   "overrides": {old["id"]: {"aliases": ["中文别名"]}}, "redirects": {}, "removed_ids": []}
-        artist = {"id": 123, "defaultName": "新名", "artistType": "Producer", "status": "Approved",
-                  "webLinks": [{"category": "Official", "url": "https://example.org/new"}]}
-        with patch.object(sync, "snapshot", return_value=(json.dumps(artist), "2026-11-18")):
-            result = sync.refresh(None, payload, "mc", "vocadb", "Producer", [])
-        self.assertEqual(result["overrides"], payload["overrides"])
-        updated, = result["records"]
-        self.assertEqual((updated["id"], updated["name"], updated["birthday"]), (old["id"], "新名", "01-02"))
-        self.assertIn("旧名", updated["aliases"])
-        self.assertIsNone(updated["verified_at"])
+    def test_staff_refresh_requires_an_existing_verified_credit_and_preserves_edits(self):
+        row = {"id": "mc:staff:test", "name": "髙田龍一", "directory": "imas_staff",
+               "credit": "M@STERPIECE · 編曲", "credit_url": "https://example.org/credits",
+               "aliases": ["高田龙一"], "avatar_url": None}
+        data = {"records": [row], "manual_records": [], "overrides": {row["id"]: {"aliases": ["测试"]}}}
+        with patch.object(sync, "snapshot", return_value=("<p>編曲：高田 龍一</p>", "2026-11-19")):
+            result = sync.refresh_staff(None, data)
+            self.assertEqual(result["records"], [row])
+            self.assertEqual(result["overrides"][row["id"]]["aliases"], ["测试"])
+            with self.assertRaises(ValueError):
+                sync.refresh_staff(None, {"records": [{**row, "name": "同姓の別人"}]})
+            with self.assertRaises(ValueError):
+                sync.refresh_staff(None, {"records": [{**row, "directory": "vocadb"}]})
 
     def test_external_per_kind_overrides_extend_aliases_without_changing_bundled_data(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -257,12 +259,39 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
         names = (await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user]
         self.assertEqual(names, [self.tanaka, self.mafu, self.singer])
         self.assertIn("田中秀和 · 本群 1人", await self.plugin._tantou_followers(self.event, "Hidekazu Tanaka"))
-        self.assertIn("音乐创作者", self.plugin._tantou_candidate_label(self.tanaka))
+        self.assertIn("偶像大师幕后", self.plugin._tantou_candidate_label(self.tanaka))
         self.assertIn("唱见", self.plugin._tantou_candidate_label(self.mafu))
         self.assertIn("唱见", self.plugin._tantou_candidate_label(self.singer))
-        self.assertEqual(await self.plugin._change_tantou(self.event, "加推", "曲师:まふまふ"), "已经加推：まふまふ")
+        self.assertEqual(await self.plugin._change_tantou(self.event, "加推", "曲师:田中秀和"), "已经加推：田中秀和")
+        self.assertNotIn("曲师:まふまふ", self.plugin._tantou_aliases(self.mafu))
         self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "そらる 田中秀和"), "成功减推了：そらる、田中秀和")
         self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user], [self.mafu])
+
+    async def test_staff_aliases_and_archived_producers_follow_the_normal_group_commands(self):
+        ids = ["mc:staff:takayama-yusuke", "mc:staff:komino-hidefumi", self.tanaka]
+        reply = await self.plugin._change_tantou(self.event, "加推", "高山佑介 小美野日出文 田中秀和")
+        self.assertEqual(reply, "添加成功：高山祐介、小美野日出文、田中秀和")
+        umo = self.event.unified_msg_origin
+        self.assertEqual((await self.plugin._tantou_group(umo))[self.event.user], ids)
+        for alias in ("高山P", "制作人:小美野日出文", "作曲家:田中秀和"):
+            self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, alias))
+        self.assertEqual(await self.plugin._tantou_birthday_users(umo, ids), [])
+        retired = "mc:vocadb:45"
+        self.assertNotIn(retired, await self.plugin._all_tantou_records())
+        self.plugin.storage[f"tantou_v1:{umo}"] = {self.event.user: [retired, "mc:vocadb:876", self.tanaka]}
+        followed = (await self.plugin._tantou_group(umo))[self.event.user]
+        self.assertEqual(followed, [retired, "ut:nicopedia:4517914", self.tanaka])
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "DECO*27"), "成功减推了：DECO*27")
+
+    def test_old_creator_portrait_cache_is_still_usable_on_existing_cards(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.plugin.tantou_icons_dir = root
+            ident = "mc:vocadb:45"
+            cached = root / "people" / "music_creator" / (self.registry[ident]["cached_avatar_key"] + ".png")
+            cached.parent.mkdir(parents=True)
+            Image.new("RGB", (12, 12)).save(cached)
+            self.assertEqual(self.plugin._tantou_icon_path(ident), cached)
 
     async def test_explicit_public_type_bypasses_name_fragment_ambiguity_without_changing_imas_priority(self):
         self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推", "唱见:そらる"))
@@ -309,7 +338,7 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_public_portraits_are_bounded_and_reject_arbitrary_hosts_and_redirects(self):
         data = io.BytesIO()
-        Image.new("RGB", (640, 640), "red").save(data, format="PNG")
+        Image.new("RGB", (1200, 1200), "red").save(data, format="PNG")
         original = httpx.AsyncClient
         prepare = plugin_module.ImasBirthdayPlugin._prepare_tantou_icons
         with tempfile.TemporaryDirectory() as folder:
@@ -325,7 +354,7 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn(requests[0].url.host, {"thumb.wikimedia.org", "upload.wikimedia.org"})
             path = self.plugin._tantou_icon_path(self.tanaka)
             with Image.open(path) as image:
-                self.assertEqual(image.size, (320, 320))
+                self.assertEqual(image.size, (960, 960))
                 self.assertEqual(image.format, "PNG")
             path.unlink()
             for url in ("http://127.0.0.1/x", "https://images.ctfassets.net.evil.example/x", "https://user:pass@images.ctfassets.net/x"):
@@ -337,3 +366,7 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(lambda request: httpx.Response(302, headers={"location": "http://127.0.0.1/x"})), **kw)):
                 await prepare(self.plugin, [self.tanaka])
             self.assertFalse(self.plugin._tantou_icon_path(self.tanaka))
+            with patch.object(plugin_module.httpx, "AsyncClient", side_effect=lambda **kw: original(transport=httpx.MockTransport(response), **kw)):
+                await prepare(self.plugin, [self.mafu])
+            with Image.open(self.plugin._tantou_icon_path(self.mafu)) as image:
+                self.assertEqual(image.size, (320, 320))

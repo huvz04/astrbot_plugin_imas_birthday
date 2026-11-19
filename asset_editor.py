@@ -274,7 +274,7 @@ class AssetEditor:
                 public_records = self.plugin._public_people_records()
                 public_aliases = self.plugin._tantou_alias_index(public_records)
                 if self.plugin._public_person_id(name) or self.plugin._exact_name_key(name) in public_aliases:
-                    raise ValueError("此人物属于独立人物库，请进入「唱见与P主图片资料」页面编辑。")
+                    raise ValueError("请在「唱见／偶像大师幕后」中编辑这位人物。")
                 aliases = self.plugin._tantou_alias_index(known)
                 if self.plugin._exact_name_key(name) in aliases:
                     raise ValueError("这个名字已对应现有角色，请搜索并编辑原角色。")
@@ -385,9 +385,9 @@ class AssetEditor:
 
 
 class PeopleEditor(AssetEditor):
-    """A separate page and separate JSON overlays for singers and music creators."""
+    """Manage singers and Idolmaster production staff with separate JSON overlays."""
     api_prefix = "people"
-    page_label = "唱见与P主图片资料管理"
+    page_label = "唱见与偶像大师幕后资料管理"
     actions = (*AssetEditor.actions, "source")
     filenames = {"utaite": "utaite.json", "music_creator": "music_creators.json"}
     photo_fields = ("avatar_url", "original_url", "source_url", "license", "license_url", "image_author", "attribution", "verified_at")
@@ -398,8 +398,10 @@ class PeopleEditor(AssetEditor):
         self.root = self.people_root / "editor"
         self.lock = asyncio.Lock()
         self.records, self.base = {}, {}
+        redirects = {}
         for kind, filename in self.filenames.items():
             payload = json.loads((plugin.plugin_dir / "data" / "people" / filename).read_text(encoding="utf-8"))
+            redirects.update(payload.get("redirects", {}))
             for row in [*payload.get("records", []), *payload.get("manual_records", [])]:
                 self.base[row["id"]] = {**row, "kind": kind}
             for ident, row in payload.get("legacy_names", {}).items():
@@ -412,10 +414,13 @@ class PeopleEditor(AssetEditor):
                 for row in custom.get("manual_records", []):
                     self.base[row["id"]] = {**row, "kind": kind}
                 self.records.update(custom.get("overrides", {}))
+        for former, current in redirects.items():
+            if former in self.records:
+                self.records.setdefault(current, self.records[former])
 
     def identity(self, ident):
         if not isinstance(ident, str) or ident not in self.catalogue:
-            raise ValueError("没有找到这位唱见或音乐创作者，请刷新目录。")
+            raise ValueError("没有找到这位人物，请刷新目录。")
         return ident
 
     def current_image(self, name, kind):
@@ -432,7 +437,7 @@ class PeopleEditor(AssetEditor):
         return {"people": [{"id": ident, "name": row["name"], "kind": row["kind"],
                             "birthday": row.get("birthday", ""), "aliases": row.get("aliases", []),
                             "has_image": self.has_image(ident, "tantou"),
-                            "has_source_image": bool(row.get("avatar_url")),
+                            "has_source_image": bool(row.get("avatar_url")), "archived": bool(row.get("archived")),
                             "custom": bool(self.records.get(ident))}
                            for ident, row in self.catalogue.items() if not row.get("archived") or ident in self.records],
                 "storage": str(self.people_root)}
@@ -452,18 +457,19 @@ class PeopleEditor(AssetEditor):
                 image = image_uri(source.convert("RGBA"))
         row = self.catalogue[name]
         base = self.base.get(name, row)
+        directory_crop = row.get("portrait_crop")
+        crop = settings or directory_crop or {"x": .5, "y": .5, "zoom": .72, "fit": "contain"}
         return {"id": name, "name": row["name"], "kind": row["kind"], "birthday": row.get("birthday", ""),
                 "aliases": row.get("aliases", []), "base_birthday": base.get("birthday", ""),
                 "base_name": base["name"], "sources": row.get("sources", []),
+                "credit": base.get("credit", ""), "credit_url": base.get("credit_url", ""),
                 "birthday_source": row.get("birthday_source", ""),
                 "portrait": settings.get("provenance", {}) if settings else {k: row.get(k) for k in self.photo_fields},
-                "has_source_image": bool(row.get("avatar_url")),
+                "has_source_image": bool(row.get("avatar_url")), "directory_crop": directory_crop, "archived": bool(row.get("archived")),
                 "record": copy.deepcopy(self.records.get(name, {})),
                 "image": {"image": image, "source": settings.get("source", "") if settings else "",
-                          "x": settings.get("x", .5) if settings else .5,
-                          "y": settings.get("y", .5) if settings else .5,
-                          "zoom": settings.get("zoom", 1) if settings else .72,
-                          "fit": settings.get("fit", "cover") if settings else "contain", "custom": bool(settings)}}
+                          "x": crop.get("x", .5), "y": crop.get("y", .5), "zoom": crop.get("zoom", 1),
+                          "fit": crop.get("fit", "cover"), "custom": bool(settings)}}
 
     async def save(self, payload):
         if not isinstance(payload, dict):
@@ -549,7 +555,10 @@ class PeopleEditor(AssetEditor):
                 temporary.unlink(missing_ok=True)
             self.records[ident] = record
             base = self.base[ident]
-            self.catalogue[ident] = {**base, **record, "kind": kind, "is_idolmaster": False,
+            if "avatar_url" in record or "image_url" in record:
+                # Keep the current local source and its own crop/credits on a name edit.
+                base = {**base, **{k: self.catalogue[ident].get(k) for k in (*self.photo_fields, "portrait_crop")}}
+            self.catalogue[ident] = {**base, **record, "kind": kind, "is_idolmaster": base.get("directory") == "imas_staff",
                                      "aliases": list(dict.fromkeys([record["name"], base["name"], *base.get("aliases", []), *record["aliases"]]))}
             self.plugin._public_person_search_keys.cache_clear()
         return {"saved": True, "id": ident, "revision": record["revision"]}

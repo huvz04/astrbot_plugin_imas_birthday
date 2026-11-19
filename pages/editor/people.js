@@ -2,7 +2,7 @@ window.ImasEditors = window.ImasEditors || {};
 window.ImasEditors['music'] = function(root, bridge) {
 const $ = id => root.querySelector(`#${id}`);
 let catalogue = [], current = null, imageState = null, dirty = false, busy = false, page = 0;
-const labels = {utaite: '唱见', music_creator: 'P主／音乐创作者'}, pageSize = 80;
+const labels = {utaite: '唱见', music_creator: '偶像大师幕后'}, pageSize = 80;
 function status(value, error = false) { $('status').textContent = value; $('status').classList.toggle('error', error); }
 function changed() { dirty = true; $('dirty').textContent = '有未保存的修改'; $('preview-image').hidden = true; }
 async function run(action) {
@@ -14,7 +14,7 @@ async function run(action) {
 function normal(value) { return String(value).normalize('NFKC').toLocaleLowerCase().replace(/\s/g, ''); }
 function renderList() {
   const query = normal($('search').value), kind = $('kind').value;
-  const rows = catalogue.filter(row => (!kind || row.kind === kind) && (!$('missing').checked || (!row.has_image && !row.has_source_image)) && (!$('no-birthday').checked || !row.birthday) && [row.name, ...row.aliases].some(value => normal(value).includes(query)));
+  const rows = catalogue.filter(row => (!kind || (!row.archived && row.kind === kind)) && (!$('missing').checked || (!row.has_image && !row.has_source_image)) && (!$('no-birthday').checked || !row.birthday) && [row.name, ...row.aliases].some(value => normal(value).includes(query)));
   const pages = Math.max(1, Math.ceil(rows.length / pageSize)); page = Math.min(page, pages - 1);
   $('count').textContent = `${rows.length} 位人物`; $('page').textContent = `${page + 1} / ${pages}`;
   $('previous').disabled = page === 0; $('next').disabled = page + 1 >= pages;
@@ -22,7 +22,7 @@ function renderList() {
   for (const row of rows.slice(page * pageSize, (page + 1) * pageSize)) {
     const button = document.createElement('button'), title = document.createElement('strong'), sub = document.createElement('small');
     button.type = 'button'; button.classList.toggle('active', current?.id === row.id);
-    title.textContent = row.name; sub.textContent = `${labels[row.kind]} · ${row.birthday || '生日未登记'}${row.custom ? ' · 已编辑' : ''}`;
+    title.textContent = row.name; sub.textContent = `${row.archived ? '旧登记' : labels[row.kind]} · ${row.birthday || '生日未登记'}${row.custom ? ' · 已编辑' : ''}`;
     button.append(title, sub); button.onclick = () => {
       if (dirty) { status('请先保存修改，或撤销后再切换人物。', true); return; }
       run(() => select(row.id));
@@ -39,7 +39,7 @@ async function select(id) {
   const data = await bridge.apiGet('people/detail', {name: id});
   current = data; dirty = false; $('empty').hidden = true; $('form').hidden = false;
   $('preview-area').hidden = $('source-area').hidden = false; $('preview-image').hidden = true;
-  $('title').textContent = data.name; $('badge').textContent = labels[data.kind];
+  $('title').textContent = data.name; $('badge').textContent = data.archived ? '旧登记' : labels[data.kind];
   $('name').value = data.name; $('base-name').textContent = `基础资料：${data.base_name}`;
   $('aliases').value = (data.record.aliases || []).join('\n'); $('note').value = data.record.source_note || '';
   $('birthday-mode').value = data.record.birthday === undefined ? 'inherit' : data.record.birthday ? 'custom' : 'none';
@@ -52,7 +52,7 @@ async function select(id) {
   credit.textContent = `${origin} · 摄影／绘者 ${photo.image_author || '未标注'} · 授权 ${photo.license || '未注明'}${photo.verified_at ? ' · 核验于 ' + photo.verified_at : ''}`;
   $('sources').append(credit);
   const links = [[photo.source_url, '头像来源页'], [photo.original_url, '原图'], [photo.license_url, '授权条款'],
-                 [data.birthday_source, '生日来源'], ...data.sources.map(url => [url, url])];
+                 [data.credit_url, data.credit || '制作署名'], [data.birthday_source, '生日来源'], ...data.sources.map(url => [url, url])];
   const seen = new Set();
   for (const [source, label] of links) {
     if (!source || seen.has(source)) continue;
@@ -72,7 +72,7 @@ function draw() {
   ctx.clearRect(0, 0, w, h); ctx.save(); ctx.fillStyle = '#f3f5f8'; ctx.fillRect(0, 0, w, h);
   if (state.image) {
     const iw = state.image.naturalWidth, ih = state.image.naturalHeight;
-    if (state.action === 'keep' && !state.custom) {
+    if (state.action !== 'change' && !state.custom && !current.directory_crop) {
       const scale = Math.min(w * .64 / iw, h * .8 / ih); ctx.drawImage(state.image, (w - iw * scale) / 2, (h - ih * scale) / 2, iw * scale, ih * scale);
     } else if (state.fit === 'contain') {
       const scale = Math.min(w / iw, h / ih) * state.zoom, dw = Math.max(1, Math.round(iw * scale)), dh = Math.max(1, Math.round(ih * scale));
@@ -104,13 +104,18 @@ $('upload').onchange = event => run(async () => {
   changed(); draw(); status('图片已载入，可以拖动调整位置。');
 });
 $('center').onclick = () => { if (!imageState?.image) return; imageState.x = imageState.y = .5; imageState.zoom = 1; imageState.action = 'change'; changed(); draw(); };
-$('directory-image').onclick = () => run(async () => {
-  status('正在载入目录头像…');
-  const result = await bridge.apiGet('people/source', {name: current.id});
-  imageState = {image: await loadImage(result.image), source: result.source, x: .5, y: .5, zoom: 1, fit: 'contain', action: 'change', custom: true};
-  changed(); draw(); status('目录头像已载入，调整后点击保存生效。');
-});
-$('restore').onclick = () => { imageState.action = 'restore'; changed(); draw(); };
+async function showDirectoryImage(action) {
+  let result = null;
+  if (current.has_source_image) {
+    try { result = await bridge.apiGet('people/source', {name: current.id}); }
+    catch (error) { if (action !== 'restore') throw error; }
+  }
+  const crop = current.directory_crop || {x: .5, y: .5, zoom: action === 'restore' ? .72 : 1, fit: 'contain'};
+  imageState = {...crop, image: result ? await loadImage(result.image) : null, source: result?.source || '', action, custom: false};
+  changed(); draw();
+}
+$('directory-image').onclick = () => run(() => showDirectoryImage('change'));
+$('restore').onclick = () => run(() => showDirectoryImage('restore'));
 let drag = null;
 $('canvas').onpointerdown = event => { if (!imageState?.image || busy) return; $('canvas').setPointerCapture(event.pointerId); drag = {px: event.clientX, py: event.clientY, x: imageState.x, y: imageState.y}; };
 $('canvas').onpointermove = event => {
@@ -138,8 +143,8 @@ $('preview').onclick = () => run(async () => {
   $('preview-image').src = result.tantou; $('preview-image').hidden = false; status('预览已生成。');
 });
 window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
-if (!bridge) status('请从 AstrBot 插件详情中的「唱见与P主图片资料」进入。', true);
-else run(async () => { await bridge.ready(); await $('mask').decode(); await refresh(); status('选择一位唱见或音乐创作者开始编辑。'); });
+if (!bridge) status('请从 AstrBot 插件详情中的「唱见与偶像大师幕后资料」进入。', true);
+else run(async () => { await bridge.ready(); await $('mask').decode(); await refresh(); status('选择一位人物开始编辑。'); });
 
 return () => { if (dirty) {status('请先保存修改或撤销后再切换模块。', true); return false;} return !busy; };
 };

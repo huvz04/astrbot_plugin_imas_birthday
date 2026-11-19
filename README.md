@@ -19,8 +19,8 @@ AstrBot/data/plugins/astrbot_plugin_imas_birthday
 - `editor_web_host` 默认 `127.0.0.1`，用于本机；需要其他设备访问时设置 `0.0.0.0`，使用服务器地址访问，建议在可信网络或 HTTPS 反向代理后使用。
 - `editor_web_port` 默认 `8097`，可改为未占用的端口。
 - 设置密码时，登录有效期 8 小时，修改密码、重载或停止插件后旧登录失效。页面有密码尝试限速和跨站请求校验。
-- 独立端口与 AstrBot 内只有一个管理视图，共用「偶像大师角色」「唱见／P主」两个模块以及同一份持久化数据。模块有未保存修改时先保存或撤销再切换。
-- 唱见／P主生日仅供资料编辑使用，**不加入偶像大师生日提醒**。
+- 独立端口与 AstrBot 共用一个管理视图，可在「偶像大师角色」与「唱见／偶像大师幕后」之间切换。有未保存的修改时可以先保存或撤销。
+- 唱见与幕后人员的生日仅供资料页查看。群内生日提醒沿用角色与声优名单。
 
 ### Windows 更新时字体文件被占用
 
@@ -355,17 +355,19 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 生日图片默认不再附带重复的详细聊天文字，但仍发送同日生日声优的姓名及已确认的「角色名役」；图片缺失时保留完整文字通知和 @。如需原来的长文字，在插件设置开启 `birthday_text_with_card`。泰勇气的配音关联依据[事务所履历](https://remax-web.jp/man/T/tai_y/tai_y.pdf)，显示为「声优：泰 勇気（ドラマCD プロデューサー役）」。
 
-### 独立人物库：唱见与音乐创作者
+### 唱见与偶像大师幕后人员
 
-唱见与 P 主／曲师分别保存在 `data/people/utaite.json`、`data/people/music_creators.json`，继续直接使用 `加推 まふまふ`、`加推 田中秀和`，可用 `唱见:`、`P主:`、`曲师:` 限定同名人物。这些人物参与担当总览、担当查询、跨群同步与总榜／DD 排行，不计入偶像排行和企划占比，也不会作为偶像大师角色或声优。
+可以直接发送 `加推 高山佑介 小美野日出文 田中秀和`，名片会按输入顺序显示三人。`高山P`、`小美野P` 和 `ガミP` 也能直接使用。同名时可加 `幕后:`、`制作人:`、`作曲家:`、`曲师:` 或 `唱见:` 限定范围。这些人物参与担当总览、担当查询、跨群同步、综合榜与 DD 排行。偶像排行和企划占比只统计角色。
 
 唱见收录有日文 Wiki 人物页、且有公开资料能核对日本国籍或日本出身的个人。维护工具遍历日语维基百科的「歌い手」分类、ニコニコ大百科「歌い手一覧」的个人名单，以及 Seesaa「歌い手wiki」的五十音目录。每条记录保留人物页和身份依据。UtaiteDB 的头像通过同一人物条目或本人账号关联，缺图时可在管理页上传。[日语维基百科](https://ja.wikipedia.org/wiki/Category:歌い手) · [ニコニコ大百科](https://dic.nicovideo.jp/a/歌い手一覧) · [Seesaa 歌い手wiki](https://seesaawiki.jp/utaite/) · [UtaiteDB](https://utaitedb.net/)
 
-音乐创作者以 VocaDB 的制作人资料和主图为主。兼任唱见和创作者的人物，能够核对同一身份时共用登记。蓝月、优花、奶油糖等已核对的中文别名继续用于检索。退出目录的旧唱见和曲师保留显示名、旧缓存和本地裁切，已经登记的用户可以查看或减推。
+幕后目录按具体作品署名和系列制作职务收录。首批 11 人都有照片，包括《闪耀色彩》制作人高山祐介（也可搜「高山佑介」）、《学园偶像大师》初代主制作人小美野日出文，以及为《イリュージョニスタ！》作曲、编曲的田中秀和。管理页可查看每人的署名出处。[高山祐介访谈](https://www.famitsu.com/article/202605/75738) · [万代南梦宫制作访谈](https://www.bandainamco.co.jp/ir/library/feature04_01_2025.html) · [乐曲官方署名](https://cinderellagirls.idolmaster-official.jp/discography/cocc-17458/)
 
-人物头像保存展示地址、原图地址、来源页、授权、作者和来源核验日期。来源没有标明摄影者或授权时保持为空。Commons 使用与人物关联的具体文件和该文件的署名、授权；发出使用这些图片的名片和排行榜时附上署名。目录收录的生日只供资料编辑。[VocaDB 图片权利说明](https://wiki.vocadb.net/docs/license) · [Commons 图片元数据接口](https://www.mediawiki.org/wiki/API:Imageinfo)
+唱见与幕后人员分别保存在 `data/people/utaite.json` 和 `data/people/music_creators.json`。升级后，已登记的旧 P 主仍可查看或减推。六位有日文唱见资料的兼任者归入唱见，原有担当顺序、别名和手动裁切会随登记沿用。
 
-在插件详情的 Pages 中打开唯一的 **「图片与资料管理」**，切换到 **「唱见／P主」** 模块：
+人物头像保存展示地址、原图地址、来源页、公开的摄影者、授权和核验日期。采用 Commons 照片的名片和排行会附摄影署名及授权。小美野和田中的活动照已按本人位置取景，可在管理页继续调整。[Commons 图片元数据接口](https://www.mediawiki.org/wiki/API:Imageinfo)
+
+在插件详情的 Pages 中打开 **「图片与资料管理」**，切换到 **「唱见／偶像大师幕后」**。
 
 - 按类别筛选或搜索名字、罗马音、别名，可筛选缺图片、未登记生日；列表分页展示。
 - 可以修改显示名字、增加别名、选择沿用／手动设置／不登记生日。人物内部编号固定，已有担当关联保留。
@@ -374,7 +376,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 手动资料保存在插件外的 `AstrBot/data/imas_birthday_assets/people/utaite.json`、`music_creators.json` 的 `overrides`；上传图和裁切副本保存在同目录的 `editor/originals`、`editor/renders`。请备份整个 `people` 目录。自动目录更新不覆盖手动设置，修改生日不会主动向群发送消息。
 
-维护者可安装 `tools/requirements-public-people.txt`，运行 `python tools/sync_public_people.py` 刷新两份音乐目录，或加 `--singers-only` 单独更新唱见和兼任唱见的身份关联。曲师按现有 VocaDB 编号更新，`--add mc:vocadb:编号` 可额外核对其他创作者。群内查询使用随包目录，按需缓存头像。
+维护者可安装 `tools/requirements-public-people.txt`，运行 `python tools/sync_public_people.py` 更新目录。`--singers-only` 单独刷新日语唱见，`--staff-only` 单独复查幕后人员的署名页和照片。增收幕后人员时需先补入本人对应的作品或制作职务及来源。群聊查询使用随包目录，照片按需缓存。
 
 ### 本群担当排行
 
@@ -410,7 +412,7 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 官网公共目录 `https://idolmaster-official.jp/cdn/jsons/idols/idol_list.json` 和前端实际使用的 `/assets/img/idol/hexagon/{brand}/{idol_code}.png` 是角色目录及头像来源，不需要用户登录。`character_tantou_icons.py` 保存与本地中文名字的精确映射、官网日文全名、假名、`idol_code`、数字 `id`、企划及资料链接，当前覆盖 341 位。插件把角色目录保存到 AstrBot 持久化 KV 的 `idol_catalogue_v1`，首次启动及此后每 24 小时在后台更新；按 `idol_code` 关联已有角色，保留改名前的日文名用于匹配，同步失败则保留原缓存并在一小时后重试。已有日文担当记录在读取时会归到本地角色名并去重。角色目录同步与官网账号的担当同步是独立的，本期无需账号绑定。
 
-提供的 0.1.111 ZIP 安装包内附这些官方偶像头像。从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图。均缺失时保留名字，头像使用空白占位。
+ZIP 安装包内附这些官方偶像头像。从源码安装时，总览查询会自动缓存缺少的头像。`tantou_icons_dir` 留空时缓存到 `AstrBot/data/imas_birthday_assets/tantou_icons`，并可直接读取安装包内的 `assets/tantou_icons`。官方目录尚未收录、暂时无法下载或无缓存时，回退到本地角色图。均缺失时保留名字，头像使用空白占位。
 
 制作人昵称保留原始花体字母、符号和 emoji，不做字符兼容归一化；`assets/fonts` 随源码和安装包附带 Noto 字体及许可证，自动补充系统字体缺少的字形，无需运行时下载。emoji 使用与文字同色的单色样式，换行及截断保留完整字符组合；组合 emoji 的连字显示取决于 Pillow 的 Raqm 排版支持。更新到本版本后请安装新增的 `fonttools`、`regex` 依赖并重载插件。
 

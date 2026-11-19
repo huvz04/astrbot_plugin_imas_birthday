@@ -125,6 +125,48 @@ class PeopleEditorTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse((await self.editor.detail(self.ident))["portrait"].get("license"))
         self.assertFalse(self.plugin._portrait_credits([self.ident]))
 
+    async def test_staff_directory_framing_matches_the_editor_and_yields_to_a_saved_crop(self):
+        self.plugin.tantou_icons_dir = self.root / "icons"
+        path = self.plugin._person_photo_path(self.ident)
+        path.parent.mkdir(parents=True)
+        path.write_bytes(assets_test.EditorTests.picture())
+        detail = await self.editor.detail(self.ident)
+        self.assertEqual(detail["directory_crop"], {k: detail["image"][k] for k in ("fit", "x", "y", "zoom")})
+        def center_pixel():
+            canvas = Image.new("RGB", (100, 100))
+            self.plugin._draw_tantou_avatar(canvas, self.ident, 0, 0, 100)
+            return canvas.getpixel((50, 50))
+        self.assertEqual(center_pixel(), (255, 0, 0))
+        await self.save(image={"fit": "cover", "x": 1, "y": .5, "zoom": 2})
+        self.assertEqual(center_pixel(), (0, 0, 255))
+        await self.save(image=None)
+        self.assertEqual(center_pixel(), (255, 0, 0))
+
+    async def test_old_creator_file_follows_the_singer_until_the_next_manual_save(self):
+        from public_people import load_catalogues
+
+        former, current = "mc:vocadb:876", "ut:nicopedia:4517914"
+        token = self.editor.import_image(assets_test.EditorTests.picture())["source"]
+        crop = {"source": token, "fit": "cover", "x": 1, "y": .5, "zoom": 1}
+        previous = {"name": "旧名字", "aliases": ["本地别名"], "images": {"tantou": crop}, "revision": "previous"}
+        old_file = self.root / "music_creators.json"
+        old_file.write_text(json.dumps({"schema": 1, "kind": "music_creator", "overrides": {former: previous}}), encoding="utf-8")
+        old_bytes = old_file.read_bytes()
+        catalogue = self.plugin.plugin_dir / "data" / "people"
+        rows, redirects = load_catalogues(catalogue, self.root)
+        self.assertEqual(redirects[former], current)
+        self.assertEqual(rows[current]["name"], "旧名字")
+        editor = editor_module.PeopleEditor(self.plugin, self.root, rows)
+        self.assertEqual(editor.records[current], previous)
+        self.assertTrue(editor.render_image(current, "tantou", (100, 90)).is_file())
+        await editor.save({"id": current, "name": "新名字", "aliases": ["新别名"], "revision": "previous"})
+        rows, _ = load_catalogues(catalogue, self.root)
+        self.assertIn("新别名", rows[current]["aliases"])
+        self.assertEqual(rows[current]["name"], "新名字")
+        restarted = editor_module.PeopleEditor(self.plugin, self.root, rows)
+        self.assertEqual(restarted.records[current]["images"]["tantou"], crop)
+        self.assertEqual(old_file.read_bytes(), old_bytes)
+
     async def test_removed_vtuber_records_are_backed_up_and_no_longer_sync_or_rank(self):
         event = Event()
         key = "tantou_v1:" + event.unified_msg_origin
