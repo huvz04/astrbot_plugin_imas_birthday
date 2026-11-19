@@ -1,4 +1,5 @@
 """Check real group registrations, command routing and ranking image output."""
+import json
 import unittest
 import tempfile
 import types
@@ -43,6 +44,88 @@ class RankingTests(unittest.IsolatedAsyncioTestCase):
         with patch.object(restarted, "_render_tantou_ranking", return_value="rank.png") as render:
             await restarted._tantou_ranking(self.event)
             self.assertEqual(render.call_args.args[0], first)
+
+    async def test_single_ranks_the_entire_group_by_count_then_saved_registration_order(self):
+        umo = self.event.unified_msg_origin
+        singles = [str(6500 - i) for i in range(8)]
+        two = ["va:21149", "qq:2100"]
+        group = {"1001": ["月村手毬", *two], "9903": two, "8000": [], "9000": ["vt:retired"],
+                 **{uid: ["月村手毬", "月村 手毬"] for uid in singles}, "9902": two, "9901": two}
+        storage = {
+            "tantou_v1:" + umo: group,
+            "tantou_v1:bot:GroupMessage:200": {"1004": ["花海佑芽"]},
+            "tantou_profiles_v1:" + umo: {uid: {"name": uid + "号"} for uid in [*group, "1005"]},
+        }
+        restarted = make_plugin(json.loads(json.dumps(storage)))
+        expected = [("qq:" + uid, 1) for uid in singles] + [("qq:9903", 2), ("qq:9902", 2)]
+        with patch.object(restarted, "_cache_tantou_member_avatars", new_callable=AsyncMock) as avatars, \
+                patch.object(restarted, "_render_tantou_ranking", return_value="rank.png") as render:
+            result = await restarted._tantou_ranking(self.event, kind="single")
+            self.assertEqual(render.call_args.args[0], expected)
+            self.assertEqual(render.call_args.kwargs["title"], "单推排行榜")
+            self.assertEqual(render.call_args.kwargs["unit"], "推")
+            self.assertIn("1. 6500号P · 1推", result["message"])
+            self.assertIn("10. 9902号P · 2推", result["message"])
+            avatars.assert_awaited_once_with(umo, [name[3:] for name, _ in expected])
+            restarted._prepare_tantou_icons.assert_not_awaited()
+            await restarted._tantou_ranking(self.event, kind="dd")
+            self.assertEqual(render.call_args.args[0][0], ("qq:1001", 3))
+        restored = make_plugin(json.loads(json.dumps(restarted.storage, sort_keys=True)))
+        with patch.object(restored, "_cache_tantou_member_avatars", new_callable=AsyncMock), \
+                patch.object(restored, "_render_tantou_ranking", return_value="rank.png") as render:
+            await restored._tantou_ranking(self.event, kind="single")
+            self.assertEqual(render.call_args.args[0], expected)
+
+    async def test_single_seniority_starts_on_save_and_restarts_only_after_the_last_follow_is_removed(self):
+        group_key = "tantou_v1:" + self.event.unified_msg_origin
+        self.plugin.storage[group_key] = {"9001": []}
+        change = self.plugin._change_tantou
+        first, second, pending = Event(user="9007"), Event(user="9002"), Event(user="9001")
+        await change(pending, "加推", "月村手球")
+        await change(first, "加推", "月村手毬")
+        await change(second, "加推", "月村手毬 花海佑芽")
+        await change(pending, "加推确认", "月村手毬")
+        await change(second, "减推", "花海佑芽")
+        await change(first, "担当改名", "ZZZ")
+        with patch.object(self.plugin, "_cache_tantou_member_avatars", new_callable=AsyncMock), \
+                patch.object(self.plugin, "_render_tantou_ranking", return_value="rank.png") as render:
+            await self.plugin._tantou_ranking(self.event, kind="single")
+            self.assertEqual(render.call_args.args[0], [("qq:9007", 1), ("qq:9002", 1), ("qq:9001", 1)])
+            await change(first, "清空担当", "")
+            await change(first, "加推", "花海佑芽")
+            await change(second, "减推", "月村手毬")
+            await self.plugin._tantou_ranking(self.event, kind="single")
+            self.assertEqual(render.call_args.args[0], [("qq:9001", 1), ("qq:9007", 1)])
+            await change(second, "加推", "月村手毬")
+            await self.plugin._tantou_ranking(self.event, kind="single")
+            self.assertEqual(render.call_args.args[0][-1], ("qq:9002", 1))
+
+    async def test_failed_new_registration_does_not_reserve_a_place_after_retry(self):
+        umo = self.event.unified_msg_origin
+        save = self.plugin.put_kv_data
+        async def fail_group_write(key, value):
+            if key == "tantou_v1:" + umo:
+                raise OSError("write interrupted")
+            await save(key, value)
+        with patch.object(self.plugin, "put_kv_data", side_effect=fail_group_write), self.assertRaises(OSError):
+            await self.plugin._append_tantou_batch(umo, "9001", ["花海佑芽"])
+        with patch.object(self.plugin, "_render_tantou_ranking") as render:
+            self.assertIn("还没有登记", (await self.plugin._tantou_ranking(self.event, kind="single"))["message"])
+            render.assert_not_called()
+        await self.plugin._append_tantou_batch(umo, "9002", ["月村手毬"])
+        await self.plugin._append_tantou_batch(umo, "9001", ["花海佑芽"])
+        self.assertEqual(self.plugin.storage["tantou_registration_order_v1:" + umo], ["9002", "9001"])
+
+    async def test_single_rank_bare_and_slash_report_an_empty_group_once(self):
+        self.plugin.storage["tantou_v1:" + self.event.unified_msg_origin] = {"1001": [], "9000": ["vt:retired"]}
+        with patch.object(self.plugin, "_render_tantou_ranking") as render:
+            for command in ("单推排行", "/单推排行"):
+                event = Event(text=command)
+                replies = [r async for r in self.plugin.tantou_text_fallback(event)]
+                replies.extend([r async for r in self.plugin.tantou_single_rank(event)])
+                self.assertEqual(len(replies), 1)
+                self.assertIn("还没有登记", replies[0])
+            render.assert_not_called()
 
     async def test_member_vote_uses_bound_name_and_render_failure_keeps_text(self):
         umo = self.event.unified_msg_origin

@@ -47,6 +47,11 @@ SOURCE_URL = (
     "%E7%9B%B8%E5%85%B3%E4%BA%BA%E5%A3%AB%E7%94%9F%E6%97%A5%E4%BF%A1%E6%81%AF"
 )
 MATCH_PREVIEW_LIMIT = 10
+TANTOU_RANK_COMMANDS = {
+    "担当排行": "all", "偶像排行": "idol", "群友排行": "member",
+    "声优排行": "voice_actor", "女声优排行": "voice_actor",
+    "DD排行": "dd", "单推排行": "single",
+}
 
 MONTH_NAMES = {
     1: "一月",
@@ -860,6 +865,16 @@ class ImasBirthdayPlugin(Star):
             else:
                 yield event.plain_result(result["message"])
 
+    @filter.command("单推排行")
+    async def tantou_single_rank(self, event: AstrMessageEvent, args: GreedyStr = ""):
+        """查看本群担当最少的十位 P，同推数时登记早的在前。"""
+        if self._claim_tantou_event(event):
+            result = await self._tantou_ranking(event, str(args), kind="single")
+            if result["card_path"]:
+                await self._send_tantou_cards(event, result)
+            else:
+                yield event.plain_result(result["message"])
+
     @filter.command("担当改名")
     async def tantou_rename(self, event: AstrMessageEvent, name: GreedyStr = ""):
         """设置本群名片的 P 名，填写“重置”恢复群昵称。"""
@@ -894,7 +909,8 @@ class ImasBirthdayPlugin(Star):
         if not parts or parts[0].startswith("/"):
             return
         command = parts[0]
-        if command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行", "担当查询", "刷新群友头像", "担当同步"}:
+        rank_kind = TANTOU_RANK_COMMANDS.get(command)
+        if not rank_kind and command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当查询", "刷新群友头像", "担当同步"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
@@ -910,11 +926,13 @@ class ImasBirthdayPlugin(Star):
         if command == "担当查询":
             yield event.plain_result(await self._tantou_followers(event, args))
             return
-        if command not in {"担当", "担当排行", "偶像排行", "群友排行", "声优排行", "女声优排行", "DD排行"}:
+        if rank_kind:
+            result = await self._tantou_ranking(event, args, kind=rank_kind)
+        elif command == "担当":
+            result = await self._tantou_overview(event, args)
+        else:
             yield event.plain_result(await self._change_tantou(event, command, args))
             return
-        ranks = {"担当排行": "all", "偶像排行": "idol", "群友排行": "member", "声优排行": "voice_actor", "女声优排行": "voice_actor", "DD排行": "dd"}
-        result = await (self._tantou_ranking(event, args, kind=ranks[command]) if command in ranks else self._tantou_overview(event, args))
         if result["card_path"]:
             await self._send_tantou_cards(event, result)
         else:
@@ -1153,6 +1171,9 @@ class ImasBirthdayPlugin(Star):
                     members = await self.get_kv_data(members_key, {})
                     await self.put_kv_data(members_key, {**members, **verified})
                 group = await self.get_kv_data(f"tantou_v1:{umo}", {})
+                if not pending["current"]:
+                    group.pop(user_id, None)
+                    await self._tantou_registration_order(umo, group, registering=user_id)
                 group[user_id] = list(incoming)
                 await self.put_kv_data(f"tantou_v1:{umo}", group)
                 self._tantou_sync_pending.pop(key, None)
@@ -1386,7 +1407,7 @@ class ImasBirthdayPlugin(Star):
             logger.exception("群友头像刷新失败")
             return "刷新失败，保留原图，请稍后重试。"
 
-    async def _tantou_member_cards(self, umo: str, names: list[str]) -> dict[str, dict[str, Any]]:
+    async def _tantou_member_cards(self, umo: str, names: list[str], *, producers: bool = False) -> dict[str, dict[str, Any]]:
         ids = [self._tantou_member_id(name) for name in names if self._tantou_member_id(name)]
         if not ids:
             return {}
@@ -1395,9 +1416,13 @@ class ImasBirthdayPlugin(Star):
         cards = {}
         for user_id in ids:
             profile, member = profiles.get(user_id, {}), members.get(user_id, {})
+            if producers:
+                label = self._tantou_producer_name(profile.get("name") or profile.get("nickname") or member.get("nickname") or "制作人")
+            else:
+                label = profile.get("name") or member.get("nickname") or "群友"
             path = self._tantou_member_avatar_path(umo, user_id)
             cards["qq:" + user_id] = {
-                "name": profile.get("name") or member.get("nickname") or "群友",
+                "name": label,
                 "avatar_path": path if path.is_file() else None,
             }
         return cards
@@ -1463,6 +1488,23 @@ class ImasBirthdayPlugin(Star):
                     await self.put_kv_data(backup_key, value)
             await self.put_kv_data(f"tantou_v1:{umo}", normalized)
         return normalized
+
+    async def _tantou_registration_order(self, umo: str, group: dict[str, list[str]], *, registering: str = "") -> list[str]:
+        """Keep active owners in local registration order, including pre-upgrade data."""
+        key = f"tantou_registration_order_v1:{umo}"
+        saved = await self.get_kv_data(key, [])
+        active = dict.fromkeys(uid for uid, names in group.items() if names and uid != registering)
+        # Old groups have only the insertion order of their saved registrations.
+        ordered = {}
+        if isinstance(saved, list):
+            ordered = dict.fromkeys(uid for uid in saved if isinstance(uid, str) and uid in active)
+        ordered.update(active)
+        if registering:
+            ordered[registering] = None
+        result = list(ordered)
+        if result != saved:
+            await self.put_kv_data(key, result)
+        return result
 
     async def _load_idol_catalogue(self) -> None:
         async with self._idol_catalogue_lock:
@@ -1863,6 +1905,9 @@ class ImasBirthdayPlugin(Star):
         existing = [name for name in selected if name in current]
         members = await self._tantou_member_cards(umo, selected)
         if added:
+            if not current:
+                group.pop(user_id, None)
+                await self._tantou_registration_order(umo, group, registering=user_id)
             group[user_id] = current + added
             await self.put_kv_data(f"tantou_v1:{umo}", group)
         labels = lambda values: "、".join(self._tantou_display_name(name, members) for name in values)
@@ -2008,12 +2053,18 @@ class ImasBirthdayPlugin(Star):
         umo, user_id = self._tantou_identity(event)
         if not umo or not user_id:
             return {"message": "请在群聊里查看担当排行。", "card_path": ""}
-        titles = {"all": "担当排行榜", "idol": "偶像排行榜", "member": "群友排行榜", "voice_actor": "声优排行榜", "dd": "DD排行榜"}
+        titles = {"all": "担当排行榜", "idol": "偶像排行榜", "member": "群友排行榜", "voice_actor": "声优排行榜", "dd": "DD排行榜", "single": "单推排行榜"}
         if kind not in titles or args.strip() or self._tantou_mentions(event):
             return {"message": "请直接发送排行指令，不要附加名字或 @。", "card_path": ""}
+        producer_ranking = kind in {"dd", "single"}
         async with self._tantou_lock:
             group = await self._tantou_group(umo)
-        if kind == "dd":
+            if kind == "single":
+                order = await self._tantou_registration_order(umo, group)
+                group = {uid: group[uid] for uid in order}
+            if producer_ranking and group.get(user_id) and self._tantou_member_id("qq:" + user_id):
+                await self._tantou_owner(umo, user_id, str(event.get_sender_name() or ""))
+        if producer_ranking:
             counts = Counter({"qq:" + uid: len(set(names)) for uid, names in group.items() if names and self._tantou_member_id("qq:" + uid)})
         else:
             counts = Counter(name for names in group.values() for name in set(names)
@@ -2022,21 +2073,21 @@ class ImasBirthdayPlugin(Star):
                              or (kind == "voice_actor" and self._voice_actor_id(name)))
         if not counts:
             return {"message": "本群还没有登记对应的担当。", "card_path": ""}
-        members = await self._tantou_member_cards(umo, list(counts))
-        if kind == "dd":
-            for uid in group:
-                key = "qq:" + uid
-                if key in counts:
-                    owner = await self._tantou_owner(umo, uid, str(event.get_sender_name() or "") if uid == user_id else "")
-                    members[key] = {**members.get(key, {}), "name": self._tantou_producer_name(owner)}
-        rows = sorted(counts.items(), key=lambda row: (-row[1], self._tantou_display_name(row[0], members), row[0]))[:10]
+        names = list(counts)
+        if kind == "single":
+            # A stable sort keeps tied owners in their saved group registration order.
+            names = sorted(names, key=counts.__getitem__)[:10]
+        members = await self._tantou_member_cards(umo, names, producers=producer_ranking)
+        if kind != "single":
+            names = sorted(names, key=lambda name: (-counts[name], self._tantou_display_name(name, members), name))[:10]
+        rows = [(name, counts[name]) for name in names]
         member_ids = [self._tantou_member_id(name) for name, _ in rows if self._tantou_member_id(name)]
         await self._cache_tantou_member_avatars(umo, member_ids)
         for uid in member_ids:
             avatar = self._tantou_member_avatar_path(umo, uid)
             members["qq:" + uid]["avatar_path"] = avatar if avatar.is_file() else None
         group_header = await self._tantou_ranking_group(event)
-        unit = "推" if kind == "dd" else "人"
+        unit = "推" if producer_ranking else "人"
         message = group_header["name"] + "\n" + titles[kind] + "\n" + "\n".join(
             f"{index}. {self._tantou_display_name(name, members)} · {count}{unit}"
             for index, (name, count) in enumerate(rows, 1)
@@ -2044,7 +2095,7 @@ class ImasBirthdayPlugin(Star):
         brand_counts = Counter({brand: sum(count for name, count in counts.items() if self._character_brand(name) == brand)
                                 for brand in {self._character_brand(name) for name in counts}}) if kind == "idol" else None
         try:
-            if kind != "dd":
+            if not producer_ranking:
                 await self._prepare_tantou_icons([name for name, _ in rows])
             if kind == "all":
                 path = await asyncio.to_thread(self._render_tantou_ranking, rows, members=members, group_header=group_header)

@@ -141,6 +141,7 @@ class TantouSyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("同步成功", await self.confirm())
         self.assertEqual(self.follows(), ["月村手毬", "va:21149"])
         self.assertEqual(self.plugin.storage[f"tantou_v1:{self.target}"]["1002"], ["如月千早"])
+        self.assertEqual(list(self.plugin.storage[f"tantou_v1:{self.target}"]), ["1001", "1002"])
         self.assertEqual(self.plugin.storage[f"tantou_v1:{self.a}"], source)
         self.assertEqual(self.plugin.storage[f"tantou_profiles_v1:{self.target}"], profiles)
         self.assertEqual(await self.plugin._tantou_birthday_users(self.target, ["月村手毬"]), ["1001"])
@@ -161,6 +162,15 @@ class TantouSyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("选择", ([reply async for reply in self.plugin.tantou_text_fallback(restart)])[0])
         explicit = Event(text="/担当同步 2")
         self.assertIn("天海 春香", ([reply async for reply in self.plugin.tantou_sync(explicit, "2")])[0])
+
+    async def test_sync_into_empty_legacy_slot_starts_a_new_local_registration(self):
+        group = self.plugin.storage[f"tantou_v1:{self.target}"]
+        group["1001"] = []
+        await self.start()
+        await self.choose()
+        self.assertIn("同步成功", await self.confirm())
+        self.assertEqual(list(self.plugin.storage[f"tantou_v1:{self.target}"]), ["1002", "1001"])
+        self.assertEqual(self.plugin.storage[f"tantou_registration_order_v1:{self.target}"], ["1002", "1001"])
 
     async def test_cancel_expiry_wrong_owner_and_wrong_group_never_overwrite(self):
         await self.start()
