@@ -73,10 +73,11 @@ class TantouSyncTests(unittest.IsolatedAsyncioTestCase):
         self.store.range_get_async.assert_awaited_once_with("plugin", self.plugin.plugin_id)
         self.assertEqual(self.follows(), ["花海佑芽"])
 
-    async def test_valid_choice_recalls_only_the_bots_list_and_does_not_send_it_twice(self):
+    async def test_qq_choice_and_confirmation_recall_their_own_prompts_once(self):
+        ids = iter(("-43210", 65432))
         async def action(name, **kwargs):
             if name == "send_group_msg":
-                return {"message_id": "-43210"}
+                return {"message_id": next(ids)}
         bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
         start = Event(text="担当同步")
         start.bot = bot
@@ -89,26 +90,41 @@ class TantouSyncTests(unittest.IsolatedAsyncioTestCase):
         choose = Event(text="1")
         choose.bot = bot
         choose.message_obj = types.SimpleNamespace(message_id=12345)
-        self.assertIn("同步后", await self.plugin._tantou_sync_reply(choose))
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(choose)], [])
         self.assertEqual(self.follows(), ["花海佑芽"])
+        for event in (Event(user="1002", text="确认"), Event(group="200", text="确认"), Event(text="1")):
+            event.bot = bot
+            await self.plugin._tantou_sync_reply(event)
+        deleted = [call.kwargs["message_id"] for call in bot.call_action.await_args_list if call.args == ("delete_msg",)]
+        self.assertEqual(deleted, [-43210])
         confirmed = Event(text="确认")
         confirmed.bot = bot
-        self.assertIn("同步成功", await self.plugin._tantou_sync_reply(confirmed))
+        confirmed.message_obj = types.SimpleNamespace(message_id=54321)
+        result = [reply async for reply in self.plugin.tantou_text_fallback(confirmed)]
+        self.assertEqual(len(result), 1)
+        self.assertIn("同步成功", result[0])
+        self.assertEqual([reply async for reply in self.plugin.tantou_text_fallback(confirmed)], [])
+        self.assertEqual(self.follows(), ["月村手毬", "va:21149"])
         actions = [call for call in bot.call_action.await_args_list if call.args[0] != "get_group_info"]
-        self.assertEqual([call.args[0] for call in actions], ["send_group_msg", "delete_msg"])
+        self.assertEqual([call.args[0] for call in actions], ["send_group_msg", "delete_msg", "send_group_msg", "delete_msg"])
         self.assertEqual(actions[1].kwargs, {"message_id": -43210, "self_id": "9999"})
+        self.assertIn("同步后：月村 手毬、小鹿 なお", actions[2].kwargs["message"][0]["data"]["text"])
+        self.assertEqual(actions[3].kwargs, {"message_id": 65432, "self_id": "9999"})
 
     async def test_recall_failure_still_allows_preview_and_confirmation(self):
+        ids = iter((43210, 43211))
         async def action(name, **kwargs):
             if name == "send_group_msg":
-                return {"message_id": 43210}
+                return {"message_id": next(ids)}
             if name == "delete_msg":
                 raise RuntimeError("recall unavailable")
         self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
         self.assertIsNone(await self.start())
-        self.assertIn("同步后", await self.choose())
+        self.assertIsNone(await self.choose())
         self.assertIn("同步成功", await self.confirm())
         self.event.bot.call_action.assert_any_await("delete_msg", message_id=43210, self_id="9999")
+        self.event.bot.call_action.assert_any_await("delete_msg", message_id=43211, self_id="9999")
+        self.assertEqual(self.follows(), ["月村手毬", "va:21149"])
 
     async def test_cancelling_before_send_acknowledgement_still_recalls_the_list(self):
         entered, release = asyncio.Event(), asyncio.Event()
@@ -125,6 +141,72 @@ class TantouSyncTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(await task)
         self.event.bot.call_action.assert_awaited_with("delete_msg", message_id=43210, self_id="9999")
         self.assertEqual(self.follows(), ["花海佑芽"])
+
+    async def test_confirm_before_either_qq_receipt_recalls_both_when_they_arrive(self):
+        list_sent, preview_sent = asyncio.Event(), asyncio.Event()
+        list_ack, preview_ack = asyncio.Event(), asyncio.Event()
+        async def action(name, **kwargs):
+            if name == "send_group_msg":
+                if "当前担当" in kwargs["message"][0]["data"]["text"]:
+                    preview_sent.set()
+                    await preview_ack.wait()
+                    return {"message_id": 73202}
+                list_sent.set()
+                await list_ack.wait()
+                return {"message_id": 73201}
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
+        listing = asyncio.create_task(self.start())
+        await asyncio.wait_for(list_sent.wait(), timeout=2)
+        preview = asyncio.create_task(self.choose())
+        await asyncio.wait_for(preview_sent.wait(), timeout=2)
+        self.assertIn("同步成功", await self.confirm())
+        preview_ack.set()
+        self.assertIsNone(await preview)
+        list_ack.set()
+        self.assertIsNone(await listing)
+        deleted = [call.kwargs["message_id"] for call in self.event.bot.call_action.await_args_list if call.args == ("delete_msg",)]
+        self.assertEqual(deleted, [73202, 73201])
+
+    async def test_confirmation_waits_until_preview_is_being_sent(self):
+        withdrawing, withdrawn = asyncio.Event(), asyncio.Event()
+        # The list has a receipt, but the preview is sent without a usable one.
+        receipts = iter(({"message_id": 1234}, {}))
+        async def action(name, **kwargs):
+            if name == "send_group_msg":
+                return next(receipts)
+            if name == "delete_msg":
+                withdrawing.set()
+                await withdrawn.wait()
+        self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
+        self.event.message_obj = types.SimpleNamespace(message_id=99999)
+        self.assertIsNone(await self.start())
+        preview = asyncio.create_task(self.choose())
+        await asyncio.wait_for(withdrawing.wait(), timeout=2)
+        self.assertIn("稍候", await self.confirm())
+        self.assertEqual(self.follows(), ["花海佑芽"])
+        withdrawn.set()
+        self.assertIsNone(await preview)
+        self.assertIn("同步成功", await self.confirm())
+        deleted = [call.kwargs["message_id"] for call in self.event.bot.call_action.await_args_list if call.args == ("delete_msg",)]
+        self.assertEqual(deleted, [1234])
+
+    async def test_qq_cancel_or_stale_confirmation_withdraws_preview_without_overwriting(self):
+        for answer in ("取消", "0", "确认"):
+            with self.subTest(answer=answer):
+                ids = iter((43210, 43211))
+                async def action(name, **kwargs):
+                    if name == "send_group_msg":
+                        return {"message_id": next(ids)}
+                self.event.bot = types.SimpleNamespace(call_action=AsyncMock(side_effect=action))
+                self.assertIsNone(await self.start())
+                self.assertIsNone(await self.choose())
+                if answer == "确认":
+                    self.plugin.storage[f"tantou_v1:{self.a}"]["1001"] = ["天海春香"]
+                result = await self.choose(answer)
+                self.assertIn("已变化" if answer == "确认" else "取消", result)
+                self.assertEqual(self.follows(), ["花海佑芽"])
+                deleted = [call.kwargs["message_id"] for call in self.event.bot.call_action.await_args_list if call.args == ("delete_msg",)]
+                self.assertEqual(deleted, [43210, 43211])
 
     async def test_preview_then_explicit_confirmation_overwrites_only_self_and_keeps_order_and_profile(self):
         source = copy.deepcopy(self.plugin.storage[f"tantou_v1:{self.a}"])
