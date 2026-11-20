@@ -16,6 +16,16 @@ CHARACTER_SUPPLEMENTAL_PROFILES = {
     "樱井桃华": {
         "aliases": ["mmk"],
     },
+    "冰渡香名江": {
+        "name_cn": "冰渡香名江",
+        "name_jp": "氷渡 香名江",
+        "brand": "gakuen_idolmaster",
+        "birthday": "08-20",
+        "cv": "安倍 彩野夏",
+        "aliases": ["香名江"],
+        "source_url": "https://gakuen.idolmaster-official.jp/idol/kanae/",
+        "source_title": "学園名簿：氷渡 香名江",
+    },
     "美城常务": {
         "name_cn": "美城常务",
         "name_jp": "美城常務",

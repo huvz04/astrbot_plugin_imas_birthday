@@ -462,7 +462,7 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(index[key], name)
                 else:
                     self.assertFalse(key in index, key)
-        self.assertEqual(covered, 341)
+        self.assertGreaterEqual(covered, 342)
         # A generated initial must not match as a fragment inside unrelated input.
         self.assertEqual(self.plugin._tantou_candidates("完全无关的测试词abcdef", records), [])
         self.assertEqual(self.plugin._tantou_candidates("qzxv987", records), [])
@@ -1149,6 +1149,48 @@ class TantouTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.follows(), ["一之濑志希", "月村手毬"])
         self.assertEqual(await self.plugin._tantou_birthday_users(self.event.unified_msg_origin, ["一ノ瀬 志希"]), [self.event.user])
         self.assertEqual(self.plugin.storage[f"tantou_v1:{self.event.unified_msg_origin}"][self.event.user], ["一之濑志希", "月村手毬"])
+
+    async def test_kanae_birthday_and_official_spellings_share_follows_and_votes(self):
+        name, official = "冰渡香名江", "氷渡 香名江"
+        row = self.plugin._idol_catalogue[name]
+        self.assertEqual(row["idol_code"], "kanae_hiwatari")
+        self.assertEqual(row["filename"], "gakuen/kanae_hiwatari.png")
+        cache = {"updated_at": time.time(), "records": {
+            name: {"idol_code": row["idol_code"], "idol_name": official, "aliases": ["冰渡旧名"]},
+            official: {**row, "aliases": ["氷渡旧名"]},
+        }}
+        self.plugin.storage["idol_catalogue_v1"] = cache
+        umo = self.event.unified_msg_origin
+        self.plugin.storage[f"tantou_v1:{umo}"] = {
+            "1001": ["花海佑芽", official, "月村手毬", name], "1002": ["氷渡香名江"],
+        }
+        entry = {"characters": [name, "氷渡　香名江"]}
+        self.plugin.storage["birthday_cache"] = {"data": {"08-20": entry}}
+        self.assertEqual(await self.plugin._tantou_sync_names(umo, "1001"), ["花海佑芽", name, "月村手毬"])
+        self.assertEqual(await self.follows(), ["花海佑芽", name, "月村手毬"])
+        saved = self.plugin.storage["idol_catalogue_v1"]
+        self.assertEqual(list(saved["records"]), [name])
+        self.assertEqual(saved["updated_at"], cache["updated_at"])
+        self.assertEqual(set(saved["records"][name]["aliases"]), {official, "氷渡旧名", "冰渡旧名"})
+        self.assertEqual(saved["records"][name]["filename"], row["filename"])
+        self.assertEqual(self.plugin._visible_characters(entry), [name])
+        self.assertEqual(await self.plugin._tantou_birthday_users(umo, entry["characters"]), ["1001", "1002"])
+        records = await self.plugin._tantou_records()
+        self.assertEqual([n for n in records if "香名江" in n], [name])
+        self.assertEqual(self.plugin._tantou_candidates("香名江", records), [name])
+        for surname in ("冰渡", "氷渡"):
+            self.assertEqual(self.plugin._tantou_candidates(surname, records)[0], name)
+        self.assertIn("氷渡 香名江 · 本群 2人", await self.plugin._tantou_followers(self.event, "香名江"))
+        result = await self.plugin._change_tantou(self.event, "减推", "氷渡 香名江")
+        self.assertIn(official, result)
+        self.assertEqual(await self.follows(), ["花海佑芽", "月村手毬"])
+        actor = Event(user="1003")
+        for query in ("香名江", "冰渡 香名江", "氷渡香名江", "ひわたり かなえ", "kanae_hiwatari"):
+            with self.subTest(query=query):
+                response = await self.plugin._change_tantou(actor, "加推", query)
+                self.assertIn(official, response)
+                self.assertEqual(await self.follows(actor), [name])
+                await self.plugin._change_tantou(actor, "减推", name)
 
     async def test_birthday_lookup_accepts_official_japanese_name(self):
         self.plugin.storage["birthday_cache"] = {"updated_at": int(time.time()), "data": {

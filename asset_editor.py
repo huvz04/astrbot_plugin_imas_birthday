@@ -77,27 +77,37 @@ class AssetEditor:
             payload = json.loads(self.file.read_text(encoding="utf-8"))
             if payload.get("schema") != 1 or not isinstance(payload.get("records"), dict):
                 raise ValueError("角色编辑数据格式无效，请检查 characters.json。")
-            self.records = payload["records"]
-            old = self.records.get("百万ChiefP")
-            if isinstance(old, dict):
-                current = self.records.get("赤羽根P", {})
-                merged = {**old, **current, "images": {**old.get("images", {}), **current.get("images", {})}}
-                if "name_jp" not in current and merged.get("name_jp") == "チーフプロデューサー":
-                    merged.pop("name_jp")
-                self.records = {name: record for name, record in self.records.items() if name != "百万ChiefP"}
-                self.records["赤羽根P"] = merged
-                # Keep both original files and the pre-merge JSON recoverable.
-                backup = self.file.with_name("characters.before-chief-merge.json")
-                if not backup.exists():
-                    with backup.open("x", encoding="utf-8") as stream:
-                        json.dump(payload, stream, ensure_ascii=False, indent=2)
-                with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.root, suffix=".json", delete=False) as stream:
-                    json.dump({**payload, "records": self.records}, stream, ensure_ascii=False, indent=2)
-                    temporary = Path(stream.name)
-                try:
-                    temporary.replace(self.file)
-                finally:
-                    temporary.unlink(missing_ok=True)
+            self.records = dict(payload["records"])
+            self._merge_legacy_names(payload)
+
+    def _merge_legacy_names(self, payload):
+        for old_name, old in payload["records"].items():
+            name = self.plugin._canonical_character_name(old_name)
+            if name == old_name or not isinstance(old, dict):
+                continue
+            current = self.records.get(name, {})
+            merged = {**old, **current}
+            merged["aliases"] = list(dict.fromkeys([*current.get("aliases", []), *old.get("aliases", [])]))
+            merged["images"] = {**old.get("images", {}), **current.get("images", {})}
+            if old_name == "百万ChiefP" and "name_jp" not in current and merged.get("name_jp") == "チーフプロデューサー":
+                merged.pop("name_jp")
+            self.records[name] = merged
+            del self.records[old_name]
+        if self.records == payload["records"]:
+            return
+        # Preserve the entire original overlay, including conflicting crops of the same kind.
+        suffix = "chief" if "百万ChiefP" in payload["records"] and "百万ChiefP" not in self.records else "name"
+        backup = self.file.with_name(f"characters.before-{suffix}-merge.json")
+        if not backup.exists():
+            with backup.open("x", encoding="utf-8") as stream:
+                json.dump(payload, stream, ensure_ascii=False, indent=2)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.root, suffix=".json", delete=False) as stream:
+            json.dump({**payload, "records": self.records}, stream, ensure_ascii=False, indent=2)
+            temporary = Path(stream.name)
+        try:
+            temporary.replace(self.file)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def register(self, context):
         # Older AstrBot versions can still use the bot commands and saved overrides.
@@ -137,14 +147,13 @@ class AssetEditor:
             )
         return True
 
-    @staticmethod
-    def validate_name(name):
+    def validate_name(self, name):
         if not isinstance(name, str) or not name.strip() or len(name) > 80:
             raise ValueError("角色名字需为 1—80 个字符。")
         name = name.strip()
         if name.lower().startswith("qq:") or any(ord(c) < 32 for c in name) or any(c in name for c in "、,，;；"):
             raise ValueError("角色名字不能使用群友内部标识、控制字符或名字分隔符。")
-        return "赤羽根P" if name == "百万ChiefP" else name
+        return self.plugin._canonical_character_name(name)
 
     def source_path(self, token):
         if not isinstance(token, str) or not re.fullmatch(r"[0-9a-f]{64}", token):
@@ -347,7 +356,7 @@ class AssetEditor:
             return data
         result = copy.deepcopy(data)
         for entry in result.values():
-            entry["characters"] = [name for name in self.plugin._split_people(entry.get("characters", []))
+            entry["characters"] = [name for name in self.plugin._split_people(entry.get("characters", []), characters=True)
                                    if self.plugin._base_character_name(name) not in overrides]
         for name, birthday in overrides.items():
             if birthday:

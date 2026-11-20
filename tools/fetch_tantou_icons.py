@@ -38,6 +38,9 @@ def normalize_name(value: str) -> str:
 
 def build_mapping(rows: list[dict]) -> tuple[dict[str, dict], list[dict]]:
     profiles = read_mapping(ROOT / "character_profiles.py", "CHARACTER_PROFILES")
+    supplements = read_mapping(ROOT / "character_supplemental_profiles.py", "CHARACTER_SUPPLEMENTAL_PROFILES")
+    for name, profile in supplements.items():
+        profiles[name] = {**profiles.get(name, {}), **profile}
     assets = read_mapping(ROOT / "character_assets.py", "CHARACTER_IMAGE_ASSETS")
     aliases = read_mapping(ROOT / "tools" / "fetch_portrait_assets.py", "SPECIAL_NAME_ALIASES")
     aliases.update({"エミリー": "艾米莉·斯图亚特", "詩花": "诗花"})

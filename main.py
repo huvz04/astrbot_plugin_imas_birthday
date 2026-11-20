@@ -440,6 +440,13 @@ BRAND_ALIASES = {
 CHARACTER_NAME_ALIASES = {
     "ミント": "Mint",
     "百万ChiefP": "赤羽根P",
+    "氷渡 香名江": "冰渡香名江",
+}
+
+CHARACTER_CANONICAL_NAMES = {
+    "".join(spelling.split()): canonical
+    for alias, canonical in CHARACTER_NAME_ALIASES.items()
+    for spelling in (alias, canonical)
 }
 
 CHARACTER_REVERSE_ALIASES = {
@@ -1514,11 +1521,22 @@ class ImasBirthdayPlugin(Star):
             records = cache.get("records") if isinstance(cache, dict) else None
             if isinstance(records, dict) and records:
                 by_code = {record["idol_code"]: name for name, record in self._idol_catalogue.items()}
-                for cached_name, record in records.items():
+                canonical_records = {}
+                # When both spellings were cached, give the canonical entry precedence.
+                for cached_name, record in sorted(records.items(), key=lambda pair: pair[0] == by_code.get(pair[1].get("idol_code"))):
                     name = by_code.get(record.get("idol_code"), cached_name)
-                    if name != cached_name:
-                        record = {**record, "aliases": list(dict.fromkeys([*record.get("aliases", []), cached_name]))}
-                    self._idol_catalogue[name] = record
+                    previous = canonical_records.get(name, {})
+                    if name != cached_name or previous:
+                        aliases = [*previous.get("aliases", []), *record.get("aliases", [])]
+                        if name != cached_name:
+                            aliases.append(cached_name)
+                        if previous.get("idol_name") and previous["idol_name"] != record.get("idol_name"):
+                            aliases.append(previous["idol_name"])
+                        record = {**record, "aliases": list(dict.fromkeys(aliases))}
+                    canonical_records[name] = {**self._idol_catalogue.get(name, {}), **previous, **record}
+                if canonical_records != records:
+                    await self.put_kv_data("idol_catalogue_v1", {**cache, "records": canonical_records})
+                self._idol_catalogue.update(canonical_records)
                 self._catalogue_next_refresh = float(cache.get("updated_at", 0)) + 86400
             else:
                 await self.put_kv_data("idol_catalogue_v1", {"updated_at": 0, "records": self._idol_catalogue})
@@ -1542,7 +1560,7 @@ class ImasBirthdayPlugin(Star):
                 if not re.fullmatch(r"[a-z0-9_]+", code) or not re.fullmatch(r"[a-z]+", brand) or code in seen or not str(row.get("idol_name", "")).strip():
                     raise ValueError("Invalid or duplicate official character identity")
                 seen.add(code)
-                name = by_code.get(code) or aliases.get(self._exact_name_key(row["idol_name"])) or row["idol_name"].strip()
+                name = by_code.get(code) or aliases.get(self._exact_name_key(row["idol_name"])) or self._canonical_character_name(row["idol_name"].strip())
                 previous = updated.get(name, {})
                 old_aliases = list(previous.get("aliases", []))
                 if previous.get("idol_name") and previous["idol_name"] != row["idol_name"]:
@@ -1560,6 +1578,10 @@ class ImasBirthdayPlugin(Star):
 
     def _exact_name_key(self, value: str) -> str:
         return person_name_key(value)
+
+    @staticmethod
+    def _canonical_character_name(name: str) -> str:
+        return CHARACTER_CANONICAL_NAMES.get("".join(name.split()), name)
 
     @staticmethod
     def _voice_actor_id(name: str) -> str:
@@ -1631,7 +1653,7 @@ class ImasBirthdayPlugin(Star):
         record = self._idol_catalogue.get(name, {})
         profile = self._lookup_character_profile(name)
         code = record.get("idol_code", "")
-        return [name, profile.get("display_name", ""), profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), code, *character_romanized_aliases(code), *character_romanized_abbreviations(code), *record.get("aliases", []), *profile.get("aliases", [])]
+        return [name, CHARACTER_REVERSE_ALIASES.get(name, ""), profile.get("display_name", ""), profile.get("name_jp", ""), record.get("idol_name", ""), record.get("idol_kana", ""), code, *character_romanized_aliases(code), *character_romanized_abbreviations(code), *record.get("aliases", []), *profile.get("aliases", [])]
 
     def _tantou_display_name(self, name: str, members: dict[str, dict[str, Any]] | None = None) -> str:
         ident = self._public_person_id(name)
@@ -1725,7 +1747,7 @@ class ImasBirthdayPlugin(Star):
 
     def _tantou_alias_index(self, names: Any) -> dict[str, str]:
         candidates: dict[str, set[str]] = {}
-        for name in dict.fromkeys(CHARACTER_NAME_ALIASES.get(name, name) for name in names):
+        for name in dict.fromkeys(self._canonical_character_name(name) for name in names):
             for alias in self._tantou_aliases(name):
                 if alias:
                     candidates.setdefault(self._exact_name_key(alias), set()).add(name)
@@ -1759,7 +1781,7 @@ class ImasBirthdayPlugin(Star):
         cache = await self.get_kv_data("birthday_cache", {})
         if isinstance(cache, dict) and isinstance(cache.get("data"), dict):
             names.update(record["name"] for record in self._character_birthday_records(cache["data"]))
-        return sorted({CHARACTER_NAME_ALIASES.get(name, self._base_character_name(name)) for name in names if name and not name.startswith("qq:") and not self._public_person_id(name) and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
+        return sorted({self._canonical_character_name(self._base_character_name(name)) for name in names if name and not name.startswith("qq:") and not self._public_person_id(name) and (self._cfg_bool("include_kr_characters", False) or not self._is_kr_character(name))})
 
     async def _all_tantou_records(self) -> list[str]:
         return [*await self._tantou_records(), *VOICE_ACTOR_CATALOGUE, *self._public_people_records()]
@@ -2231,7 +2253,7 @@ class ImasBirthdayPlugin(Star):
         if self._public_person_id(name) or self._voice_actor_id(name):
             path = self._person_photo_path(name)
             return path if path.is_file() else None
-        record = self._idol_catalogue.get(name)
+        record = self._idol_catalogue.get(self._canonical_character_name(name))
         if not record:
             return None
         for directory in (self.tantou_icons_dir, self.plugin_dir / "assets" / "tantou_icons"):
@@ -2501,7 +2523,7 @@ class ImasBirthdayPlugin(Star):
 
         best_score, best = matches[0]
         lines = [f"查询：{query}"]
-        if self._normalize_character_query(best["name"]) != self._normalize_character_query(query):
+        if self._normalize_character_query(best["name"]) != self._normalize_character_query(self._canonical_character_name(query)):
             lines.append(f"是否在找：{best['name']}")
         else:
             lines.append(f"找到：{best['name']}")
@@ -2714,7 +2736,7 @@ class ImasBirthdayPlugin(Star):
         }
 
     def _character_profile_payload(self, character: str, date_key: str = "") -> dict[str, Any]:
-        name = self._base_character_name(CHARACTER_NAME_ALIASES.get(character, character))
+        name = self._canonical_character_name(self._base_character_name(character))
         brand = self._character_brand(name)
         profile = self._lookup_character_profile(name)
         birthday = str(profile.get("birthday") or date_key or "")
@@ -2770,20 +2792,19 @@ class ImasBirthdayPlugin(Star):
             payload.update(official_name_jp=official.get("idol_name", ""), official_kana=official.get("idol_kana", ""), official_code=official.get("idol_code", ""), official_id=official.get("id"), official_profile_url=official.get("idol_idollist_url", ""))
         return payload
 
+    def _character_lookup_names(self, character: str) -> tuple[str, ...]:
+        base = self._base_character_name(character)
+        canonical = self._canonical_character_name(character)
+        return tuple(dict.fromkeys((character, canonical, CHARACTER_REVERSE_ALIASES.get(canonical, canonical),
+                                    base, self._canonical_character_name(base))))
+
     def _lookup_character_profile(self, character: str) -> dict[str, Any]:
-        candidates = [
-            character,
-            CHARACTER_NAME_ALIASES.get(character, character),
-            CHARACTER_REVERSE_ALIASES.get(character, character),
-            self._base_character_name(character),
-            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
-        ]
         custom = self._editor_record(character)
         overrides = {key: custom[key] for key in ("name_jp", "brand", "birthday") if key in custom}
         if "birthday" in custom:
             overrides["birthday_text"] = custom["birthday"]
             overrides["zodiac"] = ""
-        for candidate in dict.fromkeys(candidates):
+        for candidate in self._character_lookup_names(character):
             profile = CHARACTER_PROFILES.get(candidate)
             if isinstance(profile, dict):
                 profile = {**profile, **overrides, "aliases": list(dict.fromkeys([*profile.get("aliases", []), *custom.get("aliases", [])]))}
@@ -2796,7 +2817,7 @@ class ImasBirthdayPlugin(Star):
         editor = getattr(self, "editor", None)
         if not editor:
             return {}
-        name = CHARACTER_NAME_ALIASES.get(character, self._base_character_name(character))
+        name = self._canonical_character_name(self._base_character_name(character))
         return editor.records.get(name, {})
 
     def _editor_image(self, character: str, kind: str, size=None) -> Path | None:
@@ -2806,7 +2827,7 @@ class ImasBirthdayPlugin(Star):
         editor = getattr(self, "editor", None)
         if not editor:
             return None
-        name = CHARACTER_NAME_ALIASES.get(character, self._base_character_name(character))
+        name = self._canonical_character_name(self._base_character_name(character))
         return editor.render_image(name, kind, size)
 
     async def _build_find_character_result(
@@ -2844,7 +2865,7 @@ class ImasBirthdayPlugin(Star):
                 result.update({"action": "find", "query": query, "matches": []})
             return result
 
-        if self._normalize_character_query(best["name"]) != self._normalize_character_query(query):
+        if self._normalize_character_query(best["name"]) != self._normalize_character_query(self._canonical_character_name(query)):
             message = f"是否在找：{best['name']}\n{message}"
 
         card_path = ""
@@ -2928,9 +2949,8 @@ class ImasBirthdayPlugin(Star):
         return list(records_by_name.values())
 
     def _normalize_character_query(self, text: str) -> str:
-        text = CHARACTER_NAME_ALIASES.get(text, text)
-        text = self._base_character_name(text)
-        text = person_name_key(text).lower()
+        # Keep each spelling searchable by its own fragments, including 氷渡 and 冰渡.
+        text = person_name_key(self._base_character_name(text))
         return re.sub(r"[\s·・．.。\-_/＿—~～（）()【】\[\]「」『』]+", "", text)
 
     def _character_match_score(self, query_key: str, name_key: str) -> float:
@@ -4286,14 +4306,7 @@ class ImasBirthdayPlugin(Star):
         return path if path.exists() else None
 
     def _character_color(self, character: str, brand: str) -> str:
-        candidates = [
-            character,
-            CHARACTER_NAME_ALIASES.get(character, character),
-            CHARACTER_REVERSE_ALIASES.get(character, character),
-            self._base_character_name(character),
-            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
-        ]
-        for candidate in dict.fromkeys(candidates):
+        for candidate in self._character_lookup_names(character):
             color = CHARACTER_COLORS.get(candidate)
             if color:
                 return color
@@ -4314,7 +4327,7 @@ class ImasBirthdayPlugin(Star):
         custom_brand = self._editor_record(character).get("brand")
         if custom_brand:
             return BRAND_ALIASES.get(self._normalize_brand_key(custom_brand), custom_brand)
-        character = CHARACTER_NAME_ALIASES.get(character, character)
+        character = self._canonical_character_name(character)
         base_character = self._base_character_name(character)
         if character in CHARACTER_BRAND_OVERRIDES:
             return CHARACTER_BRAND_OVERRIDES[character]
@@ -4329,28 +4342,14 @@ class ImasBirthdayPlugin(Star):
         return BRAND_ALIASES.get(self._normalize_brand_key(brand), "OTHER")
 
     def _character_asset_filename(self, character: str) -> str:
-        candidates = [
-            character,
-            CHARACTER_NAME_ALIASES.get(character, character),
-            CHARACTER_REVERSE_ALIASES.get(character, character),
-            self._base_character_name(character),
-            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
-        ]
-        for candidate in dict.fromkeys(candidates):
+        for candidate in self._character_lookup_names(character):
             filename = CHARACTER_IMAGE_ASSETS.get(candidate)
             if filename:
                 return filename
         return ""
 
     def _character_portrait_filename(self, character: str) -> str:
-        candidates = [
-            character,
-            CHARACTER_NAME_ALIASES.get(character, character),
-            CHARACTER_REVERSE_ALIASES.get(character, character),
-            self._base_character_name(character),
-            CHARACTER_NAME_ALIASES.get(self._base_character_name(character), self._base_character_name(character)),
-        ]
-        for candidate in dict.fromkeys(candidates):
+        for candidate in self._character_lookup_names(character):
             filename = CHARACTER_PORTRAIT_ASSETS.get(candidate)
             if filename:
                 return filename
@@ -4363,7 +4362,7 @@ class ImasBirthdayPlugin(Star):
         return re.sub(r"[^0-9a-zα]+", "_", value.lower()).strip("_")
 
     def _visible_characters(self, entry: dict[str, list[str]]) -> list[str]:
-        characters = [name for name in self._split_people(entry.get("characters", [])) if not self._public_person_id(name)]
+        characters = [name for name in self._split_people(entry.get("characters", []), characters=True) if not self._public_person_id(name)]
         if self._cfg_bool("include_kr_characters", False):
             return characters
         return [character for character in characters if not self._is_kr_character(character)]
@@ -4380,12 +4379,13 @@ class ImasBirthdayPlugin(Star):
             or self._character_brand(normalized) == "KR"
         )
 
-    def _split_people(self, values: list[str]) -> list[str]:
+    def _split_people(self, values: list[str], *, characters: bool = False) -> list[str]:
         people: list[str] = []
         for value in values:
             for item in re.split(r"[、,，]", value):
                 item = item.strip()
-                item = CHARACTER_NAME_ALIASES.get(item, item)
+                if characters:
+                    item = self._canonical_character_name(item)
                 if item and item not in people:
                     people.append(item)
         return people
@@ -4839,7 +4839,7 @@ body {{
                 "related_people": list(entry.get("related_people", [])),
                 "events": list(entry.get("events", [])),
             }
-            for character in self._split_people(entry.get("characters", [])):
+            for character in self._split_people(entry.get("characters", []), characters=True):
                 if self._is_kr_character(character):
                     removed_count += 1
                     continue

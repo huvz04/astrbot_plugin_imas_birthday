@@ -109,6 +109,36 @@ class EditorTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(producer["display_name"], "中村P")
         self.assertEqual((await again.detail("百万动画P"))["display_name"], "中村P")
 
+    async def test_kanae_editor_merges_images_and_aliases_under_the_birthday_identity(self):
+        name, old = "冰渡香名江", "氷渡　香名江"
+        token = self.editor.import_image(self.picture())["source"]
+        left = {"source": token, "x": 0, "y": .5, "zoom": 1}
+        right = {**left, "x": 1}
+        original = {"schema": 1, "records": {
+            name: {"images": {"birthday": right}, "aliases": ["旧中文别名"], "revision": "current"},
+            old: {"images": {"tantou": left, "birthday": left}, "aliases": ["旧日文别名"], "source_note": "自选头像"},
+        }}
+        self.editor.file.write_text(json.dumps(original, ensure_ascii=False), encoding="utf-8")
+        editor = self.attach(self.plugin)
+        rows = [r for r in (await editor.list_records())["characters"] if "香名江" in r["name"]]
+        self.assertEqual([(r["name"], r["name_jp"], r["birthday"], r["brand"]) for r in rows],
+                         [(name, "氷渡 香名江", "08-20", "GAKUEN_IDOLMASTER")])
+        self.assertTrue(rows[0]["has_tantou_image"] and rows[0]["has_birthday_image"])
+        detail = await editor.detail("氷渡香名江")
+        self.assertEqual(detail["record"]["images"], {"birthday": right, "tantou": left})
+        self.assertEqual(detail["record"]["aliases"], ["旧中文别名", "旧日文别名"])
+        self.assertEqual(detail["record"]["source_note"], "自选头像")
+        self.assertEqual(detail["revision"], "current")
+        self.assertTrue(editor.source_path(token).is_file())
+        backup = self.root / "characters.before-name-merge.json"
+        self.assertEqual(json.loads(backup.read_text(encoding="utf-8")), original)
+        self.assertEqual(self.attach(self.plugin).records, editor.records)
+        await editor.save({"name": old, "revision": "current", "birthday": "08-21"})
+        self.assertEqual(list(editor.records), [name])
+        updated = editor.apply_birthdays({"08-20": {"characters": [name, old]}})
+        self.assertEqual(updated["08-20"]["characters"], [])
+        self.assertEqual(updated["08-21"]["characters"], [name])
+
     async def test_birthday_override_moves_removes_and_restores_without_changing_source(self):
         data = {"06-03": {"characters": ["月村手毬", "花海佑芽"], "seiyuu": ["声优"], "events": [], "related_people": []}}
         original = copy.deepcopy(data)

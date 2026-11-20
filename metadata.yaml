@@ -2,7 +2,7 @@ name: astrbot_plugin_imas_birthday
 display_name: 偶像大师生日提醒
 description: 偶像大师生日祝贺、担当登记与跨群同步；可加推声优、唱见和偶像大师幕后人员。
 short_desc: 偶像大师生日祝贺、担当登记与本群排行
-version: 0.1.113
+version: 0.1.114
 author: dache
 repo: https://github.com/huvz04/astrbot_plugin_imas_birthday
 support_platforms:
