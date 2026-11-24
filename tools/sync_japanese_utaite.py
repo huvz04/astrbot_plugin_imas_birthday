@@ -134,6 +134,8 @@ def refresh_singers(client, previous, parse_artist):
     # Existing stage names can have a Japanese biography outside the 歌い手 categories.
     old = {r["id"]: r for r in previous["records"]}
     seed = {r["name"] for r in old.values() if r["id"].startswith("ut:utaitedb:")}
+    seed.update(t for r in old.values() for url in (r.get("wiki_url", ""), *r.get("sources", []))
+                if (t := japanese_title(url)))
     seed.update(r["name"] for i, r in previous.get("legacy_names", {}).items() if i.startswith("ut:utaitedb:"))
     titles = category | set(by_title) | seed
     pages, redirects = {}, {}

@@ -14,7 +14,11 @@ USER_AGENT = "imas-birthday-catalogue/1.1 (+https://github.com/huvz04/astrbot_pl
 _LAST_REQUEST = {}
 
 
-def snapshot(client, url, cache=CACHE, *, max_age_days=0, interval=0):
+class SnapshotUnavailable(Exception):
+    """A previously fetched page is unavailable within the requested freshness."""
+
+
+def snapshot(client, url, cache=CACHE, *, max_age_days=0, interval=0, cached_only=False):
     """Return the public response and the UTC date it was actually retrieved."""
     cache.mkdir(parents=True, exist_ok=True)
     path = cache / (hashlib.sha256(url.encode()).hexdigest() + ".json")
@@ -24,6 +28,8 @@ def snapshot(client, url, cache=CACHE, *, max_age_days=0, interval=0):
         age = (date.fromisoformat(today) - date.fromisoformat(saved["verified_at"])).days
         if saved["url"] == url and 0 <= age <= max_age_days:
             return saved["text"], saved["verified_at"]
+    if cached_only:
+        raise SnapshotUnavailable(url)
     for attempt in range(3):
         try:
             if interval:

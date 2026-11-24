@@ -15,7 +15,7 @@ from PIL import Image
 from test_tantou import Event, make_plugin, plugin_module
 
 ROOT = Path(__file__).resolve().parents[1]
-SINGER_WIKI = r"^https://(?:ja\.wikipedia\.org/wiki/|dic\.nicovideo\.jp/a/|seesaawiki\.jp/utaite/d/)[^?#]+$"
+SINGER_WIKI = r"^https://(?:ja\.wikipedia\.org/wiki/|dic\.nicovideo\.jp/(?:a|id)/|seesaawiki\.jp/utaite/d/)[^?#]+$"
 spec = importlib.util.spec_from_file_location("public_people_test_source", ROOT / "public_people.py")
 source = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(source)
@@ -83,13 +83,71 @@ class PublicPeopleSourceTests(unittest.TestCase):
                    and (r["kind"] == "utaite" or "utaite" in r.get("roles", []))]
         for row in singers:
             self.assertRegex(row["wiki_url"], SINGER_WIKI)
-            self.assertTrue(row["japan_source"])
+            if not row.get("japan_source"):
+                self.assertEqual(row["eligibility_basis"], "japanese_wiki")
+                self.assertIn(row["wiki_directory_url"], row["sources"])
+                self.assertTrue(row["wiki_checked_at"])
+                self.assertTrue(row["avatar_url"])
             self.assertIn(row["wiki_url"], row["sources"])
         self.assertTrue({"nayuta", "柊優花", "藍月なくる", "そらる", "まふまふ", "赤ティン", "コゲ犬", "recog"} <= {r["name"] for r in singers})
         self.assertTrue(any("seesaawiki.jp/utaite/d/" in u for r in singers for u in r["sources"]))
         self.assertTrue(any("dic.nicovideo.jp/a/" in r["wiki_url"] for r in singers))
-        self.assertFalse({"银临", "茶理理", "熊子", "ダズビー"} & {r["name"] for r in singers})
+        self.assertFalse({"银临", "茶理理", "熊子", "ダズビー", "花近", "ほんこーん", "Mes", "SquaDus", "グリリ"} & {r["name"] for r in singers})
         self.assertEqual(len(singers), len({r["wiki_url"] for r in singers}))
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_nico_directory_does_not_require_an_unpublished_hometown(self):
+        import community_utaite as community
+        entry = community.Entry("テスト", community.NICO + "/a/test", "nico", True, providers={12})
+        artist = {"id": 12, "defaultName": "テスト", "status": "Finished", "names": [],
+                  "webLinks": [{"category": "Official", "url": "https://x.com/owned"}],
+                  "mainPicture": {"urlThumb": "https://static.utaitedb.net/test.png"}}
+        indexes = ({"テスト": {12}}, {"twitter:owned": {12}}, {}, {})
+        error = httpx.HTTPStatusError("Forbidden", request=httpx.Request("GET", entry.url),
+                                     response=httpx.Response(403))
+        def discover():
+            with patch.object(community, "inspect_profile", side_effect=error):
+                return list(community.community_profiles(None, {entry.url: entry}, {12: (artist, "2026-11-24")},
+                                                         indexes, {}, {}, {}))
+        result = discover()
+        self.assertEqual(result[0][3], 12)
+        self.assertEqual(result[0][-2:], ("", ""))
+        self.assertEqual(entry.verification, "directory_reference")
+        entry.providers.clear()
+        self.assertEqual(discover(), [])  # Same name alone cannot attach a portrait.
+        entry.providers.add(12)
+        artist["mainPicture"] = {}
+        self.assertEqual(discover(), [])
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_biography_uses_own_accounts_and_does_not_infer_origin_from_a_tv_reference(self):
+        from utaite_wiki_profiles import profile
+        header = "{{Utaite\n|NNDuserpage = 123\n|mylist1 = 456\n|Twitter = Owned\n" + (
+            "|birthday = 10|birthmonth = 08|birthref = <ref>https://example.org/birthday</ref>\n}}\n")
+        row = profile(header + "'''Test''' is an utaite.<ref>Singaporean TV</ref>\n"
+                      "Collaborator https://twitter.com/other", "Test", "2026-11-24")
+        self.assertFalse(row["foreign"])
+        self.assertEqual(row["birthday"], "08-10")
+        self.assertEqual(row["tokens"], {"twitter:owned", "niconico:user/123", "niconico:mylist/456"})
+        foreign = profile(header + "'''Test''' is a Korean singer.", "Test", "2026-11-24")
+        self.assertTrue(foreign["foreign"])
+        commented = profile(header.rstrip() + "<!-- note -->'''Test''' is an Israeli youtaite.", "Test", "2026-11-24")
+        self.assertTrue(commented["foreign"])
+        sectioned = profile(header + "==Description==\n'''Test''' is a Chinese singer.", "Test", "2026-11-24")
+        self.assertTrue(sectioned["foreign"])
+
+    @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
+    def test_biography_name_alone_cannot_verify_an_unrelated_portrait(self):
+        import utaite_wiki_profiles as wiki
+        artist = {"defaultName": "Test", "names": [],
+                  "webLinks": [{"category": "Official", "url": "https://x.com/owned"}]}
+        def document(owner):
+            return json.dumps({"query": {"pages": [{"title": "Test", "revisions": [
+                {"slots": {"main": {"content": "{{Utaite\n|Twitter = " + owner + "\n}}\n'''Test''' is an utaite."}}}]}]}})
+        for owner, expected in (("other", set()), ("owned", {12})):
+            with patch.object(wiki, "snapshot", return_value=(document(owner), "2026-11-24")):
+                result = wiki.singer_biographies(None, {12: (artist, "2026-11-24")})
+                self.assertEqual(set(result), expected)
 
     @unittest.skipIf(sync is None, "Optional catalogue maintenance dependency is not installed")
     def test_japanese_page_does_not_make_a_foreign_singer_or_group_eligible(self):
@@ -223,6 +281,24 @@ class PublicPeopleTests(unittest.IsolatedAsyncioTestCase):
         for name in ("赤ティン", "コゲ犬"):
             self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, name))
         self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "コゲ犬 赤ティン"), "成功减推了：コゲ犬、赤ティン")
+
+    async def test_new_nico_singers_can_be_added_in_order_queried_and_removed(self):
+        names = "灯油 柿チョコ un:c 実谷なな"
+        self.assertIn("添加成功", await self.plugin._change_tantou(self.event, "加推", names))
+        group = await self.plugin._tantou_group(self.event.unified_msg_origin)
+        self.assertEqual(group[self.event.user], ["ut:utaitedb:1039", "ut:utaitedb:1029", "ut:utaitedb:1106", "ut:utaitedb:1448"])
+        for name in names.split():
+            self.assertIn("本群 1人", await self.plugin._tantou_followers(self.event, name))
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", names), "成功减推了：灯油、柿チョコ、un:c、実谷なな")
+
+    async def test_singer_display_name_wins_over_another_singers_romanized_alias(self):
+        reply = await self.plugin._change_tantou(self.event, "加推", "nayuta 泣ユた")
+        self.assertEqual(reply, "添加成功：nayuta、泣ユた")
+        group = await self.plugin._tantou_group(self.event.unified_msg_origin)
+        self.assertEqual(group[self.event.user], ["ut:utaitedb:24", "ut:utaitedb:12001"])
+        self.assertIn("nayuta · 本群 1人", await self.plugin._tantou_followers(self.event, "Nayuta"))
+        self.assertEqual(await self.plugin._change_tantou(self.event, "减推", "nayuta"), "成功减推了：nayuta")
+        self.assertEqual((await self.plugin._tantou_group(self.event.unified_msg_origin))[self.event.user], ["ut:utaitedb:12001"])
 
     def test_community_singer_with_existing_biography_or_composer_gets_one_identity(self):
         for name in ("ゴム", "みきとP", "ラマーズP", "ゆよゆっぺ"):

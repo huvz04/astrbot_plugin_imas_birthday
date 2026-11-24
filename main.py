@@ -1776,6 +1776,9 @@ class ImasBirthdayPlugin(Star):
         for key, values in candidates.items():
             established = {name for name in values if not self._public_person_id(name)}
             preferred = established or values
+            if not established and len(values) > 1:
+                full_names = {name for name in values if key == self._exact_name_key(self._tantou_display_name(name))}
+                preferred = full_names or values
             if len(preferred) == 1:
                 unique[key] = next(iter(preferred))
         return unique

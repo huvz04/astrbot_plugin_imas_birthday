@@ -362,7 +362,9 @@ python .\tools\import_character_assets.py .\assets_manifest.csv
 
 可以直接发送 `加推 高山佑介 小美野日出文 田中秀和`，名片会按输入顺序显示三人。`高山P`、`小美野P` 和 `ガミP` 也能直接使用。同名时可加 `幕后:`、`制作人:`、`作曲家:`、`曲师:` 或 `唱见:` 限定范围。这些人物参与担当总览、担当查询、跨群同步、综合榜与 DD 排行。偶像排行和企划占比只统计角色。
 
-唱见收录有日文 Wiki 人物页、且有公开资料能核对日本国籍或日本出身的个人。维护工具遍历日语维基百科的「歌い手」分类、ニコニコ大百科「歌い手一覧」的个人名单，以及 Seesaa「歌い手wiki」的五十音目录。每条记录保留人物页和身份依据。UtaiteDB 的头像通过同一人物条目或本人账号关联，缺图时可在管理页上传。[日语维基百科](https://ja.wikipedia.org/wiki/Category:歌い手) · [ニコニコ大百科](https://dic.nicovideo.jp/a/歌い手一覧) · [Seesaa 歌い手wiki](https://seesaawiki.jp/utaite/) · [UtaiteDB](https://utaitedb.net/)
+唱见以ニコニコ大百科「歌い手一覧」的个人名单为主要补录来源，同时读取日语维基百科和 Seesaa「歌い手wiki」。名单中的人物通过资料库对同一条目的引用，或 Utaite Wiki 传记中的本人账号，与 UtaiteDB 头像关联。从大百科补入的新人物需要有头像及可核对的身份关联；公开资料明确属于外国唱见、组合或虚拟主播的条目不收录。没有公开国籍或出身资料时保留为空。[ニコニコ大百科](https://dic.nicovideo.jp/a/歌い手一覧) · [日语维基百科](https://ja.wikipedia.org/wiki/Category:歌い手) · [Seesaa 歌い手wiki](https://seesaawiki.jp/utaite/) · [Utaite Wiki](https://utaite.wiki/) · [UtaiteDB](https://utaitedb.net/)
+
+每条记录保留人物页、核对方式和实际读取日期。网站暂时无法访问时，维护工具只使用有效期内的已保存网页和明确关联的资料；覆盖统计区分已核对、缺头像、来源不可访问和身份冲突，不把读到名单计作全部人物已收录。有出处的生日可在管理页查看、修改，唱见不加入偶像大师生日提醒。
 
 幕后目录按具体作品署名和系列制作职务收录。首批 11 人都有照片，包括《闪耀色彩》制作人高山祐介（也可搜「高山佑介」）、《学园偶像大师》初代主制作人小美野日出文，以及为《イリュージョニスタ！》作曲、编曲的田中秀和。管理页可查看每人的署名出处。[高山祐介访谈](https://www.famitsu.com/article/202605/75738) · [万代南梦宫制作访谈](https://www.bandainamco.co.jp/ir/library/feature04_01_2025.html) · [乐曲官方署名](https://cinderellagirls.idolmaster-official.jp/discography/cocc-17458/)
 

@@ -1,5 +1,5 @@
 """Discover individual singers in Japanese community wikis and verify their origin."""
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 import json
 import re
@@ -8,7 +8,7 @@ from urllib.parse import quote, unquote, urlencode, urljoin, urlsplit
 import httpx
 from bs4 import BeautifulSoup
 
-from catalogue_sources import snapshot
+from catalogue_sources import SnapshotUnavailable, snapshot
 from sync_japanese_utaite import accounts, batches, claims, key
 
 NICO = "https://dic.nicovideo.jp"
@@ -21,6 +21,12 @@ PREFECTURES = re.compile(r"^(?:日本[・、 ,]*)?(北海道|東京都|京都府
 FOREIGN = re.compile(r"中国(?:籍|人|出身|生まれ)|台湾(?:人|出身|生まれ)|韓国(?:人|出身|生まれ)|香港(?:人|出身|生まれ)|外国籍")
 FOREIGN_PLACE = re.compile(r"^(?:中国(?!地方|山地)|中華人民共和国|台湾|香港|韓国|大韓民国|米国|アメリカ|カナダ|イギリス|フランス|海外)")
 VIRTUAL = re.compile(r"VTuber|バーチャル(?:YouTuber|ユーチューバー|ライバー|シンガー)", re.I)
+# Reviewed exclusions supplement profiles whose opening paragraph omits origin.
+FOREIGN_PROVIDERS = {
+    1414: "https://ascii.jp/elem/000/000/615/615921/2/",  # 花近, interview
+    11730: "https://barks.jp/?p=657922",  # ほんこーん, interview
+    1272: "https://www.talenttuber.com/detail/mes.html",  # Mes, Canadian singer
+}
 
 
 @dataclass
@@ -30,6 +36,9 @@ class Entry:
     site: str
     listed: bool
     providers: set = field(default_factory=set)
+    checked: str = ""
+    verification: str = "article"
+    biography: dict = field(default_factory=dict)
 
 
 def singer_key(name):
@@ -48,7 +57,7 @@ def nico_key(url):
 
 
 def read_index(client):
-    raw, _ = snapshot(client, NICO_LIST, max_age_days=7, interval=5)
+    raw, checked = snapshot(client, NICO_LIST, max_age_days=7, interval=5)
     soup = BeautifulSoup(raw, "html.parser")
     entries = {}
     sections = set()
@@ -66,7 +75,7 @@ def read_index(client):
                     continue
                 url = urljoin(NICO, a["href"])
                 if nico_key(url):
-                    entries.setdefault(nico_key(url), Entry(a.get_text(strip=True), url, "nico", True))
+                    entries.setdefault(nico_key(url), Entry(a.get_text(strip=True), url, "nico", True, checked=checked))
     if not {"男性歌い手", "女性歌い手"} <= sections or not entries:
         raise ValueError("NicoNicoPedia singer directory structure changed")
 
@@ -194,18 +203,19 @@ def origin_of_human(entity, places):
     return "", ""
 
 
-def inspect_profile(client, entry):
+def inspect_profile(client, entry, *, cached_only=False):
     """Read the public article. Skip genuinely missing pages; propagate service failures."""
     url = entry.url
     if entry.site == "nico" and nico_key(url).startswith("id:"):
         # The public word-article route is crawlable. Check the numeric ID before using it.
         url = NICO + "/a/" + quote(entry.name, safe="")
     try:
-        raw, _ = snapshot(client, url, max_age_days=30, interval=5 if entry.site == "nico" else 1)
+        raw, checked = snapshot(client, url, max_age_days=30, interval=5 if entry.site == "nico" else 1, cached_only=cached_only)
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code in (404, 410):
             return None
         raise
+    entry.checked = checked
     soup = BeautifulSoup(raw, "html.parser")
     if entry.site == "nico":
         body = soup.select_one("#article body")
@@ -342,34 +352,70 @@ def matching_hometowns(names, tokens, origins):
     return {source for token in tokens for name, source in origins.get(token, ()) if name in names}
 
 
-def community_profiles(client, entries, candidates, indexes, wikidata, countries, origins):
+def community_profiles(client, entries, candidates, indexes, wikidata, countries, origins, biographies=None, audit=None, known_wikis=None):
     by_name, by_account, provider_keys, _ = indexes
-    origin_names = {name for values in origins.values() for name, _ in values}
+    biographies = biographies or {}
+    audit = audit if audit is not None else {}
+    known_wikis = known_wikis or set()
+    blocked = False
     provider_countries = {ident: lookup_people(keys, wikidata) for ident, keys in provider_keys.items()}
     for entry in sorted(entries.values(), key=lambda e: (not e.listed, e.site, e.url)):
+        status = audit[entry.url] = {"name": entry.name, "site": entry.site, "outcome": "unresolved"}
         name = singer_key(entry.name)
         plausible = by_name.get(name, set()) | entry.providers
         article_people = lookup_people(article_keys(entry), wikidata)
-        potential_people = article_people | {q for ident in plausible for q in provider_countries.get(ident, ())}
-        # Seesaa profiles are compact. In the larger encyclopedia, prioritize people
-        # cross-referenced by an origin source or a statement about a specific human.
-        if (entry.site == "nico" and name not in origin_names
-                and not any(countries[q][0] for q in potential_people)):
+        pictured = {i for i in plausible if candidates[i][0].get("mainPicture", {}).get("urlThumb")
+                    and candidates[i][0].get("status") in {"Approved", "Finished", "Locked"}}
+        if entry.site == "nico" and not pictured and nico_key(entry.url) not in known_wikis:
+            status["outcome"] = "no_verified_picture_candidate"
             continue
-        profile = inspect_profile(client, entry)
+        unavailable = False
+        fallback_ident = None
+        try:
+            profile = inspect_profile(client, entry, cached_only=blocked and entry.site == "nico")
+        except (SnapshotUnavailable, httpx.HTTPStatusError) as exc:
+            if isinstance(exc, httpx.HTTPStatusError):
+                if entry.site != "nico" or exc.response.status_code != 403:
+                    raise
+                blocked = True
+            profile, unavailable = None, True
+        if unavailable and entry.listed:
+            # The saved Japanese directory names this person. An explicit link
+            # to that very article, or a biography with matching personal SNS,
+            # connects the pictured database entry without a fuzzy name join.
+            linked = {i for i in pictured if i in entry.providers or i in biographies}
+            if len(linked) == 1:
+                ident = next(iter(linked))
+                article = nico_key(entry.url)
+                wiki_id = "ut:nicopedia:" + article[3:] if article.startswith("id:") else f"ut:utaitedb:{ident}"
+                profile = wiki_id, entry.url, personal_accounts(candidates[ident][0]), ""
+                fallback_ident = ident
+                entry.verification = "directory_reference" if ident in entry.providers else "directory_biography"
         if not profile:
+            status["outcome"] = "source_unavailable" if unavailable else "not_verified_individual"
             continue
         wiki_id, url, tokens, wiki_origin = profile
         if wiki_origin == "foreign":
+            status["outcome"] = "foreign"
             continue
-        if entry.site == "nico":
+        if wiki_id.startswith("ut:nicopedia:"):
             article_people.update(lookup_people([("P14983", wiki_id.rsplit(":", 1)[1])], wikidata))
         candidates_by_account = {ident for token in tokens for ident in by_account.get(token, ())}
         matched = entry.providers | (candidates_by_account & plausible)
+        if fallback_ident is not None:
+            matched.add(fallback_ident)
         matched.update(i for i in plausible if article_people & provider_countries.get(i, set()))
         if len(matched) > 1:
+            status["outcome"] = "ambiguous_identity"
             continue
         ident = next(iter(matched), None)
+        if ident in FOREIGN_PROVIDERS:
+            status.update(outcome="foreign", source=FOREIGN_PROVIDERS[ident])
+            continue
+        entry.biography = biographies.get(ident, {})
+        if entry.biography.get("foreign"):
+            status["outcome"] = "foreign"
+            continue
         qids = article_people.copy()
         names, verified_tokens = {name}, set(tokens)
         if ident is not None:
@@ -381,8 +427,10 @@ def community_profiles(client, entries, candidates, indexes, wikidata, countries
                               for tag in artist.get("tags", []))
             # A separately documented real singer can have a virtual side project.
             if virtual_tag and not (qids and entry.listed and wiki_id.startswith("ut:nicopedia:")):
+                status["outcome"] = "virtual_identity"
                 continue
         if len(qids) > 1 or any(countries[q][1] == "foreign" for q in qids):
+            status["outcome"] = "foreign_or_ambiguous_identity"
             continue
         qid = next(iter(qids), None)
         source, basis = countries.get(qid, ("", ""))
@@ -391,17 +439,28 @@ def community_profiles(client, entries, candidates, indexes, wikidata, countries
             source, basis = url, wiki_origin
         if not source and len(hometowns) == 1:
             source, basis = next(iter(hometowns)), "birthplace"
-        if source:
+        if source or (entry.site == "nico" and entry.listed and ident in pictured):
+            status.update(outcome="eligible", verification=entry.verification)
             yield entry, wiki_id, url, ident, qid, tokens, source, basis
+        else:
+            status["outcome"] = "insufficient_evidence"
 
 
 def add_community_singers(client, candidates, records, previous, redirects, parse_artist):
     entries = read_index(client)
     counts = {"nicopedia_listed": sum(e.site == "nico" for e in entries.values()),
-              "seesaa_listed": sum(e.site == "seesaa" for e in entries.values())}
+              "seesaa_listed": sum(e.site == "seesaa" for e in entries.values()),
+              "nicopedia_directory_checked_at": sorted({e.checked for e in entries.values() if e.site == "nico" and e.listed})}
     indexes = collect_links(entries, candidates)
     lookup, countries = geography(client, indexes[-1])
     origins = origins_by_account(client)
+    from utaite_wiki_profiles import singer_biographies
+    candidate_ids = {ident for entry in entries.values()
+                     for ident in indexes[0].get(singer_key(entry.name), set()) | entry.providers
+                     if candidates[ident][0].get("mainPicture", {}).get("urlThumb")
+                     and candidates[ident][0].get("status") in {"Approved", "Finished", "Locked"}}
+    biographies = singer_biographies(client, {ident: candidates[ident] for ident in candidate_ids})
+    audit = {}
     human_sources = defaultdict(set)
     for (prop, value), people in lookup.items():
         if len(people) != 1:
@@ -433,7 +492,8 @@ def add_community_singers(client, candidates, records, previous, redirects, pars
                 for name in (row["name"], *row["aliases"]):
                     named_accounts[singer_key(name), token].add(row["id"])
     for entry, wiki_id, url, ident, qid, tokens, source, basis in community_profiles(
-            client, entries, candidates, indexes, lookup, countries, origins):
+            client, entries, candidates, indexes, lookup, countries, origins, biographies, audit,
+            {nico_key(r.get("wiki_url", "")) for r in old.values()} - {""}):
         provider_id = f"ut:utaitedb:{ident}" if ident is not None else None
         # One performer can appear in all three wikis. Only join on a stable
         # article, official provider ID, human entity or specific hometown profile.
@@ -477,7 +537,15 @@ def add_community_singers(client, candidates, records, previous, redirects, pars
                 if key in former:
                     row[key] = former[key]
             records[person_id] = row
-        row["sources"] = list(dict.fromkeys([*row["sources"], url, source, *sorted(human_sources[qid])]))
+        row["sources"] = list(dict.fromkeys(u for u in [*row["sources"], url, source, *sorted(human_sources[qid])] if u))
+        if entry.site == "nico" and entry.listed:
+            row.update(wiki_directory_url=NICO_LIST, wiki_verification=entry.verification,
+                       wiki_checked_at=entry.checked, eligibility_basis="japanese_wiki")
+            row["sources"] = list(dict.fromkeys([*row["sources"], NICO_LIST]))
+        if entry.biography:
+            row["sources"] = list(dict.fromkeys([*row["sources"], entry.biography["url"]]))
+            if entry.biography.get("birthday") and not row.get("birthday"):
+                row.update(birthday=entry.biography["birthday"], birthday_source=entry.biography["url"])
         alias = re.sub(r"\s*[（(]歌い手[)）]$", "", entry.name)
         if alias not in row["aliases"]:
             row["aliases"].append(alias)
@@ -485,7 +553,8 @@ def add_community_singers(client, candidates, records, previous, redirects, pars
             row["wikidata_id"] = qid
             by_qid[qid] = person_id
         by_wiki[wiki_id] = person_id
-        by_origin[source] = person_id
+        if source:
+            by_origin[source] = person_id
         if provider_id:
             by_provider[provider_id] = person_id
             if provider_id != person_id:
@@ -493,4 +562,6 @@ def add_community_singers(client, candidates, records, previous, redirects, pars
         for former in (wiki_id, provider_id, previous_id):
             if former in known and former != person_id:
                 redirects[former] = person_id
+    counts["community_outcomes"] = dict(Counter(item["outcome"] for item in audit.values()))
+    counts["nicopedia_verified_biographies"] = len(biographies)
     return counts
