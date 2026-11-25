@@ -771,6 +771,21 @@ class ImasBirthdayPlugin(Star):
         if self._claim_tantou_event(event):
             yield event.plain_result(await self._change_tantou(event, "加推", str(names)))
 
+    @filter.command("加推唱见")
+    async def tantou_add_singer(self, event: AstrMessageEvent, names: GreedyStr = ""):
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "加推唱见", str(names)))
+
+    @filter.command("加推声优")
+    async def tantou_add_actor(self, event: AstrMessageEvent, names: GreedyStr = ""):
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "加推声优", str(names)))
+
+    @filter.command("加推偶像")
+    async def tantou_add_idol(self, event: AstrMessageEvent, names: GreedyStr = ""):
+        if self._claim_tantou_event(event):
+            yield event.plain_result(await self._change_tantou(event, "加推偶像", str(names)))
+
     @filter.command("加推女声优")
     async def tantou_add_voice_actor(self, event: AstrMessageEvent, names: GreedyStr = ""):
         """旧版声优登记指令，多个名字以空格分隔。"""
@@ -919,7 +934,7 @@ class ImasBirthdayPlugin(Star):
             return
         command = parts[0]
         rank_kind = TANTOU_RANK_COMMANDS.get(command)
-        if not rank_kind and command not in {"加推", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当查询", "刷新群友头像", "担当同步"}:
+        if not rank_kind and command not in {"加推", "加推偶像", "加推唱见", "加推声优", "加推女声优", "加推确认", "减推", "减推女声优", "担当", "清空担当", "担当改名", "担当查询", "刷新群友头像", "担当同步"}:
             return
         args = parts[1] if len(parts) > 1 else ""
         if not self._claim_tantou_event(event):
@@ -1810,6 +1825,15 @@ class ImasBirthdayPlugin(Star):
     async def _all_tantou_records(self) -> list[str]:
         return [*await self._tantou_records(), *VOICE_ACTOR_CATALOGUE, *self._public_people_records()]
 
+    async def _tantou_command_records(self, command: str) -> list[str]:
+        if command == "加推偶像":
+            return await self._tantou_records()
+        if command == "加推唱见":
+            return [ident for ident in self._public_people_records() if PUBLIC_PEOPLE_CATALOGUE[ident]["kind"] == "utaite"]
+        if command in {"加推声优", "加推女声优", "减推女声优"}:
+            return list(VOICE_ACTOR_CATALOGUE)
+        return await self._all_tantou_records()
+
     async def _change_tantou(self, event: AstrMessageEvent, command: str, args: str) -> str:
         umo, user_id = self._tantou_identity(event)
         if not umo or not user_id:
@@ -1817,12 +1841,12 @@ class ImasBirthdayPlugin(Star):
         mentions = self._tantou_mentions(event)
         if mentions and command in {"加推", "减推"}:
             return await self._change_tantou_members(event, command, mentions)
-        if mentions and command in {"加推女声优", "减推女声优", "加推确认", "担当改名"}:
+        if mentions and command in {"加推偶像", "加推唱见", "加推声优", "加推女声优", "减推女声优", "加推确认", "担当改名"}:
             return "这条指令不接受 @ 群友。"
         if command == "清空担当" and (args.strip() or self._tantou_mentions(event)):
             return "用法：清空担当；只清空你在本群的登记。"
         if command != "清空担当" and not args.split():
-            examples = {"加推": "加推 月村手毬", "加推女声优": "加推女声优 小鹿なお", "减推": "减推 月村手毬", "减推女声优": "减推女声优 小鹿なお", "加推确认": "加推确认 1（按待修正名字的顺序填写序号或完整名字，0 跳过）", "担当改名": "担当改名 你的CN（填写“重置”恢复群昵称）"}
+            examples = {"加推偶像": "加推偶像 月村手毬", "加推唱见": "加推唱见 nayuta", "加推声优": "加推声优 小鹿なお", "加推": "加推 月村手毬", "加推女声优": "加推女声优 小鹿なお", "减推": "减推 月村手毬", "减推女声优": "减推女声优 小鹿なお", "加推确认": "加推确认 1（按待修正名字的顺序填写序号或完整名字，0 跳过）", "担当改名": "担当改名 你的CN（填写“重置”恢复群昵称）"}
             return f"用法：{examples[command]}"
         if command != "担当改名":
             self._tantou_sync_pending.pop((umo, user_id), None)
@@ -1851,8 +1875,8 @@ class ImasBirthdayPlugin(Star):
                     return "已恢复使用群昵称。" if name == "重置" else f"名片 P 名已设为：{self._tantou_producer_name(name)}"
                 if command == "加推确认":
                     return await self._confirm_tantou(umo, user_id, args)
-                voice_actor = command in {"加推女声优", "减推女声优"}
-                records = list(VOICE_ACTOR_CATALOGUE) if voice_actor else await self._all_tantou_records()
+                voice_actor = command in {"加推声优", "加推女声优", "减推女声优"}
+                records = await self._tantou_command_records(command)
                 if command in {"减推", "减推女声优"}:
                     group = await self._tantou_group(umo)
                     current = group.get(user_id, [])
@@ -1891,7 +1915,7 @@ class ImasBirthdayPlugin(Star):
                 now = time.monotonic()
                 self._tantou_pending = {key: value for key, value in self._tantou_pending.items() if value["expires"] > now}
                 if pending:
-                    self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending, "batch": batch, "voice_actor": voice_actor}
+                    self._tantou_pending[(umo, user_id)] = {"expires": now + 300, "items": pending, "batch": batch, "voice_actor": voice_actor, "command": command}
                     lines.append(self._tantou_confirmation_hint(pending))
                     return "\n".join(lines)
                 return await self._append_tantou_batch(umo, user_id, batch)
@@ -1912,7 +1936,7 @@ class ImasBirthdayPlugin(Star):
             self._tantou_pending.pop((umo, user_id), None)
             return "没有待确认的加推或已过期，请重新加推。"
         items = pending["items"]
-        records = list(VOICE_ACTOR_CATALOGUE) if pending.get("voice_actor") else await self._all_tantou_records()
+        records = await self._tantou_command_records(pending["command"])
         aliases = self._voice_actor_alias_index() if pending.get("voice_actor") else self._tantou_alias_index(records)
         choices = args.split() if re.fullmatch(r"[0-9]+(?:\s+[0-9]+)*", args.strip()) else self._split_tantou_names(args, self._tantou_split_aliases(records, aliases), deduplicate=False)
         candidate_items = [item for item in items if item["candidates"]]
