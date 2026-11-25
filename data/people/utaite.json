@@ -2,7 +2,43 @@
   "schema": 1,
   "kind": "utaite",
   "overrides": {},
-  "manual_records": [],
+  "manual_records": [
+    {
+      "id": "ut:moegirl:364058",
+      "name": "葉月ゆら",
+      "aliases": [
+        "葉月ゆら",
+        "Hatsuki Yura",
+        "叶月由罗",
+        "葉月由羅",
+        "はつきゆら"
+      ],
+      "directory": "utaitedb",
+      "source_status": "Finished",
+      "sources": [
+        "https://utaitedb.net/Ar/15065",
+        "http://hatukiyura.blog.fc2.com/",
+        "http://hatukiyura.sakura.ne.jp/",
+        "https://twitter.com/yura_hatuki",
+        "http://vocadb.net/Ar/1222",
+        "https://ja.wikipedia.org/wiki/%E8%91%89%E6%9C%88%E3%82%86%E3%82%89",
+        "https://hatukiyura.sakura.ne.jp/",
+        "https://w.atwiki.jp/hmiku/pages/45298.html"
+      ],
+      "avatar_url": "https://static.utaitedb.net/img/Artist/mainThumb/15065.jpg?v=10",
+      "original_url": "https://static.utaitedb.net/img/Artist/mainOrig/15065.jpg?v=10",
+      "source_url": "https://utaitedb.net/Ar/15065",
+      "image_author": null,
+      "license": null,
+      "verified_at": "2026-11-24",
+      "last_seen_on": "2026-11-24",
+      "utaitedb_id": "ut:utaitedb:15065",
+      "wiki_url": "https://ja.wikipedia.org/wiki/%E8%91%89%E6%9C%88%E3%82%86%E3%82%89",
+      "japan_source": "https://ja.wikipedia.org/wiki/%E8%91%89%E6%9C%88%E3%82%86%E3%82%89",
+      "birthday": "09-17",
+      "birthday_source": "https://ja.wikipedia.org/wiki/%E8%91%89%E6%9C%88%E3%82%86%E3%82%89"
+    }
+  ],
   "records": [
     {
       "id": "ut:jawiki:2268672",
@@ -16290,13 +16326,6 @@
       "aliases": [
         "Warma",
         "沃玛"
-      ]
-    },
-    "ut:moegirl:364058": {
-      "name": "叶月由罗",
-      "aliases": [
-        "叶月由罗",
-        "葉月ゆら"
       ]
     },
     "ut:moegirl:366684": {
