@@ -3913,6 +3913,9 @@ class ImasBirthdayPlugin(Star):
                     else:
                         from asset_editor import crop_image
                     avatar = crop_image(avatar, (size, avatar_height), directory_crop)
+                elif not custom and PUBLIC_PEOPLE_CATALOGUE.get(name, {}).get("kind") == "utaite":
+                    height = max(1, round(avatar.height * size / avatar.width))
+                    avatar = avatar.resize((size, height), Image.Resampling.LANCZOS)
                 elif (self._voice_actor_id(name) or self._public_person_id(name)) and not custom:
                     avatar = ImageOps.contain(avatar, (round(size * .64), round(avatar_height * .80)), Image.Resampling.LANCZOS)
                 else:

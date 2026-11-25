@@ -73,7 +73,7 @@ function draw() {
   if (state.image) {
     const iw = state.image.naturalWidth, ih = state.image.naturalHeight;
     if (state.action !== 'change' && !state.custom && !current.directory_crop) {
-      const scale = Math.min(w * .64 / iw, h * .8 / ih); ctx.drawImage(state.image, (w - iw * scale) / 2, (h - ih * scale) / 2, iw * scale, ih * scale);
+      const scale = current.kind === 'utaite' ? w / iw : Math.min(w * .64 / iw, h * .8 / ih); ctx.drawImage(state.image, (w - iw * scale) / 2, (h - ih * scale) / 2, iw * scale, ih * scale);
     } else if (state.fit === 'contain') {
       const scale = Math.min(w / iw, h / ih) * state.zoom, dw = Math.max(1, Math.round(iw * scale)), dh = Math.max(1, Math.round(ih * scale));
       ctx.drawImage(state.image, Math.round((w - dw) * state.x), Math.round((h - dh) * state.y), dw, dh);
